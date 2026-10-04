@@ -2,7 +2,7 @@
   "name": "viniCycle",
   "description": "ViniCycle",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "start": "vite dev",
