@@ -1,0 +1,188 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791040651321,
+      "tag": "0000_base",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791040689093,
+      "tag": "0001_seguranca",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791055732130,
+      "tag": "0002_cadastros",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791055760497,
+      "tag": "0003_seguranca_cadastros",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791065474482,
+      "tag": "0004_producao",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791065474964,
+      "tag": "0005_seguranca_producao",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791080316193,
+      "tag": "0006_ciclo4",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791080317197,
+      "tag": "0007_seguranca_ciclo4",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791085753207,
+      "tag": "0008_ciclo5",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791085761017,
+      "tag": "0009_seguranca_ciclo5",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791088233917,
+      "tag": "0010_ciclo6",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791088234894,
+      "tag": "0011_seguranca_ciclo6",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791111063133,
+      "tag": "0012_ciclo7",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791111071054,
+      "tag": "0013_seguranca_ciclo7",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791116452601,
+      "tag": "0014_ciclo8",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1791116453412,
+      "tag": "0015_seguranca_ciclo8",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1791120556848,
+      "tag": "0016_ciclo9",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791120558026,
+      "tag": "0017_seguranca_ciclo9",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791146552407,
+      "tag": "0018_ciclo10",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791146553171,
+      "tag": "0019_seguranca_ciclo10",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791152277515,
+      "tag": "0020_ciclo11",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791152278203,
+      "tag": "0021_seguranca_ciclo11",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791153040573,
+      "tag": "0022_ciclo11_reajuste",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791156787104,
+      "tag": "0023_ciclo12",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791156787871,
+      "tag": "0024_seguranca_ciclo12",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791202689579,
+      "tag": "0025_ajustes_vencimento",
+      "breakpoints": true
+    }
+  ]
+}

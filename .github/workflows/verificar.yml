@@ -1,0 +1,47 @@
+# Verificação automática a cada envio (04-plano-de-entregas.md, ciclo 1, passo 6; P24).
+name: Verificar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        # Mesma versão do servidor (02-arquitetura.md).
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      URL_APLICACAO: http://localhost:5173
+      DATABASE_URL: postgres://vinicycle_app:app_local@localhost:5432/vinicycle
+      DATABASE_URL_TESTE: postgres://vinicycle_app:app_local@localhost:5432/vinicycle_teste
+      DATABASE_URL_DONO_TESTE: postgres://vinicycle_dono:dono_local@localhost:5432/vinicycle_teste
+      # Chave só para os testes; a de produção fica no servidor.
+      CHAVE_CIFRA: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      ARMAZENAMENTO_DIR: /tmp/armazenamento
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Bancos de teste
+        run: scripts/banco-local.sh
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build

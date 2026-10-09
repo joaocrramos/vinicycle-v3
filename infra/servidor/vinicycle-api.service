@@ -1,0 +1,16 @@
+# Serviço do usuário vinicycle (systemctl --user). Instalado e reiniciado por scripts/publicar.sh.
+[Unit]
+Description=ViniCycle (API e interface)
+After=network-online.target
+
+[Service]
+WorkingDirectory=/srv/vinicycle/atual/api
+EnvironmentFile=/srv/vinicycle/config/api.env
+ExecStart=/usr/bin/node /srv/vinicycle/atual/api/dist/main.js
+Restart=always
+RestartSec=3
+# A API recusa começar sem a configuração completa (src/config.ts).
+TimeoutStopSec=20
+
+[Install]
+WantedBy=default.target
