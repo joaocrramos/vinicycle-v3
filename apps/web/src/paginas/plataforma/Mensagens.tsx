@@ -117,7 +117,7 @@ export function PaginaEnvios() {
         A fila de e-mail, WhatsApp e SMS. Cada mensagem tenta de novo com espera crescente; a que
         falhou pode ser reenviada.
       </p>
-      <TabelaDados<LinhaEnvio>
+      <TabelaDados
         tabela="plataforma.envios"
         url="/api/plataforma/envios"
         ordemPadrao={{ campo: 'criadoEm', direcao: 'desc' }}

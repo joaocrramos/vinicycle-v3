@@ -3,7 +3,7 @@ import { api } from '@/lib/api'
 import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
 import { useQuery } from '@tanstack/react-query'
 import { Diferencas, NOMES_ACAO, type RegistroAuditoria } from '@/componentes/Historico'
-import { TabelaDados } from '@/componentes/TabelaDados'
+import { type Coluna, TabelaDados } from '@/componentes/TabelaDados'
 import { Entrada, Selecao } from '@/componentes/ui/campos'
 import { Pagina } from '@/layout/Estrutura'
 import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
@@ -37,9 +37,52 @@ const ENTIDADES: Record<string, string> = {
   listagem: 'Listagem',
 }
 
+interface LinhaAuditoria extends RegistroAuditoria {
+  ip?: string | null
+}
+
 export function PaginaAuditoria() {
   const { data: s } = useSessao()
   const fuso = fusoAtivo(s)
+  const colunas: Coluna<LinhaAuditoria>[] = [
+    {
+      id: 'ocorridoEm',
+      titulo: 'Quando',
+      ordenavel: true,
+      className: 'whitespace-nowrap',
+      celula: (r) => formatarDataHora(r.ocorridoEm, fuso),
+      exportar: (r) => r.ocorridoEm,
+    },
+    {
+      id: 'usuario',
+      titulo: 'Quem',
+      celula: (r) => r.usuario ?? 'Sistema',
+      exportar: (r) => r.usuario,
+    },
+    {
+      id: 'acao',
+      titulo: 'Ação',
+      ordenavel: true,
+      celula: (r) => NOMES_ACAO[r.acao] ?? r.acao,
+      exportar: (r) => r.acao,
+    },
+    {
+      id: 'entidade',
+      titulo: 'Registro',
+      ordenavel: true,
+      celula: (r) => (r.entidade ? (ENTIDADES[r.entidade] ?? r.entidade) : '—'),
+      exportar: (r) => r.entidade,
+    },
+    {
+      id: 'detalhes',
+      titulo: 'Detalhes',
+      className: 'min-w-72',
+      celula: (r) => <Diferencas r={r} />,
+      exportar: (r) => JSON.stringify(r.diferenca ?? r.dados ?? ''),
+    },
+    { id: 'ip', titulo: 'IP', celula: (r) => r.ip ?? '—', exportar: (r) => r.ip },
+  ]
+
   return (
     <Pagina titulo="Auditoria" trilha={['Configurações']}>
       <p className="text-sm text-muted-foreground">
@@ -96,44 +139,7 @@ export function PaginaAuditoria() {
             />
           </>
         )}
-        colunas={[
-          {
-            id: 'ocorridoEm',
-            titulo: 'Quando',
-            ordenavel: true,
-            className: 'whitespace-nowrap',
-            celula: (r) => formatarDataHora(r.ocorridoEm, fuso),
-            exportar: (r) => r.ocorridoEm,
-          },
-          {
-            id: 'usuario',
-            titulo: 'Quem',
-            celula: (r) => r.usuario ?? 'Sistema',
-            exportar: (r) => r.usuario,
-          },
-          {
-            id: 'acao',
-            titulo: 'Ação',
-            ordenavel: true,
-            celula: (r) => NOMES_ACAO[r.acao] ?? r.acao,
-            exportar: (r) => r.acao,
-          },
-          {
-            id: 'entidade',
-            titulo: 'Registro',
-            ordenavel: true,
-            celula: (r) => (r.entidade ? (ENTIDADES[r.entidade] ?? r.entidade) : '—'),
-            exportar: (r) => r.entidade,
-          },
-          {
-            id: 'detalhes',
-            titulo: 'Detalhes',
-            className: 'min-w-72',
-            celula: (r) => <Diferencas r={r} />,
-            exportar: (r) => JSON.stringify(r.diferenca ?? r.dados ?? ''),
-          },
-          { id: 'ip', titulo: 'IP', celula: (r) => r.ip ?? '—', exportar: (r) => r.ip },
-        ]}
+        colunas={colunas}
       />
     </Pagina>
   )

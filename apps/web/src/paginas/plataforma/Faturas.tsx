@@ -30,7 +30,7 @@ export function PaginaFaturas() {
         A fatura de cada ciclo sai sozinha antes do vencimento; a baixa é manual até a integração
         com os meios de pagamento. Busque pelo cliente ou pelo número.
       </p>
-      <TabelaDados<LinhaFatura>
+      <TabelaDados
         tabela="plataforma.faturas"
         url="/api/plataforma/faturas"
         ordemPadrao={{ campo: 'vencimento', direcao: 'desc' }}

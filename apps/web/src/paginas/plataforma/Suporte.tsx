@@ -424,7 +424,7 @@ export function PaginaSuporte() {
         )
       }
     >
-      <TabelaDados<LinhaChamado>
+      <TabelaDados
         tabela="plataforma.suporte"
         url="/api/plataforma/chamados"
         ordemPadrao={{ campo: 'prazoEm', direcao: 'asc' }}

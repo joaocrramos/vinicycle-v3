@@ -130,7 +130,7 @@ export function ListaClientes() {
         )
       }
     >
-      <TabelaDados<LinhaCliente>
+      <TabelaDados
         tabela="plataforma.clientes"
         url="/api/plataforma/empresas"
         ordemPadrao={{ campo: 'nome', direcao: 'asc' }}
