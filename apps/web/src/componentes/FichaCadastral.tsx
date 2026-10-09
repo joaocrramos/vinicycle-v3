@@ -1,21 +1,21 @@
 // Bloco cadastral padrão (P2): os mesmos campos, máscaras e validações em todo cadastro de
 // pessoa ou empresa.
-import { cnpjValido, REDES, ROTULOS_ENDERECO, UFS } from '@vinicycle/shared';
-import { Plus, Search, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { api } from '@/lib/api';
-import type { Formulario } from '@/lib/formulario';
-import { CampoCep, CampoDocumento, CampoTelefone } from './campos-especiais';
-import { Botao } from './ui/botao';
-import { Aviso } from './ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from './ui/campos';
+import { cnpjValido, REDES, ROTULOS_ENDERECO, UFS } from '@vinicycle/shared'
+import { Plus, Search, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { api } from '@/lib/api'
+import type { Formulario } from '@/lib/formulario'
+import { CampoCep, CampoDocumento, CampoTelefone } from './campos-especiais'
+import { Botao } from './ui/botao'
+import { Aviso } from './ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from './ui/campos'
 
 const NOMES_ROTULO: Record<(typeof ROTULOS_ENDERECO)[number], string> = {
   principal: 'Principal',
   cobranca: 'Cobrança',
   entrega: 'Entrega',
   propriedade_rural: 'Propriedade rural',
-};
+}
 const NOMES_REDE: Record<(typeof REDES)[number], string> = {
   instagram: 'Instagram',
   facebook: 'Facebook',
@@ -24,48 +24,48 @@ const NOMES_REDE: Record<(typeof REDES)[number], string> = {
   youtube: 'YouTube',
   x: 'X',
   outra: 'Outra',
-};
+}
 
 interface Endereco {
-  rotulo: string;
-  cep: string;
-  logradouro: string;
-  numero: string;
-  complemento?: string | null;
-  bairro?: string;
-  municipio: string;
-  codigoIbge?: string | null;
-  uf: string;
-  principal?: boolean;
+  rotulo: string
+  cep: string
+  logradouro: string
+  numero: string
+  complemento?: string | null
+  bairro?: string
+  municipio: string
+  codigoIbge?: string | null
+  uf: string
+  principal?: boolean
 }
 interface Contato {
-  tipo: 'email' | 'telefone' | 'rede';
-  rotulo?: string;
-  valor: string;
-  whatsapp?: boolean;
-  rede?: string | null;
-  principal?: boolean;
+  tipo: 'email' | 'telefone' | 'rede'
+  rotulo?: string
+  valor: string
+  whatsapp?: boolean
+  rede?: string | null
+  principal?: boolean
 }
 
 interface EnderecoConsultado {
-  cep: string;
-  logradouro: string;
-  bairro: string;
-  municipio: string;
-  uf: string;
-  codigoIbge: string | null;
-  numero?: string;
-  complemento?: string;
+  cep: string
+  logradouro: string
+  bairro: string
+  municipio: string
+  uf: string
+  codigoIbge: string | null
+  numero?: string
+  complemento?: string
 }
 
 interface DadosCnpj {
-  nome: string;
-  nomeFantasia: string | null;
-  situacaoCadastral: string | null;
-  endereco: EnderecoConsultado | null;
-  email: string | null;
-  telefone: string | null;
-  fonte: string;
+  nome: string
+  nomeFantasia: string | null
+  situacaoCadastral: string | null
+  endereco: EnderecoConsultado | null
+  email: string | null
+  telefone: string | null
+  fonte: string
 }
 
 export const FICHA_VAZIA_PJ = {
@@ -79,9 +79,9 @@ export const FICHA_VAZIA_PJ = {
   observacoes: '',
   enderecos: [] as Endereco[],
   contatos: [] as Contato[],
-};
+}
 
-export const FICHA_VAZIA_PF = { ...FICHA_VAZIA_PJ, tipoPessoa: 'fisica' as const };
+export const FICHA_VAZIA_PF = { ...FICHA_VAZIA_PJ, tipoPessoa: 'fisica' as const }
 
 export function FichaCadastral({
   form,
@@ -91,68 +91,68 @@ export function FichaCadastral({
   tiposPermitidos = ['juridica', 'fisica'],
   simples,
 }: {
-  form: Formulario;
-  prefixo?: string;
+  form: Formulario
+  prefixo?: string
   /** O documento da empresa só é trocado pelo suporte. */
-  documentoBloqueado?: boolean;
-  documentoObrigatorio?: boolean;
-  tiposPermitidos?: Array<'juridica' | 'fisica' | 'estrangeira'>;
+  documentoBloqueado?: boolean
+  documentoObrigatorio?: boolean
+  tiposPermitidos?: Array<'juridica' | 'fisica' | 'estrangeira'>
   /** Pessoa física sem inscrições (ficha do usuário). */
-  simples?: boolean;
+  simples?: boolean
 }) {
-  const c = (campo: string) => (prefixo ? `${prefixo}.${campo}` : campo);
-  const tipo = form.valor(c('tipoPessoa')) as 'juridica' | 'fisica' | 'estrangeira';
-  const pj = tipo === 'juridica';
-  const enderecos = (form.valor(c('enderecos')) as Endereco[] | undefined) ?? [];
-  const contatos = (form.valor(c('contatos')) as Contato[] | undefined) ?? [];
-  const [consulta, setConsulta] = useState<{ tom: 'info' | 'alerta'; texto: string } | null>(null);
-  const [buscando, setBuscando] = useState(false);
-  const documento = (form.valor(c('documento')) as string | null) ?? '';
+  const c = (campo: string) => (prefixo ? `${prefixo}.${campo}` : campo)
+  const tipo = form.valor(c('tipoPessoa')) as 'juridica' | 'fisica' | 'estrangeira'
+  const pj = tipo === 'juridica'
+  const enderecos = (form.valor(c('enderecos')) as Endereco[] | undefined) ?? []
+  const contatos = (form.valor(c('contatos')) as Contato[] | undefined) ?? []
+  const [consulta, setConsulta] = useState<{ tom: 'info' | 'alerta'; texto: string } | null>(null)
+  const [buscando, setBuscando] = useState(false)
+  const documento = (form.valor(c('documento')) as string | null) ?? ''
 
   // Busca de CEP (P2): preenche o endereço; o usuário completa número e complemento.
   async function buscarCep(i: number, cep: string) {
     try {
       const r = await api.get<EnderecoConsultado & { encontrado: boolean; fonte?: string }>(
         `/api/consultas/cep/${cep}`,
-      );
+      )
       if (!r.encontrado)
         return setConsulta({
           tom: 'alerta',
           texto: 'CEP não encontrado. Preencha o endereço à mão.',
-        });
-      const base = `enderecos.${i}`;
-      form.definir(c(`${base}.logradouro`), r.logradouro);
-      form.definir(c(`${base}.bairro`), r.bairro);
-      form.definir(c(`${base}.municipio`), r.municipio);
-      form.definir(c(`${base}.uf`), r.uf);
-      form.definir(c(`${base}.codigoIbge`), r.codigoIbge);
+        })
+      const base = `enderecos.${i}`
+      form.definir(c(`${base}.logradouro`), r.logradouro)
+      form.definir(c(`${base}.bairro`), r.bairro)
+      form.definir(c(`${base}.municipio`), r.municipio)
+      form.definir(c(`${base}.uf`), r.uf)
+      form.definir(c(`${base}.codigoIbge`), r.codigoIbge)
       setConsulta({
         tom: 'info',
         texto: `Endereço preenchido pelo CEP (${r.fonte}). Complete o número e confira.`,
-      });
+      })
     } catch {
       setConsulta({
         tom: 'alerta',
         texto: 'A busca de CEP não respondeu. Preencha o endereço à mão.',
-      });
+      })
     }
   }
 
   // Busca de CNPJ (P2, decidido em 03/10/2026): pré-preenche com os dados públicos da Receita.
   async function buscarCnpj() {
-    setBuscando(true);
+    setBuscando(true)
     try {
       const r = await api.get<DadosCnpj & { encontrado: boolean }>(
         `/api/consultas/cnpj/${documento}`,
-      );
+      )
       if (!r.encontrado)
         return setConsulta({
           tom: 'alerta',
           texto: 'CNPJ não encontrado nos serviços públicos. Preencha à mão.',
-        });
-      if (!form.valor(c('nome'))) form.definir(c('nome'), r.nome);
+        })
+      if (!form.valor(c('nome'))) form.definir(c('nome'), r.nome)
       if (!form.valor(c('nomeFantasia')) && r.nomeFantasia)
-        form.definir(c('nomeFantasia'), r.nomeFantasia);
+        form.definir(c('nomeFantasia'), r.nomeFantasia)
       if (r.endereco && !enderecos.length) {
         form.definir(c('enderecos'), [
           {
@@ -167,25 +167,25 @@ export function FichaCadastral({
             uf: r.endereco.uf,
             principal: true,
           },
-        ]);
+        ])
       }
-      const novos: Contato[] = [];
+      const novos: Contato[] = []
       if (r.email && !contatos.some((x) => x.tipo === 'email')) {
-        novos.push({ tipo: 'email', valor: r.email, rotulo: '', principal: true });
+        novos.push({ tipo: 'email', valor: r.email, rotulo: '', principal: true })
       }
       if (r.telefone && !contatos.some((x) => x.tipo === 'telefone')) {
-        novos.push({ tipo: 'telefone', valor: `+55${r.telefone}`, rotulo: '' });
+        novos.push({ tipo: 'telefone', valor: `+55${r.telefone}`, rotulo: '' })
       }
-      if (novos.length) form.definir(c('contatos'), [...contatos, ...novos]);
-      const situacao = r.situacaoCadastral ? ` Situação na Receita: ${r.situacaoCadastral}.` : '';
+      if (novos.length) form.definir(c('contatos'), [...contatos, ...novos])
+      const situacao = r.situacaoCadastral ? ` Situação na Receita: ${r.situacaoCadastral}.` : ''
       setConsulta({
         tom: r.situacaoCadastral && !/ativ/i.test(r.situacaoCadastral) ? 'alerta' : 'info',
         texto: `Dados de ${r.fonte}.${situacao} Os campos já preenchidos foram mantidos; confira antes de salvar.`,
-      });
+      })
     } catch {
-      setConsulta({ tom: 'alerta', texto: 'A busca de CNPJ não respondeu. Preencha à mão.' });
+      setConsulta({ tom: 'alerta', texto: 'A busca de CNPJ não respondeu. Preencha à mão.' })
     } finally {
-      setBuscando(false);
+      setBuscando(false)
     }
   }
 
@@ -195,7 +195,7 @@ export function FichaCadastral({
     onChange: (e: { target: { value: string } }) => form.definir(c(campo), e.target.value),
     onBlur: () => form.tocar(c(campo)),
     'aria-invalid': !!form.erro(c(campo)),
-  });
+  })
 
   return (
     <div className="flex flex-col gap-6">
@@ -208,8 +208,8 @@ export function FichaCadastral({
               value={tipo}
               disabled={documentoBloqueado}
               onChange={(e) => {
-                form.definir(c('tipoPessoa'), e.target.value);
-                form.definir(c('documento'), '');
+                form.definir(c('tipoPessoa'), e.target.value)
+                form.definir(c('documento'), '')
               }}
             >
               {tiposPermitidos.includes('juridica') && (
@@ -308,7 +308,7 @@ export function FichaCadastral({
       <fieldset className="flex flex-col gap-3">
         <legend className="mb-2 text-sm font-semibold">Contatos</legend>
         {contatos.map((ct, i) => {
-          const base = `contatos.${i}`;
+          const base = `contatos.${i}`
           return (
             <div
               key={i}
@@ -422,7 +422,7 @@ export function FichaCadastral({
                 </Botao>
               </div>
             </div>
-          );
+          )
         })}
         <div className="flex flex-wrap gap-2">
           {(['email', 'telefone', 'rede'] as const).map((tipoContato) => (
@@ -456,7 +456,7 @@ export function FichaCadastral({
       <fieldset className="flex flex-col gap-3">
         <legend className="mb-2 text-sm font-semibold">Endereços</legend>
         {enderecos.map((en, i) => {
-          const base = `enderecos.${i}`;
+          const base = `enderecos.${i}`
           const campoTexto = (
             campo: keyof Endereco,
             rotulo: string,
@@ -476,7 +476,7 @@ export function FichaCadastral({
                 onBlur={() => form.tocar(c(`${base}.${campo}`))}
               />
             </Campo>
-          );
+          )
           return (
             <div key={i} className="grid gap-3 rounded-md border p-3 sm:grid-cols-6">
               <Campo rotulo="Tipo" id={c(`${base}.rotulo`)} className="sm:col-span-2">
@@ -504,8 +504,8 @@ export function FichaCadastral({
                   id={c(`${base}.cep`)}
                   valor={en.cep}
                   aoMudar={(v) => {
-                    form.definir(c(`${base}.cep`), v);
-                    if (v.length === 8 && v !== en.cep) void buscarCep(i, v);
+                    form.definir(c(`${base}.cep`), v)
+                    if (v.length === 8 && v !== en.cep) void buscarCep(i, v)
                   }}
                   onBlur={() => form.tocar(c(`${base}.cep`))}
                 />
@@ -568,7 +568,7 @@ export function FichaCadastral({
               </Campo>
               {campoTexto('codigoIbge', 'Código IBGE do município', { className: 'sm:col-span-2' })}
             </div>
-          );
+          )
         })}
         <div>
           <Botao
@@ -603,5 +603,5 @@ export function FichaCadastral({
         </Campo>
       )}
     </div>
-  );
+  )
 }

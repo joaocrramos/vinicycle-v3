@@ -1,9 +1,9 @@
 // Empacota a API para a produção: um arquivo por ponto de entrada, com as dependências embutidas.
 // Só o argon2 (binário nativo) fica de fora e é instalado no servidor, na versão exata do lock.
-import { build } from 'esbuild';
-import { rm } from 'node:fs/promises';
+import { build } from 'esbuild'
+import { rm } from 'node:fs/promises'
 
-await rm('dist', { recursive: true, force: true });
+await rm('dist', { recursive: true, force: true })
 await build({
   entryPoints: {
     main: 'src/main.ts',
@@ -23,4 +23,4 @@ await build({
     js: "import { createRequire as __criarRequire } from 'node:module'; const require = __criarRequire(import.meta.url);",
   },
   logLevel: 'info',
-});
+})

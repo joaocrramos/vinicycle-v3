@@ -2,44 +2,44 @@
 // ancestral. A tiragem tira o vinho-base do recipiente para as garrafas em processo; cada estágio
 // registra a data, as garrafas perdidas e os insumos; no fim, as garrafas viram produto acabado num
 // lote comercial. Charmat e Asti seguem como vinho em recipiente (autoclave).
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatarDecimal } from '@vinicycle/shared';
-import { Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Aba, Abas, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { nomeNaLista, useReferencia } from '@/lib/referencia';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
-import { useItens, useLocais, useLotes } from './Estoque';
-import { useRecipientes } from './operacoes/comum';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { formatarDecimal } from '@vinicycle/shared'
+import { Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Aba, Abas, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { nomeNaLista, useReferencia } from '@/lib/referencia'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
+import { useItens, useLocais, useLotes } from './Estoque'
+import { useRecipientes } from './operacoes/comum'
 
-const F = 'enotrace.engarrafamento';
-const METODOS = { tradicional: 'Tradicional (champenoise)', ancestral: 'Ancestral (pét-nat)' };
+const F = 'enotrace.engarrafamento'
+const METODOS = { tradicional: 'Tradicional (champenoise)', ancestral: 'Ancestral (pét-nat)' }
 const SITUACAO: Record<string, { texto: string; tom: 'sucesso' | 'alerta' | 'neutro' }> = {
   em_processo: { texto: 'Em processo', tom: 'alerta' },
   finalizado: { texto: 'Finalizado', tom: 'sucesso' },
   cancelado: { texto: 'Cancelado', tom: 'neutro' },
-};
-const msg = (e: unknown) => (e instanceof ErroApi ? e.message : (e as Error).message);
+}
+const msg = (e: unknown) => (e instanceof ErroApi ? e.message : (e as Error).message)
 const agoraLocal = () => {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 16);
-};
-const paraIso = (v: string) => new Date(v).toISOString();
-const N = (n: number) => n.toLocaleString('pt-BR');
+  const d = new Date()
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+  return d.toISOString().slice(0, 16)
+}
+const paraIso = (v: string) => new Date(v).toISOString()
+const N = (n: number) => n.toLocaleString('pt-BR')
 
 interface Material {
-  itemId: string;
-  loteItemId: string;
-  quantidade: string;
+  itemId: string
+  loteItemId: string
+  quantidade: string
 }
 
 /** Linhas de materiais ou insumos baixados no estoque, com o lote quando o item controla lote. */
@@ -49,13 +49,13 @@ function Materiais({
   localId,
   tipos,
 }: {
-  linhas: Material[];
-  mudar: (l: Material[]) => void;
-  localId: string;
-  tipos: string[];
+  linhas: Material[]
+  mudar: (l: Material[]) => void
+  localId: string
+  tipos: string[]
 }) {
-  const itens = useItens();
-  const opcoes = itens.data?.filter((i) => tipos.includes(i.tipo)) ?? [];
+  const itens = useItens()
+  const opcoes = itens.data?.filter((i) => tipos.includes(i.tipo)) ?? []
   return (
     <div className="flex flex-col gap-2">
       {linhas.map((l, n) => (
@@ -77,7 +77,7 @@ function Materiais({
         </Botao>
       </div>
     </div>
-  );
+  )
 }
 
 function LinhaMaterial({
@@ -87,14 +87,14 @@ function LinhaMaterial({
   mudar,
   tirar,
 }: {
-  linha: Material;
-  localId: string;
-  opcoes: Array<{ id: string; nome: string; unidadeBase: string; controlaLote: boolean }>;
-  mudar: (p: Partial<Material>) => void;
-  tirar: () => void;
+  linha: Material
+  localId: string
+  opcoes: Array<{ id: string; nome: string; unidadeBase: string; controlaLote: boolean }>
+  mudar: (p: Partial<Material>) => void
+  tirar: () => void
 }) {
-  const item = opcoes.find((o) => o.id === linha.itemId);
-  const lotes = useLotes(item?.controlaLote ? item.id : '', localId || undefined);
+  const item = opcoes.find((o) => o.id === linha.itemId)
+  const lotes = useLotes(item?.controlaLote ? item.id : '', localId || undefined)
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Selecao
@@ -137,7 +137,7 @@ function LinhaMaterial({
         <Trash2 />
       </Botao>
     </div>
-  );
+  )
 }
 
 const materiaisApi = (linhas: Material[]) =>
@@ -147,34 +147,34 @@ const materiaisApi = (linhas: Material[]) =>
       itemId: l.itemId,
       loteItemId: l.loteItemId || null,
       quantidade: l.quantidade.replace(',', '.'),
-    }));
+    }))
 
 export function ListaEspumantes() {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const navegar = useNavigate();
-  const { data: ref } = useReferencia();
-  const [situacao, setSituacao] = useState('em_processo');
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const navegar = useNavigate()
+  const { data: ref } = useReferencia()
+  const [situacao, setSituacao] = useState('em_processo')
   const q = useQuery({
     queryKey: ['espumantes', situacao],
     queryFn: () =>
       api.get<
         Array<{
-          id: string;
-          codigo: string;
-          metodo: keyof typeof METODOS;
-          situacao: string;
-          tiragemEm: string;
-          garrafas: number;
-          garrafasIniciais: number;
-          volumeMl: number;
-          projeto: string;
-          projetoCodigo: string;
-          estagio: string | null;
-          loteComercial: string | null;
+          id: string
+          codigo: string
+          metodo: keyof typeof METODOS
+          situacao: string
+          tiragemEm: string
+          garrafas: number
+          garrafasIniciais: number
+          volumeMl: number
+          projeto: string
+          projetoCodigo: string
+          estagio: string | null
+          loteComercial: string | null
         }>
       >(`/api/espumantes?situacao=${situacao}`),
-  });
+  })
   return (
     <Pagina
       titulo="Espumante na garrafa"
@@ -255,13 +255,13 @@ export function ListaEspumantes() {
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }
 
 export function NovaTiragem() {
-  const navegar = useNavigate();
-  const recipientes = useRecipientes();
-  const locais = useLocais();
+  const navegar = useNavigate()
+  const recipientes = useRecipientes()
+  const locais = useLocais()
   const [d, setD] = useState({
     executadoEm: agoraLocal(),
     metodo: 'tradicional' as keyof typeof METODOS,
@@ -271,20 +271,20 @@ export function NovaTiragem() {
     materiais: [] as Material[],
     localEstoqueId: '',
     observacao: '',
-  });
+  })
   const [previa, setPrevia] = useState<{
-    tiradosLitros: string;
-    garrafasLitros: string;
-    perdaLitros: string;
-    avisos: Array<{ codigo: string; mensagem: string }>;
-    bloqueios: string[];
-  } | null>(null);
-  const [cientes, setCientes] = useState<string[]>([]);
-  const [erro, setErro] = useState<string | null>(null);
+    tiradosLitros: string
+    garrafasLitros: string
+    perdaLitros: string
+    avisos: Array<{ codigo: string; mensagem: string }>
+    bloqueios: string[]
+  } | null>(null)
+  const [cientes, setCientes] = useState<string[]>([])
+  const [erro, setErro] = useState<string | null>(null)
   const set = (p: Partial<typeof d>) => {
-    setPrevia(null);
-    setD({ ...d, ...p });
-  };
+    setPrevia(null)
+    setD({ ...d, ...p })
+  }
   const corpo = () => ({
     executadoEm: paraIso(d.executadoEm),
     metodo: d.metodo,
@@ -297,8 +297,8 @@ export function NovaTiragem() {
     localEstoqueId: d.localEstoqueId || null,
     observacao: d.observacao || null,
     cientes,
-  });
-  const comVinho = recipientes.data?.filter((r) => Number(r.volume) > 0) ?? [];
+  })
+  const comVinho = recipientes.data?.filter((r) => Number(r.volume) > 0) ?? []
   return (
     <Pagina titulo="Nova tiragem" trilha={['EnoTrace', 'Espumante na garrafa']}>
       <p className="text-sm text-muted-foreground">
@@ -476,11 +476,11 @@ export function NovaTiragem() {
         <Botao
           variante="secundario"
           onClick={async () => {
-            setErro(null);
+            setErro(null)
             try {
-              setPrevia(await api.post('/api/espumantes/tiragem/previa', corpo()));
+              setPrevia(await api.post('/api/espumantes/tiragem/previa', corpo()))
             } catch (e) {
-              setErro(msg(e));
+              setErro(msg(e))
             }
           }}
         >
@@ -493,12 +493,12 @@ export function NovaTiragem() {
             previa.avisos.some((a) => !cientes.includes(a.codigo))
           }
           onClick={async () => {
-            setErro(null);
+            setErro(null)
             try {
-              const r = await api.post<{ id: string }>('/api/espumantes/tiragem', corpo());
-              navegar(`/enotrace/espumantes/${r.id}`);
+              const r = await api.post<{ id: string }>('/api/espumantes/tiragem', corpo())
+              navegar(`/enotrace/espumantes/${r.id}`)
             } catch (e) {
-              setErro(msg(e));
+              setErro(msg(e))
             }
           }}
         >
@@ -506,53 +506,53 @@ export function NovaTiragem() {
         </Botao>
       </div>
     </Pagina>
-  );
+  )
 }
 
 interface Lote {
-  id: string;
-  codigo: string;
-  metodo: keyof typeof METODOS;
-  situacao: string;
-  tiragemEm: string;
-  volumeMl: number;
-  garrafasIniciais: number;
-  garrafas: number;
-  litros: string;
-  garrafasFinais: number | null;
-  finalizadoEm: string | null;
-  observacao: string | null;
-  operacaoId: string;
-  operacao: { codigo: string; situacao: string };
-  projetoId: string;
-  projeto: { codigo: string; nome: string };
-  loteComercial: { id: string; codigo: string } | null;
+  id: string
+  codigo: string
+  metodo: keyof typeof METODOS
+  situacao: string
+  tiragemEm: string
+  volumeMl: number
+  garrafasIniciais: number
+  garrafas: number
+  litros: string
+  garrafasFinais: number | null
+  finalizadoEm: string | null
+  observacao: string | null
+  operacaoId: string
+  operacao: { codigo: string; situacao: string }
+  projetoId: string
+  projeto: { codigo: string; nome: string }
+  loteComercial: { id: string; codigo: string } | null
   eventos: Array<{
-    id: string;
-    estagio: string;
-    nome: string | null;
-    executadoEm: string;
-    perdas: number;
-    insumos: Array<{ itemId: string; quantidade: string }> | null;
-    observacao: string | null;
-    anuladoEm: string | null;
-    motivoAnulacao: string | null;
-    por: string | null;
-  }>;
+    id: string
+    estagio: string
+    nome: string | null
+    executadoEm: string
+    perdas: number
+    insumos: Array<{ itemId: string; quantidade: string }> | null
+    observacao: string | null
+    anuladoEm: string | null
+    motivoAnulacao: string | null
+    por: string | null
+  }>
 }
 
 export function FichaEspumante() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const { data: ref } = useReferencia();
-  const locais = useLocais();
-  const itens = useItens();
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const { data: ref } = useReferencia()
+  const locais = useLocais()
+  const itens = useItens()
   const q = useQuery({
     queryKey: ['espumante', id],
     queryFn: () => api.get<Lote>(`/api/espumantes/${id}`),
-  });
+  })
   const [estagio, setEstagio] = useState({
     estagio: '',
     executadoEm: agoraLocal(),
@@ -560,16 +560,16 @@ export function FichaEspumante() {
     insumos: [] as Material[],
     localEstoqueId: '',
     observacao: '',
-  });
+  })
   const [fim, setFim] = useState({
     executadoEm: agoraLocal(),
     produtoId: '',
     formatoId: '',
     localId: '',
-  });
-  const [anulando, setAnulando] = useState<string | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-  const [okMsg, setOkMsg] = useState<string | null>(null);
+  })
+  const [anulando, setAnulando] = useState<string | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const [okMsg, setOkMsg] = useState<string | null>(null)
   const produtos = useQuery({
     queryKey: ['produtos-ativos'],
     queryFn: async () =>
@@ -578,7 +578,7 @@ export function FichaEspumante() {
           '/api/produtos?tamanho=0',
         )
       ).itens,
-  });
+  })
   const produto = useQuery({
     queryKey: ['produto', fim.produtoId],
     queryFn: () =>
@@ -586,30 +586,30 @@ export function FichaEspumante() {
         `/api/produtos/${fim.produtoId}`,
       ),
     enabled: !!fim.produtoId,
-  });
+  })
   const atualizar = () =>
     Promise.all([
       qc.invalidateQueries({ queryKey: ['espumante', id] }),
       qc.invalidateQueries({ queryKey: ['espumantes'] }),
-    ]);
+    ])
   const executar = async (f: () => Promise<unknown>, okTexto?: string) => {
-    setErro(null);
-    setOkMsg(null);
+    setErro(null)
+    setOkMsg(null)
     try {
-      await f();
-      if (okTexto) setOkMsg(okTexto);
-      await atualizar();
+      await f()
+      if (okTexto) setOkMsg(okTexto)
+      await atualizar()
     } catch (e) {
-      setErro(msg(e));
+      setErro(msg(e))
     }
-  };
-  const l = q.data;
-  if (q.error) return <Aviso tom="erro">{msg(q.error)}</Aviso>;
-  if (!l) return null;
-  const emProcesso = l.situacao === 'em_processo';
-  const podeLancar = pode(s, F, 'confirmar');
-  const nomeItem = (itemId: string) => itens.data?.find((i) => i.id === itemId)?.nome ?? '';
-  const formatos = produto.data?.formatos.filter((f) => f.ativo && f.volumeMl === l.volumeMl) ?? [];
+  }
+  const l = q.data
+  if (q.error) return <Aviso tom="erro">{msg(q.error)}</Aviso>
+  if (!l) return null
+  const emProcesso = l.situacao === 'em_processo'
+  const podeLancar = pode(s, F, 'confirmar')
+  const nomeItem = (itemId: string) => itens.data?.find((i) => i.id === itemId)?.nome ?? ''
+  const formatos = produto.data?.formatos.filter((f) => f.ativo && f.volumeMl === l.volumeMl) ?? []
   return (
     <Pagina titulo={l.codigo} trilha={['EnoTrace', 'Espumante na garrafa']}>
       <div className="flex flex-wrap items-center gap-3 text-sm">
@@ -767,8 +767,8 @@ export function FichaEspumante() {
                       insumos: materiaisApi(estagio.insumos),
                       localEstoqueId: estagio.localEstoqueId || null,
                       observacao: estagio.observacao || null,
-                    });
-                    setEstagio({ ...estagio, perdas: '', insumos: [], observacao: '' });
+                    })
+                    setEstagio({ ...estagio, perdas: '', insumos: [], observacao: '' })
                   }, 'Estágio registrado.')
                 }
               >
@@ -853,8 +853,8 @@ export function FichaEspumante() {
                     const r = await api.post<{ loteComercial: string; garrafas: number }>(
                       `/api/espumantes/${l.id}/finalizar`,
                       { ...fim, executadoEm: paraIso(fim.executadoEm) },
-                    );
-                    setOkMsg(`${N(r.garrafas)} garrafas no lote comercial ${r.loteComercial}.`);
+                    )
+                    setOkMsg(`${N(r.garrafas)} garrafas no lote comercial ${r.loteComercial}.`)
                   })
                 }
               >
@@ -871,11 +871,11 @@ export function FichaEspumante() {
         descricao="As garrafas perdidas voltam à conta, e os insumos voltam ao estoque."
         rotuloBotao="Anular"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/espumantes/${l.id}/estagios/${anulando}/anular`, { motivo });
-          setAnulando(null);
-          await atualizar();
+          await api.post(`/api/espumantes/${l.id}/estagios/${anulando}/anular`, { motivo })
+          setAnulando(null)
+          await atualizar()
         }}
       />
     </Pagina>
-  );
+  )
 }

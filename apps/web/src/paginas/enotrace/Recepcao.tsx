@@ -1,58 +1,58 @@
 // EnoTrace › Recepção da uva (cantina.md, Recepção): romaneio em rascunho enquanto a uva é pesada;
 // na confirmação ganha o código ROM e não se edita mais (P13). Alertas legais pedem "ciente" (P29).
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { dadosProjeto, formatarDecimal } from '@vinicycle/shared';
-import { Plus, Trash2, Undo2 } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
-import { BotaoIcone } from '@/componentes/AcoesLinha';
-import { Anexos } from '@/componentes/Anexos';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Historico } from '@/componentes/Historico';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarData, formatarDataHora } from '@/lib/utils';
-import { CamposProjeto, PROJETO_VAZIO, useVariedadesEmUso } from './Projetos';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { dadosProjeto, formatarDecimal } from '@vinicycle/shared'
+import { Plus, Trash2, Undo2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { BotaoIcone } from '@/componentes/AcoesLinha'
+import { Anexos } from '@/componentes/Anexos'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Historico } from '@/componentes/Historico'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarData, formatarDataHora } from '@/lib/utils'
+import { CamposProjeto, PROJETO_VAZIO, useVariedadesEmUso } from './Projetos'
 
-const F = 'enotrace.recepcao';
-const kg = (v: string | number | null | undefined) => `${formatarDecimal(String(v ?? 0), 1)} kg`;
+const F = 'enotrace.recepcao'
+const kg = (v: string | number | null | undefined) => `${formatarDecimal(String(v ?? 0), 1)} kg`
 
 /** ISO → valor do campo datetime-local (hora local do navegador). */
 const paraCampo = (iso: string) => {
-  const d = new Date(iso);
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-};
-const doCampo = (valor: string) => new Date(valor).toISOString();
-const agora = () => paraCampo(new Date().toISOString());
+  const d = new Date(iso)
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+}
+const doCampo = (valor: string) => new Date(valor).toISOString()
+const agora = () => paraCampo(new Date().toISOString())
 
 // Lista ----------------------------------------------------------------------------------------
 
 interface Linha {
-  id: string;
-  codigo: string | null;
-  chegadaEm: string;
-  situacao: 'rascunho' | 'confirmado' | 'estornado';
-  origem: 'vinhedo_proprio' | 'fornecedor';
-  projeto: string;
-  fornecedor: string | null;
-  variedades: string[];
-  kg: string;
-  aProcessar: string;
+  id: string
+  codigo: string | null
+  chegadaEm: string
+  situacao: 'rascunho' | 'confirmado' | 'estornado'
+  origem: 'vinhedo_proprio' | 'fornecedor'
+  projeto: string
+  fornecedor: string | null
+  variedades: string[]
+  kg: string
+  aProcessar: string
 }
 
 export function ListaRecepcao() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
   return (
     <Pagina
       titulo="Recepção da uva"
@@ -142,80 +142,80 @@ export function ListaRecepcao() {
         ]}
       />
     </Pagina>
-  );
+  )
 }
 
 // Formulário (rascunho) ------------------------------------------------------------------------
 
 interface PesagemForm {
-  pesadoEm: string;
-  brutoKg: string | null;
-  taraKg: string | null;
+  pesadoEm: string
+  brutoKg: string | null
+  taraKg: string | null
 }
 
 interface ItemForm {
-  nfeItemId?: string | null;
-  variedadeId: string;
-  parcelaId: string;
-  dataColheita: string;
-  ciclo: string;
-  brix: string | null;
-  ph: string | null;
-  acidezTotal: string | null;
-  sanidade: string | null;
-  temperatura: string | null;
-  organica: boolean;
-  candidataIp: boolean;
-  dataPoda: string;
-  observacoes: string;
-  pesagens: PesagemForm[];
+  nfeItemId?: string | null
+  variedadeId: string
+  parcelaId: string
+  dataColheita: string
+  ciclo: string
+  brix: string | null
+  ph: string | null
+  acidezTotal: string | null
+  sanidade: string | null
+  temperatura: string | null
+  organica: boolean
+  candidataIp: boolean
+  dataPoda: string
+  observacoes: string
+  pesagens: PesagemForm[]
 }
 
 interface Romaneio {
-  id: string;
-  codigo: string | null;
-  situacao: 'rascunho' | 'confirmado' | 'estornado';
-  chegadaEm: string;
-  projetoId: string;
-  projeto: string;
-  origem: 'vinhedo_proprio' | 'fornecedor';
-  fornecedorId: string | null;
-  fornecedor: string | null;
-  donoUvaId: string | null;
-  donoUva: string | null;
-  contratoId: string | null;
-  contrato: string | null;
-  nfNumero: string | null;
-  nfSerie: string | null;
-  nfEmissao: string | null;
-  nfeId: string | null;
-  nfChave: string | null;
-  transportadorId: string | null;
-  transportador: string | null;
-  placa: string | null;
-  caixas: number | null;
-  observacoes: string | null;
-  confirmadoEm: string | null;
-  estornadoEm: string | null;
-  motivoEstorno: string | null;
-  versao: number;
+  id: string
+  codigo: string | null
+  situacao: 'rascunho' | 'confirmado' | 'estornado'
+  chegadaEm: string
+  projetoId: string
+  projeto: string
+  origem: 'vinhedo_proprio' | 'fornecedor'
+  fornecedorId: string | null
+  fornecedor: string | null
+  donoUvaId: string | null
+  donoUva: string | null
+  contratoId: string | null
+  contrato: string | null
+  nfNumero: string | null
+  nfSerie: string | null
+  nfEmissao: string | null
+  nfeId: string | null
+  nfChave: string | null
+  transportadorId: string | null
+  transportador: string | null
+  placa: string | null
+  caixas: number | null
+  observacoes: string | null
+  confirmadoEm: string | null
+  estornadoEm: string | null
+  motivoEstorno: string | null
+  versao: number
   itens: Array<
     Omit<ItemForm, 'pesagens' | 'parcelaId' | 'ciclo' | 'dataPoda' | 'observacoes'> & {
-      id: string;
-      variedade: string;
-      nfeItemId: string | null;
-      parcelaId: string | null;
-      parcela: string | null;
-      ciclo: string | null;
-      safra: number;
-      dataPoda: string | null;
-      observacoes: string | null;
-      liquidoKg: string;
-      consumidoKg: string;
-      saldoKg: string;
-      pesagens: Array<{ pesadoEm: string; brutoKg: string; taraKg: string }>;
+      id: string
+      variedade: string
+      nfeItemId: string | null
+      parcelaId: string | null
+      parcela: string | null
+      ciclo: string | null
+      safra: number
+      dataPoda: string | null
+      observacoes: string | null
+      liquidoKg: string
+      consumidoKg: string
+      saldoKg: string
+      pesagens: Array<{ pesadoEm: string; brutoKg: string; taraKg: string }>
     }
-  >;
+  >
 }
 
 const itemVazio = (): ItemForm => ({
@@ -233,25 +233,25 @@ const itemVazio = (): ItemForm => ({
   dataPoda: '',
   observacoes: '',
   pesagens: [{ pesadoEm: agora(), brutoKg: null, taraKg: null }],
-});
+})
 
 function useOpcoesPessoa(papel: string) {
   return useQuery({
     queryKey: ['pessoas-opcoes', papel],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>(`/api/pessoas/opcoes?papel=${papel}`),
-  });
+  })
 }
 
 function ProjetoRapido({
   aoCriar,
   aoFechar,
 }: {
-  aoCriar: (id: string) => void;
-  aoFechar: () => void;
+  aoCriar: (id: string) => void
+  aoFechar: () => void
 }) {
-  const qc = useQueryClient();
-  const form = useFormulario(dadosProjeto, PROJETO_VAZIO);
+  const qc = useQueryClient()
+  const form = useFormulario(dadosProjeto, PROJETO_VAZIO)
   return (
     <Dialogo
       aberto
@@ -265,14 +265,14 @@ function ProjetoRapido({
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                const r = await api.post<{ id: string }>('/api/projetos', d);
-                await qc.invalidateQueries({ queryKey: ['projetos-opcoes'] });
-                aoCriar(r.id);
+                const r = await api.post<{ id: string }>('/api/projetos', d)
+                await qc.invalidateQueries({ queryKey: ['projetos-opcoes'] })
+                aoCriar(r.id)
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -284,26 +284,26 @@ function ProjetoRapido({
       {form.erroGeral && <Aviso tom="erro">{form.erroGeral}</Aviso>}
       <CamposProjeto form={form} rapido />
     </Dialogo>
-  );
+  )
 }
 
 function FormularioRomaneio({ atual }: { atual: Romaneio | null }) {
-  const navegar = useNavigate();
-  const qc = useQueryClient();
-  const { data: s } = useSessao();
-  const variedades = useVariedadesEmUso();
-  const produtores = useOpcoesPessoa('produtor_uva');
-  const clientes = useOpcoesPessoa('cliente_vinificacao');
-  const transportadores = useOpcoesPessoa('transportador');
+  const navegar = useNavigate()
+  const qc = useQueryClient()
+  const { data: s } = useSessao()
+  const variedades = useVariedadesEmUso()
+  const produtores = useOpcoesPessoa('produtor_uva')
+  const clientes = useOpcoesPessoa('cliente_vinificacao')
+  const transportadores = useOpcoesPessoa('transportador')
   const projetos = useQuery({
     queryKey: ['projetos-opcoes'],
     queryFn: () =>
       api.get<Array<{ id: string; codigo: string; nome: string }>>('/api/projetos/opcoes'),
-  });
+  })
   const ciclos = useQuery({
     queryKey: ['parametros', '/api/cantina/ciclos'],
     queryFn: () => api.get<Array<{ numero: string; nome: string }>>('/api/cantina/ciclos'),
-  });
+  })
   const [d, setD] = useState({
     chegadaEm: atual ? paraCampo(atual.chegadaEm) : agora(),
     projetoId: atual?.projetoId ?? '',
@@ -343,9 +343,9 @@ function FormularioRomaneio({ atual }: { atual: Romaneio | null }) {
           })),
         }))
       : [itemVazio()],
-  });
+  })
   // Contratos de terceirização vigentes com o dono da uva na chegada; o mais recente vem escolhido.
-  const dataChegada = d.chegadaEm.slice(0, 10);
+  const dataChegada = d.chegadaEm.slice(0, 10)
   const contratos = useQuery({
     queryKey: ['contratos-vigentes', d.donoUvaId, dataChegada],
     queryFn: () =>
@@ -353,58 +353,58 @@ function FormularioRomaneio({ atual }: { atual: Romaneio | null }) {
         `/api/contratos-terceirizacao/vigentes?contraparteId=${d.donoUvaId}&data=${dataChegada}`,
       ),
     enabled: !!d.donoUvaId && /^\d{4}-\d{2}-\d{2}$/.test(dataChegada),
-  });
+  })
   async function mudarDono(donoUvaId: string) {
-    setD((x) => ({ ...x, donoUvaId, contratoId: '' }));
-    if (!donoUvaId) return;
+    setD((x) => ({ ...x, donoUvaId, contratoId: '' }))
+    if (!donoUvaId) return
     const lista = await qc.fetchQuery({
       queryKey: ['contratos-vigentes', donoUvaId, dataChegada],
       queryFn: () =>
         api.get<Array<{ id: string; numero: string | null; vigenciaInicio: string }>>(
           `/api/contratos-terceirizacao/vigentes?contraparteId=${donoUvaId}&data=${dataChegada}`,
         ),
-    });
-    setD((x) => (x.donoUvaId === donoUvaId ? { ...x, contratoId: lista[0]?.id ?? '' } : x));
+    })
+    setD((x) => (x.donoUvaId === donoUvaId ? { ...x, contratoId: lista[0]?.id ?? '' } : x))
   }
-  const donoParcelas = d.origem === 'vinhedo_proprio' ? '' : d.fornecedorId;
+  const donoParcelas = d.origem === 'vinhedo_proprio' ? '' : d.fornecedorId
   const propriedades = useQuery({
     queryKey: ['propriedades-opcoes', donoParcelas],
     queryFn: () =>
       api.get<
         Array<{
-          id: string;
-          nome: string;
-          parcelas: Array<{ id: string; nome: string; variedadeId: string | null }>;
+          id: string
+          nome: string
+          parcelas: Array<{ id: string; nome: string; variedadeId: string | null }>
         }>
       >(`/api/propriedades/opcoes${donoParcelas ? `?donoId=${donoParcelas}` : ''}`),
     enabled: d.origem === 'vinhedo_proprio' || !!d.fornecedorId,
-  });
-  const [erro, setErro] = useState<string | null>(null);
-  const [avisosNota, setAvisosNota] = useState<string[]>([]);
-  const [projetoRapido, setProjetoRapido] = useState(false);
+  })
+  const [erro, setErro] = useState<string | null>(null)
+  const [avisosNota, setAvisosNota] = useState<string[]>([])
+  const [projetoRapido, setProjetoRapido] = useState(false)
 
   /** Lê o XML da nota e pré-preenche a carga (P11, "Nota da uva"). */
   async function importarXml(arquivo: File) {
-    setErro(null);
-    const dados = new FormData();
-    dados.set('arquivo', arquivo);
+    setErro(null)
+    const dados = new FormData()
+    dados.set('arquivo', arquivo)
     try {
       const r = await api.post<{
-        nfeId: string;
-        nfNumero: string;
-        nfSerie: string | null;
-        nfEmissao: string;
-        nfChave: string;
-        fornecedor: { id: string | null; nome: string; novo: boolean };
+        nfeId: string
+        nfNumero: string
+        nfSerie: string | null
+        nfEmissao: string
+        nfChave: string
+        fornecedor: { id: string | null; nome: string; novo: boolean }
         itens: Array<{
-          nfeItemId: string;
-          descricao: string;
-          kg: string | null;
-          variedadeId: string | null;
-        }>;
-        avisos: string[];
-      }>('/api/romaneios/importar-xml', dados);
-      await qc.invalidateQueries({ queryKey: ['pessoas-opcoes', 'produtor_uva'] });
+          nfeItemId: string
+          descricao: string
+          kg: string | null
+          variedadeId: string | null
+        }>
+        avisos: string[]
+      }>('/api/romaneios/importar-xml', dados)
+      await qc.invalidateQueries({ queryKey: ['pessoas-opcoes', 'produtor_uva'] })
       setAvisosNota([
         ...(r.fornecedor.novo
           ? [
@@ -412,7 +412,7 @@ function FormularioRomaneio({ atual }: { atual: Romaneio | null }) {
             ]
           : []),
         ...r.avisos,
-      ]);
+      ])
       setD({
         ...d,
         nfeId: r.nfeId,
@@ -430,15 +430,15 @@ function FormularioRomaneio({ atual }: { atual: Romaneio | null }) {
           // O peso da nota é o declarado; a balança da vinícola confirma ou corrige.
           pesagens: [{ pesadoEm: agora(), brutoKg: i.kg, taraKg: null }],
         })),
-      });
+      })
     } catch (e) {
-      setErro((e as Error).message);
+      setErro((e as Error).message)
     }
   }
   const muda = (n: number, parcial: Partial<ItemForm>) =>
-    setD({ ...d, itens: d.itens.map((x, j) => (j === n ? { ...x, ...parcial } : x)) });
+    setD({ ...d, itens: d.itens.map((x, j) => (j === n ? { ...x, ...parcial } : x)) })
   const mudaPesagem = (n: number, p: number, parcial: Partial<PesagemForm>) =>
-    muda(n, { pesagens: d.itens[n]!.pesagens.map((x, j) => (j === p ? { ...x, ...parcial } : x)) });
+    muda(n, { pesagens: d.itens[n]!.pesagens.map((x, j) => (j === p ? { ...x, ...parcial } : x)) })
 
   const corpo = () => ({
     ...d,
@@ -455,32 +455,32 @@ function FormularioRomaneio({ atual }: { atual: Romaneio | null }) {
           taraKg: p.taraKg ?? '0',
         })),
     })),
-  });
+  })
 
   async function salvar(): Promise<string | null> {
-    setErro(null);
+    setErro(null)
     try {
       if (atual) {
-        await api.put(`/api/romaneios/${atual.id}`, corpo());
-        await qc.invalidateQueries({ queryKey: ['romaneio', atual.id] });
-        return atual.id;
+        await api.put(`/api/romaneios/${atual.id}`, corpo())
+        await qc.invalidateQueries({ queryKey: ['romaneio', atual.id] })
+        return atual.id
       }
-      const r = await api.post<{ id: string }>('/api/romaneios', corpo());
-      return r.id;
+      const r = await api.post<{ id: string }>('/api/romaneios', corpo())
+      return r.id
     } catch (e) {
       setErro(
         e instanceof ErroApi && e.campos?.length
           ? `${e.message} ${e.campos.map((c) => c.mensagem).join(' ')}`
           : (e as Error).message,
-      );
-      return null;
+      )
+      return null
     }
   }
 
-  const variedadeNome = (id: string) => variedades.data?.find((v) => v.id === id)?.nome;
+  const variedadeNome = (id: string) => variedades.data?.find((v) => v.id === id)?.nome
   const parcelas = (propriedades.data ?? []).flatMap((p) =>
     p.parcelas.map((x) => ({ ...x, propriedade: p.nome })),
-  );
+  )
 
   return (
     <div className="flex flex-col gap-5">
@@ -508,9 +508,9 @@ function FormularioRomaneio({ atual }: { atual: Romaneio | null }) {
                   accept=".xml,text/xml,application/xml"
                   className="sr-only"
                   onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    e.target.value = '';
-                    if (f) void importarXml(f);
+                    const f = e.target.files?.[0]
+                    e.target.value = ''
+                    if (f) void importarXml(f)
                   }}
                 />
               </label>
@@ -708,7 +708,7 @@ function FormularioRomaneio({ atual }: { atual: Romaneio | null }) {
         const liquido = i.pesagens.reduce(
           (t, p) => t + (Number(p.brutoKg ?? 0) - Number(p.taraKg ?? 0)),
           0,
-        );
+        )
         return (
           <Cartao key={n}>
             <CabecalhoCartao
@@ -906,7 +906,7 @@ function FormularioRomaneio({ atual }: { atual: Romaneio | null }) {
               </div>
             </CorpoCartao>
           </Cartao>
-        );
+        )
       })}
       <div className="flex flex-wrap gap-2">
         <Botao
@@ -927,8 +927,8 @@ function FormularioRomaneio({ atual }: { atual: Romaneio | null }) {
         <Botao
           variante="secundario"
           onClick={async () => {
-            const id = await salvar();
-            if (id && !atual) navegar(`/enotrace/recepcao/${id}`, { replace: true });
+            const id = await salvar()
+            if (id && !atual) navegar(`/enotrace/recepcao/${id}`, { replace: true })
           }}
         >
           Salvar rascunho
@@ -936,9 +936,9 @@ function FormularioRomaneio({ atual }: { atual: Romaneio | null }) {
         {pode(s, F, 'confirmar') && (
           <Botao
             onClick={async () => {
-              const id = await salvar();
+              const id = await salvar()
               // A página do rascunho (recarregada com a versão nova) abre a confirmação.
-              if (id) navegar(`/enotrace/recepcao/${id}?confirmar=1`, { replace: true });
+              if (id) navegar(`/enotrace/recepcao/${id}?confirmar=1`, { replace: true })
             }}
           >
             Confirmar recepção
@@ -949,9 +949,9 @@ function FormularioRomaneio({ atual }: { atual: Romaneio | null }) {
             variante="fantasma"
             className="ml-auto"
             onClick={async () => {
-              if (!window.confirm('Descartar este rascunho?')) return;
-              await api.post(`/api/romaneios/${atual.id}/descartar`);
-              navegar('/enotrace/recepcao', { replace: true });
+              if (!window.confirm('Descartar este rascunho?')) return
+              await api.post(`/api/romaneios/${atual.id}/descartar`)
+              navegar('/enotrace/recepcao', { replace: true })
             }}
           >
             Descartar rascunho
@@ -962,13 +962,13 @@ function FormularioRomaneio({ atual }: { atual: Romaneio | null }) {
         <ProjetoRapido
           aoFechar={() => setProjetoRapido(false)}
           aoCriar={(id) => {
-            setD({ ...d, projetoId: id });
-            setProjetoRapido(false);
+            setD({ ...d, projetoId: id })
+            setProjetoRapido(false)
           }}
         />
       )}
     </div>
-  );
+  )
 }
 
 /** Prévia da confirmação: o que falta (bloqueia) e os avisos que pedem "ciente" (P29). */
@@ -977,22 +977,22 @@ function Confirmar({
   aoFechar,
   aoConfirmar,
 }: {
-  id: string;
-  aoFechar: () => void;
-  aoConfirmar: () => void;
+  id: string
+  aoFechar: () => void
+  aoConfirmar: () => void
 }) {
   const q = useQuery({
     queryKey: ['romaneio-previa', id],
     queryFn: () =>
       api.get<{
-        bloqueios: string[];
-        avisos: Array<{ codigo: string; mensagem: string; fonte?: string }>;
+        bloqueios: string[]
+        avisos: Array<{ codigo: string; mensagem: string; fonte?: string }>
       }>(`/api/romaneios/${id}/previa`),
-  });
-  const [cientes, setCientes] = useState<string[]>([]);
-  const [erro, setErro] = useState<string | null>(null);
-  const p = q.data;
-  const pode = !!p && !p.bloqueios.length && p.avisos.every((a) => cientes.includes(a.codigo));
+  })
+  const [cientes, setCientes] = useState<string[]>([])
+  const [erro, setErro] = useState<string | null>(null)
+  const p = q.data
+  const pode = !!p && !p.bloqueios.length && p.avisos.every((a) => cientes.includes(a.codigo))
   return (
     <Dialogo
       aberto
@@ -1008,10 +1008,10 @@ function Confirmar({
             disabled={!pode}
             onClick={async () => {
               try {
-                await api.post(`/api/romaneios/${id}/confirmar`, { cientes });
-                aoConfirmar();
+                await api.post(`/api/romaneios/${id}/confirmar`, { cientes })
+                aoConfirmar()
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               }
             }}
           >
@@ -1049,7 +1049,7 @@ function Confirmar({
         )}
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function NovaRecepcao() {
@@ -1057,29 +1057,29 @@ export function NovaRecepcao() {
     <Pagina titulo="Nova recepção" trilha={['EnoTrace', 'Recepção da uva']}>
       <FormularioRomaneio atual={null} />
     </Pagina>
-  );
+  )
 }
 
 // Ficha ------------------------------------------------------------------------------------------
 
 export function FichaRecepcao() {
-  const { id = '' } = useParams();
-  const [busca, setBusca] = useSearchParams();
-  const qc = useQueryClient();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const [estornando, setEstornando] = useState(false);
+  const { id = '' } = useParams()
+  const [busca, setBusca] = useSearchParams()
+  const qc = useQueryClient()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const [estornando, setEstornando] = useState(false)
   const q = useQuery({
     queryKey: ['romaneio', id],
     queryFn: () => api.get<Romaneio>(`/api/romaneios/${id}`),
-  });
+  })
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const r = q.data;
+    )
+  const r = q.data
   if (r.situacao === 'rascunho') {
     return (
       <Pagina titulo="Recepção em rascunho" trilha={['EnoTrace', 'Recepção da uva']}>
@@ -1089,16 +1089,16 @@ export function FichaRecepcao() {
             id={r.id}
             aoFechar={() => setBusca({}, { replace: true })}
             aoConfirmar={async () => {
-              setBusca({}, { replace: true });
-              await qc.invalidateQueries({ queryKey: ['romaneio', r.id] });
+              setBusca({}, { replace: true })
+              await qc.invalidateQueries({ queryKey: ['romaneio', r.id] })
             }}
           />
         )}
       </Pagina>
-    );
+    )
   }
-  const total = r.itens.reduce((t, i) => t + Number(i.liquidoKg), 0);
-  const saldo = r.itens.reduce((t, i) => t + Number(i.saldoKg), 0);
+  const total = r.itens.reduce((t, i) => t + Number(i.liquidoKg), 0)
+  const saldo = r.itens.reduce((t, i) => t + Number(i.saldoKg), 0)
   return (
     <Pagina
       titulo={`Romaneio ${r.codigo}`}
@@ -1134,12 +1134,12 @@ export function FichaRecepcao() {
         descricao="Só sem uva processada: se a uva já foi para um recipiente, estorne antes a operação. A nota, se houver, volta à conferência para o romaneio certo."
         rotuloBotao="Estornar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/romaneios/${r.id}/estorno`, { motivo });
+          await api.post(`/api/romaneios/${r.id}/estorno`, { motivo })
           await Promise.all(
             [['romaneio', r.id], ['lista'], ['uva-a-processar']].map((queryKey) =>
               qc.invalidateQueries({ queryKey }),
             ),
-          );
+          )
         }}
       />
       <Abas defaultValue="dados">
@@ -1238,5 +1238,5 @@ export function FichaRecepcao() {
         </ConteudoAba>
       </Abas>
     </Pagina>
-  );
+  )
 }

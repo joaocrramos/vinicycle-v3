@@ -2,8 +2,8 @@
 // roteiro do ciclo 10, bloco 2): registro de cada transferência, a granel (pela operação da cantina)
 // ou no estoque (pelo grupo de movimentos), para o contrato e a conta do cliente somarem o que já
 // passou de um titular a outro. A validade vem da operação ou dos movimentos: estornados, não contam.
-import { CHAVES_MOTIVO_TITULARIDADE, FORMAS_TITULARIDADE } from '@vinicycle/shared';
-import { sql } from 'drizzle-orm';
+import { CHAVES_MOTIVO_TITULARIDADE, FORMAS_TITULARIDADE } from '@vinicycle/shared'
+import { sql } from 'drizzle-orm'
 import {
   type AnyPgColumn,
   check,
@@ -16,21 +16,21 @@ import {
   text,
   unique,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento } from './acesso';
-import { criacao, dataHora, emLista, id } from './comum';
-import { pessoa } from './gestao';
-import { empresa } from './plataforma';
-import { loteComercial } from './envase';
-import { lote, operacao } from './producao';
-import { contratoTerceirizacao } from './terceiros';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento } from './acesso'
+import { criacao, dataHora, emLista, id } from './comum'
+import { pessoa } from './gestao'
+import { empresa } from './plataforma'
+import { loteComercial } from './envase'
+import { lote, operacao } from './producao'
+import { contratoTerceirizacao } from './terceiros'
 
 function daEmpresa(
   coluna: AnyPgColumn,
   empresaId: AnyPgColumn,
   alvo: { id: AnyPgColumn; empresaId: AnyPgColumn },
 ) {
-  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] });
+  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] })
 }
 
 export const transferenciaTitularidade = pgTable(
@@ -76,7 +76,7 @@ export const transferenciaTitularidade = pgTable(
     index('transferencia_titularidade_contrato').on(t.contratoId),
     index('transferencia_titularidade_titulares').on(t.deTitularId, t.paraTitularId),
   ],
-);
+)
 
 /**
  * Dossiê do lote para o cliente (cantina.md, Dossiê do lote; 04, roteiro do ciclo 10, bloco 4): a
@@ -107,7 +107,7 @@ export const dossie = pgTable(
     check('dossie_partida', sql`(lote_id is null) <> (lote_comercial_id is null)`),
     index('dossie_titular').on(t.titularId, t.criadoEm),
   ],
-);
+)
 
 /** Cada envio do dossiê por e-mail: para quem e quando. */
 export const dossieEnvio = pgTable(
@@ -122,4 +122,4 @@ export const dossieEnvio = pgTable(
     ...criacao(),
   },
   (t) => [daEmpresa(t.dossieId, t.empresaId, dossie), index('dossie_envio_dossie').on(t.dossieId)],
-);
+)

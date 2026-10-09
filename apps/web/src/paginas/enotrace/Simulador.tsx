@@ -1,108 +1,108 @@
 // Simulador de corte (cantina.md, Trasfega e corte; 04, roteiro do ciclo 9): na ficha do projeto, o
 // enólogo testa proporções em % sobre um volume ou direto em litros e vê a composição e o que o
 // rótulo pode declarar, sem mexer no volume. Salva, aprova e abre o corte já preenchido.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatarDecimal } from '@vinicycle/shared';
-import { Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
-import { useRecipientes } from './operacoes/comum';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { formatarDecimal } from '@vinicycle/shared'
+import { Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
+import { useRecipientes } from './operacoes/comum'
 
-type Modo = 'percentual' | 'litros';
+type Modo = 'percentual' | 'litros'
 interface Linha {
-  recipienteId: string;
-  valor: string;
+  recipienteId: string
+  valor: string
 }
 interface Resultado {
   itens: Array<{
-    recipienteId: string;
-    recipiente: string;
-    lote: string;
-    projeto: string;
-    saldo: string;
-    litros: string;
-    percentual: number;
-  }>;
-  totalLitros: string;
-  chaptalizado: boolean;
-  organica: number;
-  safras: Array<{ safra: number | null; percentual: number }>;
+    recipienteId: string
+    recipiente: string
+    lote: string
+    projeto: string
+    saldo: string
+    litros: string
+    percentual: number
+  }>
+  totalLitros: string
+  chaptalizado: boolean
+  organica: number
+  safras: Array<{ safra: number | null; percentual: number }>
   rotulo: {
     varietal: Array<{
-      abrangencia: string;
-      minimo: number;
-      variedades: Array<{ nome: string; percentual: number; pode: boolean }>;
-    }>;
-    safra: { minimo: number; safras: Array<{ safra: number | null; pode: boolean }> } | null;
-  };
-  avisos: string[];
-  projetos: number;
+      abrangencia: string
+      minimo: number
+      variedades: Array<{ nome: string; percentual: number; pode: boolean }>
+    }>
+    safra: { minimo: number; safras: Array<{ safra: number | null; pode: boolean }> } | null
+  }
+  avisos: string[]
+  projetos: number
 }
 interface Salva {
-  id: string;
-  nome: string;
-  modo: Modo;
-  volumeLitros: string | null;
-  itens: Linha[];
-  resultado: Resultado;
-  situacao: 'rascunho' | 'aprovada';
-  criadoEm: string;
-  autor: string | null;
+  id: string
+  nome: string
+  modo: Modo
+  volumeLitros: string | null
+  itens: Linha[]
+  resultado: Resultado
+  situacao: 'rascunho' | 'aprovada'
+  criadoEm: string
+  autor: string | null
 }
 
-const pct = (n: number) => `${n.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`;
+const pct = (n: number) => `${n.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%`
 
 export function SimuladorCorte({ projetoId }: { projetoId: string }) {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const navegar = useNavigate();
-  const recipientes = useRecipientes();
-  const [modo, setModo] = useState<Modo>('percentual');
-  const [volume, setVolume] = useState('');
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const navegar = useNavigate()
+  const recipientes = useRecipientes()
+  const [modo, setModo] = useState<Modo>('percentual')
+  const [volume, setVolume] = useState('')
   const [linhas, setLinhas] = useState<Linha[]>([
     { recipienteId: '', valor: '' },
     { recipienteId: '', valor: '' },
-  ]);
-  const [nome, setNome] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
-  const podeCriar = pode(s, 'enotrace.operacoes', 'criar');
-  const validas = linhas.filter((l) => l.recipienteId && Number(l.valor.replace(',', '.')) > 0);
+  ])
+  const [nome, setNome] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
+  const podeCriar = pode(s, 'enotrace.operacoes', 'criar')
+  const validas = linhas.filter((l) => l.recipienteId && Number(l.valor.replace(',', '.')) > 0)
   const corpo = {
     modo,
     volume: modo === 'percentual' ? volume.replace(',', '.') : null,
     itens: validas.map((l) => ({ ...l, valor: l.valor.replace(',', '.') })),
-  };
-  const pronto = validas.length > 0 && (modo === 'litros' || Number(corpo.volume) > 0);
+  }
+  const pronto = validas.length > 0 && (modo === 'litros' || Number(corpo.volume) > 0)
   const previa = useQuery({
     queryKey: ['simulacao-previa', corpo],
     queryFn: () => api.post<Resultado>('/api/simulacoes-corte/previa', corpo),
     enabled: pronto,
     retry: false,
-  });
+  })
   const salvas = useQuery({
     queryKey: ['simulacoes', projetoId],
     queryFn: () => api.get<Salva[]>(`/api/projetos/${projetoId}/simulacoes`),
-  });
-  const comVinho = recipientes.data?.filter((r) => Number(r.volume) > 0) ?? [];
+  })
+  const comVinho = recipientes.data?.filter((r) => Number(r.volume) > 0) ?? []
   const setLinha = (n: number, p: Partial<Linha>) =>
-    setLinhas(linhas.map((l, i) => (i === n ? { ...l, ...p } : l)));
+    setLinhas(linhas.map((l, i) => (i === n ? { ...l, ...p } : l)))
   const executar = async (f: () => Promise<unknown>) => {
-    setErro(null);
+    setErro(null)
     try {
-      await f();
-      await qc.invalidateQueries({ queryKey: ['simulacoes', projetoId] });
+      await f()
+      await qc.invalidateQueries({ queryKey: ['simulacoes', projetoId] })
     } catch (e) {
-      setErro(e instanceof ErroApi ? e.message : (e as Error).message);
+      setErro(e instanceof ErroApi ? e.message : (e as Error).message)
     }
-  };
-  const r = previa.data;
+  }
+  const r = previa.data
   return (
     <div className="flex flex-col gap-4">
       <Cartao>
@@ -241,8 +241,8 @@ export function SimuladorCorte({ projetoId }: { projetoId: string }) {
                 disabled={nome.trim().length < 2}
                 onClick={() =>
                   executar(async () => {
-                    await api.post(`/api/projetos/${projetoId}/simulacoes`, { ...corpo, nome });
-                    setNome('');
+                    await api.post(`/api/projetos/${projetoId}/simulacoes`, { ...corpo, nome })
+                    setNome('')
                   })
                 }
               >
@@ -272,9 +272,9 @@ export function SimuladorCorte({ projetoId }: { projetoId: string }) {
                   <Botao
                     variante="secundario"
                     onClick={() => {
-                      setModo(x.modo);
-                      setVolume(x.volumeLitros ?? '');
-                      setLinhas(x.itens.map((i) => ({ ...i })));
+                      setModo(x.modo)
+                      setVolume(x.volumeLitros ?? '')
+                      setLinhas(x.itens.map((i) => ({ ...i })))
                     }}
                   >
                     Abrir no simulador
@@ -315,12 +315,12 @@ export function SimuladorCorte({ projetoId }: { projetoId: string }) {
         </CorpoCartao>
       </Cartao>
     </div>
-  );
+  )
 }
 
 /** Composição por variedade e safra e o que o rótulo pode declarar. */
 function Resumo({ r, curto }: { r: Resultado; curto?: boolean }) {
-  const [primeira] = r.rotulo.varietal;
+  const [primeira] = r.rotulo.varietal
   return (
     <div className="flex flex-col gap-1">
       {primeira && (
@@ -338,7 +338,7 @@ function Resumo({ r, curto }: { r: Resultado; curto?: boolean }) {
       {!curto && (
         <>
           {r.rotulo.varietal.map((v) => {
-            const pode = v.variedades.filter((x) => x.pode);
+            const pode = v.variedades.filter((x) => x.pode)
             return (
               <p key={v.abrangencia}>
                 <span className="text-muted-foreground">
@@ -348,7 +348,7 @@ function Resumo({ r, curto }: { r: Resultado; curto?: boolean }) {
                   ? `pode declarar ${pode.map((x) => x.nome).join(', ')}`
                   : 'não pode declarar varietal'}
               </p>
-            );
+            )
           })}
           {r.rotulo.safra && (
             <p>
@@ -373,5 +373,5 @@ function Resumo({ r, curto }: { r: Resultado; curto?: boolean }) {
         </>
       )}
     </div>
-  );
+  )
 }

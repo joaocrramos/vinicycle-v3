@@ -2,32 +2,32 @@
 // da nota de compra, conferir cada item (item do estoque, conversão para a unidade base, local, lote
 // e validade, ou descarte), lançar as entradas, estornar a nota inteira. A associação de cada item
 // fica memorizada para as próximas notas do mesmo fornecedor.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { conversaoSugerida, formatarDecimal } from '@vinicycle/shared';
-import { Undo2 } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router';
-import { BotaoIcone } from '@/componentes/AcoesLinha';
-import { Anexos } from '@/componentes/Anexos';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarData, formatarDataHora } from '@/lib/utils';
-import { useItens, useLocais } from './Estoque';
-import { agora, doCampo } from './operacoes/comum';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { conversaoSugerida, formatarDecimal } from '@vinicycle/shared'
+import { Undo2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router'
+import { BotaoIcone } from '@/componentes/AcoesLinha'
+import { Anexos } from '@/componentes/Anexos'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarData, formatarDataHora } from '@/lib/utils'
+import { useItens, useLocais } from './Estoque'
+import { agora, doCampo } from './operacoes/comum'
 
-type TipoNota = 'compra' | 'venda';
+type TipoNota = 'compra' | 'venda'
 
 const ESTRATEGIAS: Record<string, string> = {
   documento: 'lote da nota',
   escolha: 'lote escolhido',
   mais_antigo: 'mais antigo primeiro',
   sem_lote: 'sem lote',
-};
+}
 
 /** Notas de compra (entram no estoque) e de venda (viram saídas, com a baixa por lote). */
 const CFG = {
@@ -53,64 +53,64 @@ const CFG = {
       'XML de NF-e ou NFC-e de venda, de qualquer emissor (P29). Cada item da nota é associado a um produto (a caixa com 6 vira 6 garrafas pela conversão); a escolha fica memorizada. O lote sai da nota ou da estratégia da empresa (Configurações › Parâmetros).',
     lancar: 'Lançar a saída',
   },
-} as const;
+} as const
 
 const SITUACOES = {
   em_conferencia: { nome: 'Em conferência', tom: 'alerta' },
   lancada: { nome: 'Lançada', tom: 'sucesso' },
   descartada: { nome: 'Descartada', tom: 'neutro' },
   estornada: { nome: 'Estornada', tom: 'neutro' },
-} as const;
-type Situacao = keyof typeof SITUACOES;
+} as const
+type Situacao = keyof typeof SITUACOES
 
 const mensagem = (e: unknown) =>
   e instanceof ErroApi && e.campos.length
     ? `${e.message} ${e.campos.map((c) => c.mensagem).join(' ')}`
-    : (e as Error).message;
+    : (e as Error).message
 
 // Lista ------------------------------------------------------------------------------------------
 
 interface LinhaNota {
-  id: string;
-  numero: string;
-  serie: string | null;
-  emissao: string;
-  emitente: string;
-  destinatario: string | null;
-  situacao: Situacao;
-  itens: number;
-  pendentes: number;
+  id: string
+  numero: string
+  serie: string | null
+  emissao: string
+  emitente: string
+  destinatario: string | null
+  situacao: Situacao
+  itens: number
+  pendentes: number
 }
 
 export function ListaNotas({ tipo }: { tipo: TipoNota }) {
-  const cfg = CFG[tipo];
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [situacao, setSituacao] = useState('todas');
-  const [erro, setErro] = useState<string | null>(null);
-  const [avisos, setAvisos] = useState<string[]>([]);
+  const cfg = CFG[tipo]
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [situacao, setSituacao] = useState('todas')
+  const [erro, setErro] = useState<string | null>(null)
+  const [avisos, setAvisos] = useState<string[]>([])
   const notas = useQuery({
     queryKey: ['estoque-notas', situacao],
     queryFn: () => api.get<LinhaNota[]>(`${cfg.api}?situacao=${situacao}`),
-  });
+  })
 
   async function importar(arquivo: File) {
-    setErro(null);
-    setAvisos([]);
-    const dados = new FormData();
-    dados.set('arquivo', arquivo);
+    setErro(null)
+    setAvisos([])
+    const dados = new FormData()
+    dados.set('arquivo', arquivo)
     try {
       const r = await api.post<{ id: string; existente: boolean; avisos: string[] }>(
         `${cfg.api}/importar-xml`,
         dados,
-      );
-      await qc.invalidateQueries({ queryKey: ['estoque-notas'] });
+      )
+      await qc.invalidateQueries({ queryKey: ['estoque-notas'] })
       navegar(`${cfg.rota}/${r.id}`, {
         state: { avisos: r.existente ? ['Esta nota já tinha sido importada.'] : r.avisos },
-      });
+      })
     } catch (e) {
-      setErro(mensagem(e));
+      setErro(mensagem(e))
     }
   }
 
@@ -127,9 +127,9 @@ export function ListaNotas({ tipo }: { tipo: TipoNota }) {
               accept=".xml,text/xml,application/xml"
               className="sr-only"
               onChange={(e) => {
-                const f = e.target.files?.[0];
-                e.target.value = '';
-                if (f) void importar(f);
+                const f = e.target.files?.[0]
+                e.target.value = ''
+                if (f) void importar(f)
               }}
             />
           </label>
@@ -210,89 +210,89 @@ export function ListaNotas({ tipo }: { tipo: TipoNota }) {
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }
 
 // Ficha ------------------------------------------------------------------------------------------
 
 interface ItemNota {
-  id: string;
-  numeroItem: number;
-  codigo: string;
-  descricao: string;
-  quantidade: string;
-  unidade: string;
-  valor: string | null;
-  lote: string | null;
-  fabricacao: string | null;
-  validade: string | null;
-  itemEstoqueId: string | null;
-  conversao: string | null;
-  localId: string | null;
-  descartado: string | null;
-  item: string | null;
-  unidadeBase: string | null;
-  local: string | null;
+  id: string
+  numeroItem: number
+  codigo: string
+  descricao: string
+  quantidade: string
+  unidade: string
+  valor: string | null
+  lote: string | null
+  fabricacao: string | null
+  validade: string | null
+  itemEstoqueId: string | null
+  conversao: string | null
+  localId: string | null
+  descartado: string | null
+  item: string | null
+  unidadeBase: string | null
+  local: string | null
 }
 
 interface Nota {
-  id: string;
-  chave: string;
-  numero: string;
-  serie: string | null;
-  emissao: string;
-  emitenteId: string | null;
-  emitente: string;
-  emitenteDocumento: string;
-  destinatario: string | null;
-  situacao: Situacao;
-  versao: number;
-  itens: ItemNota[];
-  saidaId?: string | null;
+  id: string
+  chave: string
+  numero: string
+  serie: string | null
+  emissao: string
+  emitenteId: string | null
+  emitente: string
+  emitenteDocumento: string
+  destinatario: string | null
+  situacao: Situacao
+  versao: number
+  itens: ItemNota[]
+  saidaId?: string | null
   movimentos: Array<{
-    id: string;
-    item: string;
-    unidade: string;
-    local: string;
-    lote: string | null;
-    quantidade: string;
-    tipo: string;
-    executadoEm: string;
-    motivo: string | null;
-  }>;
+    id: string
+    item: string
+    unidade: string
+    local: string
+    lote: string | null
+    quantidade: string
+    tipo: string
+    executadoEm: string
+    motivo: string | null
+  }>
 }
 
 /** Quantidade na unidade base: a da nota × a conversão. */
 const naBase = (quantidade: string, conversao: string) =>
-  (Math.round(Number(quantidade) * Number(conversao) * 1000) / 1000).toFixed(3);
+  (Math.round(Number(quantidade) * Number(conversao) * 1000) / 1000).toFixed(3)
 
 export function FichaNota({ tipo }: { tipo: TipoNota }) {
-  const cfg = CFG[tipo];
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const [pedido, setPedido] = useState<'descartar' | 'estornar' | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
+  const cfg = CFG[tipo]
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const [pedido, setPedido] = useState<'descartar' | 'estornar' | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
   const q = useQuery({
     queryKey: ['estoque-nota', id],
     queryFn: () => api.get<Nota>(`${cfg.api}/${id}`),
-  });
-  const local = useLocation();
-  const avisosImportacao = (local.state as { avisos?: string[] } | null)?.avisos ?? [];
+  })
+  const local = useLocation()
+  const avisosImportacao = (local.state as { avisos?: string[] } | null)?.avisos ?? []
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const n = q.data;
+    )
+  const n = q.data
   const atualizar = () =>
     Promise.all([
       qc.invalidateQueries({ queryKey: ['estoque-nota', id] }),
       qc.invalidateQueries({ queryKey: ['estoque-notas'] }),
       qc.invalidateQueries({ queryKey: ['estoque'] }),
-    ]);
+    ])
   return (
     <Pagina
       titulo={`NF-e ${n.numero}${n.serie ? `/${n.serie}` : ''} · ${tipo === 'venda' ? (n.destinatario ?? 'Consumidor não identificado') : n.emitente}`}
@@ -308,12 +308,12 @@ export function FichaNota({ tipo }: { tipo: TipoNota }) {
             <Botao
               variante="secundario"
               onClick={async () => {
-                setErro(null);
+                setErro(null)
                 try {
-                  await api.post(`${cfg.api}/${id}/reabrir`, {});
-                  await atualizar();
+                  await api.post(`${cfg.api}/${id}/reabrir`, {})
+                  await atualizar()
                 } catch (e) {
-                  setErro(mensagem(e));
+                  setErro(mensagem(e))
                 }
               }}
             >
@@ -401,13 +401,13 @@ export function FichaNota({ tipo }: { tipo: TipoNota }) {
         aoConfirmar={async (motivo) => {
           await api.post(`${cfg.api}/${id}/${pedido === 'estornar' ? 'estorno' : 'descartar'}`, {
             motivo,
-          });
-          setPedido(null);
-          await atualizar();
+          })
+          setPedido(null)
+          await atualizar()
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 function ItensConferidos({ nota }: { nota: Nota }) {
@@ -432,26 +432,26 @@ function ItensConferidos({ nota }: { nota: Nota }) {
         ))}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 interface LinhaConferencia {
-  id: string;
-  itemEstoqueId: string;
-  conversao: string;
-  localId: string;
-  lote: string;
-  fabricacao: string;
-  validade: string;
-  descartar: boolean;
-  motivo: string;
+  id: string
+  itemEstoqueId: string
+  conversao: string
+  localId: string
+  lote: string
+  fabricacao: string
+  validade: string
+  descartar: boolean
+  motivo: string
 }
 
 interface Previa {
-  bloqueios: string[];
-  avisos: Array<{ codigo: string; mensagem: string }>;
-  entradas: number;
-  baixas?: Array<{ itemId: string; lote: string | null; quantidade: string; estrategia: string }>;
+  bloqueios: string[]
+  avisos: Array<{ codigo: string; mensagem: string }>
+  entradas: number
+  baixas?: Array<{ itemId: string; lote: string | null; quantidade: string; estrategia: string }>
 }
 
 function Conferencia({
@@ -459,18 +459,18 @@ function Conferencia({
   tipo,
   aoMudar,
 }: {
-  nota: Nota;
-  tipo: TipoNota;
-  aoMudar: () => Promise<unknown>;
+  nota: Nota
+  tipo: TipoNota
+  aoMudar: () => Promise<unknown>
 }) {
-  const cfg = CFG[tipo];
-  const { data: s } = useSessao();
-  const todos = useItens();
+  const cfg = CFG[tipo]
+  const { data: s } = useSessao()
+  const todos = useItens()
   // Venda: só produto acabado; compra: os demais itens do estoque.
   const opcoes = todos.data?.filter((x) =>
     tipo === 'venda' ? x.tipo === 'produto_acabado' : x.tipo !== 'produto_acabado',
-  );
-  const locais = useLocais();
+  )
+  const locais = useLocais()
   const [linhas, setLinhas] = useState<LinhaConferencia[]>(() =>
     nota.itens.map((i) => ({
       id: i.id,
@@ -483,19 +483,19 @@ function Conferencia({
       descartar: !!i.descartado,
       motivo: i.descartado ?? '',
     })),
-  );
-  const [executadoEm, setExecutadoEm] = useState(agora());
-  const [previa, setPrevia] = useState<Previa | null>(null);
-  const [cientes, setCientes] = useState<string[]>([]);
-  const [erro, setErro] = useState<string | null>(null);
-  const [salvo, setSalvo] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
-  const podeEditar = pode(s, cfg.F, 'editar');
+  )
+  const [executadoEm, setExecutadoEm] = useState(agora())
+  const [previa, setPrevia] = useState<Previa | null>(null)
+  const [cientes, setCientes] = useState<string[]>([])
+  const [erro, setErro] = useState<string | null>(null)
+  const [salvo, setSalvo] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
+  const podeEditar = pode(s, cfg.F, 'editar')
   const set = (n: number, p: Partial<LinhaConferencia>) => {
-    setPrevia(null);
-    setSalvo(null);
-    setLinhas(linhas.map((l, j) => (j === n ? { ...l, ...p } : l)));
-  };
+    setPrevia(null)
+    setSalvo(null)
+    setLinhas(linhas.map((l, j) => (j === n ? { ...l, ...p } : l)))
+  }
   const corpo = () => ({
     itens: linhas.map((l) => ({
       id: l.id,
@@ -507,38 +507,38 @@ function Conferencia({
       validade: l.validade,
       descartado: l.descartar ? l.motivo || 'Descartado na conferência' : null,
     })),
-  });
+  })
   async function executar(acao: () => Promise<void>) {
-    setErro(null);
-    setEnviando(true);
+    setErro(null)
+    setEnviando(true)
     try {
-      await acao();
+      await acao()
     } catch (e) {
-      setErro(mensagem(e));
+      setErro(mensagem(e))
     } finally {
-      setEnviando(false);
+      setEnviando(false)
     }
   }
-  const salvar = () => api.put(`${cfg.api}/${nota.id}`, corpo());
+  const salvar = () => api.put(`${cfg.api}/${nota.id}`, corpo())
   const verPrevia = () =>
     executar(async () => {
-      await salvar();
+      await salvar()
       const p = await api.post<Previa>(`${cfg.api}/${nota.id}/previa`, {
         executadoEm: doCampo(executadoEm),
-      });
-      setPrevia(p);
-      setCientes([]);
-    });
+      })
+      setPrevia(p)
+      setCientes([])
+    })
   const lancar = () =>
     executar(async () => {
       await api.post(`${cfg.api}/${nota.id}/lancar`, {
         executadoEm: doCampo(executadoEm),
         cientes,
-      });
-      await aoMudar();
-    });
+      })
+      await aoMudar()
+    })
   const podeLancar =
-    !!previa && !previa.bloqueios.length && previa.avisos.every((a) => cientes.includes(a.codigo));
+    !!previa && !previa.bloqueios.length && previa.avisos.every((a) => cientes.includes(a.codigo))
   return (
     <>
       <Cartao>
@@ -548,8 +548,8 @@ function Conferencia({
         />
         <CorpoCartao className="flex flex-col gap-4">
           {nota.itens.map((i, n) => {
-            const l = linhas[n]!;
-            const it = opcoes?.find((x) => x.id === l.itemEstoqueId);
+            const l = linhas[n]!
+            const it = opcoes?.find((x) => x.id === l.itemEstoqueId)
             return (
               <div key={i.id} className="flex flex-col gap-3 border-b pb-4 last:border-0 last:pb-0">
                 <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
@@ -592,13 +592,13 @@ function Conferencia({
                         value={l.itemEstoqueId}
                         disabled={!podeEditar}
                         onChange={(e) => {
-                          const novo = opcoes?.find((x) => x.id === e.target.value);
+                          const novo = opcoes?.find((x) => x.id === e.target.value)
                           set(n, {
                             itemEstoqueId: e.target.value,
                             conversao:
                               (novo && conversaoSugerida(i.unidade, novo.unidadeBase)) ??
                               l.conversao,
-                          });
+                          })
                         }}
                       >
                         <option value="">Escolha</option>
@@ -676,7 +676,7 @@ function Conferencia({
                   </div>
                 )}
               </div>
-            );
+            )
           })}
         </CorpoCartao>
       </Cartao>
@@ -736,8 +736,8 @@ function Conferencia({
               type="datetime-local"
               value={executadoEm}
               onChange={(e) => {
-                setPrevia(null);
-                setExecutadoEm(e.target.value);
+                setPrevia(null)
+                setExecutadoEm(e.target.value)
               }}
             />
           </Campo>
@@ -746,8 +746,8 @@ function Conferencia({
             disabled={enviando}
             onClick={() =>
               executar(async () => {
-                await salvar();
-                setSalvo('Conferência salva.');
+                await salvar()
+                setSalvo('Conferência salva.')
               })
             }
           >
@@ -765,5 +765,5 @@ function Conferencia({
         </div>
       )}
     </>
-  );
+  )
 }

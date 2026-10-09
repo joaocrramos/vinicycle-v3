@@ -1,8 +1,8 @@
 // Configurações › Exportar dados (P15): o pacote completo da empresa, só o Master. Disponível
 // também com a empresa bloqueada ou inativa (administracao.md, Inadimplência e bloqueio).
-import { Download } from 'lucide-react';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Pagina } from '@/layout/Estrutura';
+import { Download } from 'lucide-react'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Pagina } from '@/layout/Estrutura'
 
 export function BotaoExportar() {
   return (
@@ -12,7 +12,7 @@ export function BotaoExportar() {
     >
       <Download /> Baixar o pacote (ZIP)
     </a>
-  );
+  )
 }
 
 export function PaginaExportar() {
@@ -39,5 +39,5 @@ export function PaginaExportar() {
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }

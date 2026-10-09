@@ -1,11 +1,11 @@
-import { Tabs } from 'radix-ui';
-import type { ComponentProps } from 'react';
-import { cn } from '@/lib/utils';
+import { Tabs } from 'radix-ui'
+import type { ComponentProps } from 'react'
+import { cn } from '@/lib/utils'
 
-export const Abas = Tabs.Root;
+export const Abas = Tabs.Root
 
 export function ListaAbas({ className, ...props }: ComponentProps<typeof Tabs.List>) {
-  return <Tabs.List className={cn('flex gap-1 overflow-x-auto border-b', className)} {...props} />;
+  return <Tabs.List className={cn('flex gap-1 overflow-x-auto border-b', className)} {...props} />
 }
 
 export function Aba({ className, ...props }: ComponentProps<typeof Tabs.Trigger>) {
@@ -17,9 +17,9 @@ export function Aba({ className, ...props }: ComponentProps<typeof Tabs.Trigger>
       )}
       {...props}
     />
-  );
+  )
 }
 
 export function ConteudoAba({ className, ...props }: ComponentProps<typeof Tabs.Content>) {
-  return <Tabs.Content className={cn('pt-4', className)} {...props} />;
+  return <Tabs.Content className={cn('pt-4', className)} {...props} />
 }

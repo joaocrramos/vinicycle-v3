@@ -1,76 +1,76 @@
 // EnoTrace › Terceiros › Conta do cliente (04, roteiro do ciclo 10, bloco 3): por cliente de
 // vinificação e safra, o que a cantina recebeu, elaborou, guarda, devolveu e reteve, com o
 // rendimento e as perdas comparados com a perda tolerada do contrato.
-import { useQuery } from '@tanstack/react-query';
-import { formatarDecimal, UNIDADES_PAGAMENTO_PRODUTO } from '@vinicycle/shared';
-import { Link, useSearchParams } from 'react-router';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Campo, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query'
+import { formatarDecimal, UNIDADES_PAGAMENTO_PRODUTO } from '@vinicycle/shared'
+import { Link, useSearchParams } from 'react-router'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Campo, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
 
 interface Safra {
-  safra: number | null;
-  uvaKg: string;
-  mostoElaborado: string;
-  granelRecebido: string;
-  perdas: string;
-  engarrafado: string;
-  devolvidoGranel: string;
-  outrasSaidasGranel: string;
-  transferidoGranel: string;
-  emElaboracao: string;
-  rendimento: string | null;
-  perdaPercentual: string | null;
-  foraDaTolerancia: string | null;
+  safra: number | null
+  uvaKg: string
+  mostoElaborado: string
+  granelRecebido: string
+  perdas: string
+  engarrafado: string
+  devolvidoGranel: string
+  outrasSaidasGranel: string
+  transferidoGranel: string
+  emElaboracao: string
+  rendimento: string | null
+  perdaPercentual: string | null
+  foraDaTolerancia: string | null
 }
 
 interface Conta {
-  titularId: string;
-  titular: string;
+  titularId: string
+  titular: string
   contrato: null | {
-    id: string;
-    numero: string | null;
-    perdaToleradaTipo: string | null;
-    perdaToleradaValor: string | null;
-    pagamentoProdutoValor: string | null;
-    pagamentoProdutoUnidade: keyof typeof UNIDADES_PAGAMENTO_PRODUTO | null;
-  };
-  safras: Safra[];
+    id: string
+    numero: string | null
+    perdaToleradaTipo: string | null
+    perdaToleradaValor: string | null
+    pagamentoProdutoValor: string | null
+    pagamentoProdutoUnidade: keyof typeof UNIDADES_PAGAMENTO_PRODUTO | null
+  }
+  safras: Safra[]
   garrafas: {
-    emEstoque: number;
-    litrosEmEstoque: string;
-    devolvidas: number;
-    entreguesPorOrdem: number;
-  };
+    emEstoque: number
+    litrosEmEstoque: string
+    devolvidas: number
+    entreguesPorOrdem: number
+  }
   transferencias: {
-    pagamentoLitros: string;
-    pagamentoGarrafas: number;
-    vendidoLitros: string;
-    vendidoGarrafas: number;
-    recebidoLitros: string;
-    recebidoGarrafas: number;
-  };
+    pagamentoLitros: string
+    pagamentoGarrafas: number
+    vendidoLitros: string
+    vendidoGarrafas: number
+    recebidoLitros: string
+    recebidoGarrafas: number
+  }
   insumos: Array<{
-    item: string;
-    unidade: string;
-    recebido: string;
-    usado: string;
-    devolvido: string;
-    saldo: string;
-  }>;
-  faltaDevolverLitros: string;
+    item: string
+    unidade: string
+    recebido: string
+    usado: string
+    devolvido: string
+    saldo: string
+  }>
+  faltaDevolverLitros: string
 }
 
-const L = (v: string) => `${formatarDecimal(v, 2)} L`;
-const garrafas = (n: number) => (n ? ` (${n} garrafas)` : '');
+const L = (v: string) => `${formatarDecimal(v, 2)} L`
+const garrafas = (n: number) => (n ? ` (${n} garrafas)` : '')
 
 function CartaoConta({ c }: { c: Conta }) {
   const tolerada = c.contrato?.perdaToleradaTipo
     ? c.contrato.perdaToleradaTipo === 'percentual'
       ? `perda tolerada de ${formatarDecimal(c.contrato.perdaToleradaValor, 2)}%`
       : `rendimento mínimo de ${formatarDecimal(c.contrato.perdaToleradaValor, 4)} L/kg`
-    : 'sem perda tolerada no contrato';
+    : 'sem perda tolerada no contrato'
   return (
     <Cartao>
       <CabecalhoCartao
@@ -208,22 +208,22 @@ function CartaoConta({ c }: { c: Conta }) {
         )}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 export function PaginaContaCliente() {
-  const [busca, setBusca] = useSearchParams();
-  const titular = busca.get('titular') ?? '';
+  const [busca, setBusca] = useSearchParams()
+  const titular = busca.get('titular') ?? ''
   const clientes = useQuery({
     queryKey: ['pessoas-opcoes', 'cliente_vinificacao'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=cliente_vinificacao'),
-  });
+  })
   const contas = useQuery({
     queryKey: ['contas-clientes', titular],
     queryFn: () =>
       api.get<Conta[]>(`/api/terceiros/contas${titular ? `?titularId=${titular}` : ''}`),
-  });
+  })
   return (
     <Pagina titulo="Conta do cliente" trilha={['EnoTrace', 'Terceiros']}>
       <p className="text-sm text-muted-foreground">
@@ -254,5 +254,5 @@ export function PaginaContaCliente() {
         <CartaoConta key={c.titularId} c={c} />
       ))}
     </Pagina>
-  );
+  )
 }

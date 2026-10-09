@@ -1,59 +1,59 @@
 // Administração › Integrações (administracao.md, Integração de pagamentos): provedor de pagamento
 // (Asaas), com a chave cifrada, o endereço e o token do aviso, a nota de serviço e os avisos
 // recebidos. A chave nunca volta para a tela.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   FORMAS_PROVEDOR,
   integracaoPagamentoEntrada,
   integracaoWhatsappEntrada,
   NOMES_ADAPTADOR,
   NOMES_FORMA_PAGAMENTO,
-} from '@vinicycle/shared';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
+} from '@vinicycle/shared'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
 
-type Forma = (typeof FORMAS_PROVEDOR)[number];
+type Forma = (typeof FORMAS_PROVEDOR)[number]
 interface Integracao {
-  id: string;
-  tipo: 'pagamento' | 'whatsapp' | 'sms';
-  adaptador: 'asaas' | 'meta';
-  numeroId: string | null;
-  modelo: string | null;
-  idioma: string | null;
-  nome: string;
-  ambiente: 'teste' | 'producao';
-  formas: Forma[];
+  id: string
+  tipo: 'pagamento' | 'whatsapp' | 'sms'
+  adaptador: 'asaas' | 'meta'
+  numeroId: string | null
+  modelo: string | null
+  idioma: string | null
+  nome: string
+  ambiente: 'teste' | 'producao'
+  formas: Forma[]
   nfse: {
-    ativa: boolean;
-    codigoServico: string | null;
-    descricao: string | null;
-    aliquotaIss: string | null;
-  };
-  ativo: boolean;
-  chaveConfigurada: boolean;
-  urlAviso: string;
+    ativa: boolean
+    codigoServico: string | null
+    descricao: string | null
+    aliquotaIss: string | null
+  }
+  ativo: boolean
+  chaveConfigurada: boolean
+  urlAviso: string
 }
 interface AvisoRecebido {
-  id: string;
-  integracao: string;
-  tipoOriginal: string;
-  tipoPadrao: string;
-  recebidoEm: string;
-  resultado: string | null;
+  id: string
+  integracao: string
+  tipoOriginal: string
+  tipoPadrao: string
+  recebidoEm: string
+  resultado: string | null
 }
 
 function Formulario({ atual, aoFechar }: { atual: Integracao | null; aoFechar: () => void }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const form = useFormulario(integracaoPagamentoEntrada, {
     nome: atual?.nome ?? 'Asaas',
     adaptador: 'asaas',
@@ -62,8 +62,8 @@ function Formulario({ atual, aoFechar }: { atual: Integracao | null; aoFechar: (
     formas: atual?.formas ?? [...FORMAS_PROVEDOR],
     nfse: atual?.nfse ?? { ativa: false, codigoServico: '', descricao: '', aliquotaIss: '' },
     ativo: atual?.ativo ?? true,
-  });
-  const v = form.valores;
+  })
+  const v = form.valores
   return (
     <Dialogo
       aberto
@@ -78,15 +78,15 @@ function Formulario({ atual, aoFechar }: { atual: Integracao | null; aoFechar: (
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                if (atual) await api.put(`/api/plataforma/integracoes/${atual.id}`, d);
-                else await api.post('/api/plataforma/integracoes', d);
-                await qc.invalidateQueries({ queryKey: ['integracoes'] });
-                aoFechar();
+                if (atual) await api.put(`/api/plataforma/integracoes/${atual.id}`, d)
+                else await api.post('/api/plataforma/integracoes', d)
+                await qc.invalidateQueries({ queryKey: ['integracoes'] })
+                aoFechar()
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -195,17 +195,17 @@ function Formulario({ atual, aoFechar }: { atual: Integracao | null; aoFechar: (
         />
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function FormularioWhatsapp({
   atual,
   aoFechar,
 }: {
-  atual: Integracao | null;
-  aoFechar: () => void;
+  atual: Integracao | null
+  aoFechar: () => void
 }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const form = useFormulario(integracaoWhatsappEntrada, {
     nome: atual?.nome ?? 'WhatsApp',
     adaptador: 'meta',
@@ -214,8 +214,8 @@ function FormularioWhatsapp({
     idioma: atual?.idioma ?? 'pt_BR',
     chave: '',
     ativo: atual?.ativo ?? true,
-  });
-  const v = form.valores;
+  })
+  const v = form.valores
   const texto = (
     campo: 'nome' | 'numeroId' | 'modelo' | 'idioma',
     rotulo: string,
@@ -228,7 +228,7 @@ function FormularioWhatsapp({
         onChange={(e) => form.definir(campo, e.target.value)}
       />
     </Campo>
-  );
+  )
   return (
     <Dialogo
       aberto
@@ -243,15 +243,15 @@ function FormularioWhatsapp({
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                if (atual) await api.put(`/api/plataforma/integracoes/${atual.id}/whatsapp`, d);
-                else await api.post('/api/plataforma/integracoes/whatsapp', d);
-                await qc.invalidateQueries({ queryKey: ['integracoes'] });
-                aoFechar();
+                if (atual) await api.put(`/api/plataforma/integracoes/${atual.id}/whatsapp`, d)
+                else await api.post('/api/plataforma/integracoes/whatsapp', d)
+                await qc.invalidateQueries({ queryKey: ['integracoes'] })
+                aoFechar()
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -304,12 +304,12 @@ function FormularioWhatsapp({
         />
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function MensagemTeste({ integracao, aoFechar }: { integracao: Integracao; aoFechar: () => void }) {
-  const [telefone, setTelefone] = useState('');
-  const [resultado, setResultado] = useState<{ ok: boolean; mensagem: string } | null>(null);
+  const [telefone, setTelefone] = useState('')
+  const [resultado, setResultado] = useState<{ ok: boolean; mensagem: string } | null>(null)
   return (
     <Dialogo
       aberto
@@ -344,16 +344,16 @@ function MensagemTeste({ integracao, aoFechar }: { integracao: Integracao; aoFec
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function Token({ integracao, aoFechar }: { integracao: Integracao; aoFechar: () => void }) {
   const q = useQuery({
     queryKey: ['integracao-token', integracao.id],
     queryFn: () => api.get<{ token: string }>(`/api/plataforma/integracoes/${integracao.id}/token`),
-  });
-  const [token, setToken] = useState<string | null>(null);
-  const valor = token ?? q.data?.token;
+  })
+  const [token, setToken] = useState<string | null>(null)
+  const valor = token ?? q.data?.token
   return (
     <Dialogo
       aberto
@@ -387,8 +387,8 @@ function Token({ integracao, aoFechar }: { integracao: Integracao; aoFechar: () 
               const r = await api.post<{ token: string }>(
                 `/api/plataforma/integracoes/${integracao.id}/token`,
                 {},
-              );
-              setToken(r.token);
+              )
+              setToken(r.token)
             }}
           >
             Gerar outro token
@@ -399,25 +399,25 @@ function Token({ integracao, aoFechar }: { integracao: Integracao; aoFechar: () 
         </div>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function PaginaIntegracoes() {
-  const { data: s } = useSessao();
+  const { data: s } = useSessao()
   const q = useQuery({
     queryKey: ['integracoes'],
     queryFn: () => api.get<Integracao[]>('/api/plataforma/integracoes'),
-  });
+  })
   const avisos = useQuery({
     queryKey: ['integracoes-avisos'],
     queryFn: () => api.get<AvisoRecebido[]>('/api/plataforma/integracoes/avisos'),
-  });
-  const [editar, setEditar] = useState<Integracao | 'nova' | null>(null);
-  const [editarWa, setEditarWa] = useState<Integracao | 'nova' | null>(null);
-  const [teste, setTeste] = useState<Integracao | null>(null);
-  const [token, setToken] = useState<Integracao | null>(null);
-  const [mensagem, setMensagem] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null);
-  const podeEditar = pode(s, 'plataforma.integracoes', 'editar');
+  })
+  const [editar, setEditar] = useState<Integracao | 'nova' | null>(null)
+  const [editarWa, setEditarWa] = useState<Integracao | 'nova' | null>(null)
+  const [teste, setTeste] = useState<Integracao | null>(null)
+  const [token, setToken] = useState<Integracao | null>(null)
+  const [mensagem, setMensagem] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null)
+  const podeEditar = pode(s, 'plataforma.integracoes', 'editar')
   return (
     <Pagina
       titulo="Integrações"
@@ -495,8 +495,8 @@ export function PaginaIntegracoes() {
                       const r = await api.post<{ ok: boolean; mensagem: string }>(
                         `/api/plataforma/integracoes/${i.id}/testar`,
                         {},
-                      );
-                      setMensagem({ tom: r.ok ? 'sucesso' : 'erro', texto: r.mensagem });
+                      )
+                      setMensagem({ tom: r.ok ? 'sucesso' : 'erro', texto: r.mensagem })
                     }}
                   >
                     Testar conexão
@@ -536,5 +536,5 @@ export function PaginaIntegracoes() {
       )}
       {teste && <MensagemTeste integracao={teste} aoFechar={() => setTeste(null)} />}
     </Pagina>
-  );
+  )
 }

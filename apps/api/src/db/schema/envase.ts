@@ -2,7 +2,7 @@
 // produção com formatos e recipientes de origem, produções parciais (uma operação "engarrafamento"
 // por dia) e o lote comercial do contrarrótulo, um por ordem, com a composição do que foi
 // engarrafado (5.6). Selos de IG e espumante tradicional ficam para 2027 (04, roteiro do ciclo 5).
-import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm'
 import {
   type AnyPgColumn,
   boolean,
@@ -18,30 +18,30 @@ import {
   unique,
   uniqueIndex,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, local } from './acesso';
-import { itemEstoque, produto, produtoFormato, produtoRotulo, recipiente } from './cantina';
-import { alteracao, criacao, dataHora, emLista, id } from './comum';
-import { loteItem } from './estoque';
-import { pessoa } from './gestao';
-import { empresa } from './plataforma';
-import { lote, operacao, projeto } from './producao';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento, local } from './acesso'
+import { itemEstoque, produto, produtoFormato, produtoRotulo, recipiente } from './cantina'
+import { alteracao, criacao, dataHora, emLista, id } from './comum'
+import { loteItem } from './estoque'
+import { pessoa } from './gestao'
+import { empresa } from './plataforma'
+import { lote, operacao, projeto } from './producao'
 
 function daEmpresa(
   coluna: AnyPgColumn,
   empresaId: AnyPgColumn,
   alvo: { id: AnyPgColumn; empresaId: AnyPgColumn },
 ) {
-  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] });
+  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] })
 }
 
 const empresaId = () =>
   uuid('empresa_id')
     .notNull()
-    .references(() => empresa.id);
+    .references(() => empresa.id)
 
-export const SITUACOES_ORDEM = ['planejada', 'em_execucao', 'encerrada', 'cancelada'] as const;
-export const ORIGENS_LOTE_COMERCIAL = ['envase', 'retorno_terceiro', 'carga_inicial'] as const;
+export const SITUACOES_ORDEM = ['planejada', 'em_execucao', 'encerrada', 'cancelada'] as const
+export const ORIGENS_LOTE_COMERCIAL = ['envase', 'retorno_terceiro', 'carga_inicial'] as const
 
 /** Lote do contrarrótulo (cantina.md, Lote comercial): um por ordem, mesmo com vários formatos. */
 export const loteComercial = pgTable(
@@ -73,7 +73,7 @@ export const loteComercial = pgTable(
     uniqueIndex('lote_comercial_codigo').on(t.estabelecimentoId, t.codigo),
     check('lote_comercial_origem', emLista('origem', ORIGENS_LOTE_COMERCIAL)),
   ],
-);
+)
 
 /** Ordem de engarrafamento (2.5): não reserva estoque; vários formatos, um só lote comercial. */
 export const ordemEngarrafamento = pgTable(
@@ -118,7 +118,7 @@ export const ordemEngarrafamento = pgTable(
     check('ordem_engarrafamento_situacao', emLista('situacao', SITUACOES_ORDEM)),
     index('ordem_engarrafamento_projeto').on(t.projetoId),
   ],
-);
+)
 
 /** Cada formato envasado na ordem, com as garrafas previstas. */
 export const ordemFormato = pgTable(
@@ -139,7 +139,7 @@ export const ordemFormato = pgTable(
     unique('ordem_formato_unico').on(t.ordemId, t.formatoId),
     check('ordem_formato_garrafas', sql`garrafas_previstas >= 0`),
   ],
-);
+)
 
 /** Recipientes de onde sai o vinho (o lote é o que está nele). */
 export const ordemOrigem = pgTable(
@@ -158,7 +158,7 @@ export const ordemOrigem = pgTable(
     daEmpresa(t.recipienteId, t.empresaId, recipiente),
     unique('ordem_origem_unica').on(t.ordemId, t.recipienteId),
   ],
-);
+)
 
 /**
  * Um dia de envase (2.5, Produção parcial): a operação "engarrafamento" (litros por recipiente), as
@@ -187,7 +187,7 @@ export const producaoParcial = pgTable(
     uniqueIndex('producao_parcial_operacao').on(t.operacaoId),
     index('producao_parcial_ordem').on(t.ordemId),
   ],
-);
+)
 
 export const producaoFormato = pgTable(
   'producao_formato',
@@ -206,7 +206,7 @@ export const producaoFormato = pgTable(
     daEmpresa(t.formatoId, t.empresaId, produtoFormato),
     check('producao_formato_garrafas', sql`garrafas > 0`),
   ],
-);
+)
 
 /** Material previsto pela ficha de embalagem × real consumido (2.5, Consumo de material). */
 export const producaoMaterial = pgTable(
@@ -228,7 +228,7 @@ export const producaoMaterial = pgTable(
     daEmpresa(t.itemId, t.empresaId, itemEstoque),
     daEmpresa(t.loteItemId, t.empresaId, loteItem),
   ],
-);
+)
 
 /** Lotes de produção que formam o lote comercial (genealogia de saída, 5.6). */
 export const loteComercialOrigem = pgTable(
@@ -247,4 +247,4 @@ export const loteComercialOrigem = pgTable(
     daEmpresa(t.loteId, t.empresaId, lote),
     unique('lote_comercial_origem_unica').on(t.loteComercialId, t.loteId),
   ],
-);
+)

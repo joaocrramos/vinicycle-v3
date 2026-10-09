@@ -1,18 +1,18 @@
 // EnoTrace › Operações: adição de insumo, chaptalização e tratamentos (cantina.md, Adição de insumo;
 // Chaptalização; Tratamentos), com a prévia de cada recipiente, os avisos e o "ciente".
-import { useQuery } from '@tanstack/react-query';
-import { formatarDecimal } from '@vinicycle/shared';
-import { Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Botao } from '@/componentes/ui/botao';
-import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useReferencia } from '@/lib/referencia';
-import { litros } from '../Projetos';
-import { useItens, useLocais, useLotes } from '../Estoque';
+import { useQuery } from '@tanstack/react-query'
+import { formatarDecimal } from '@vinicycle/shared'
+import { Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Botao } from '@/componentes/ui/botao'
+import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useReferencia } from '@/lib/referencia'
+import { litros } from '../Projetos'
+import { useItens, useLocais, useLotes } from '../Estoque'
 import {
   agora,
   Cabecalho,
@@ -23,50 +23,50 @@ import {
   Rodape,
   useEnvio,
   useRecipientes,
-} from './comum';
-import { CartaoInsumos, type InsumoLinha, insumosParaApi, insumoVazio } from './insumos';
+} from './comum'
+import { CartaoInsumos, type InsumoLinha, insumosParaApi, insumoVazio } from './insumos'
 
 const comum = () => ({
   executadoEm: agora(),
   responsavelId: '',
   planoEtapaId: '',
   observacao: '',
-});
+})
 
 const cabecalhoApi = (d: ReturnType<typeof comum>) => ({
   executadoEm: doCampo(d.executadoEm),
   responsavelId: d.responsavelId || null,
   planoEtapaId: d.planoEtapaId || null,
   observacao: d.observacao,
-});
+})
 
 // Adição de insumo ------------------------------------------------------------------------------
 
 export function PaginaAdicao() {
-  return <ComRascunho>{(r) => <Adicao rascunho={r} />}</ComRascunho>;
+  return <ComRascunho>{(r) => <Adicao rascunho={r} />}</ComRascunho>
 }
 
 function Adicao({ rascunho }: { rascunho: Rascunho | null }) {
-  const recipientes = useRecipientes();
-  const envio = useEnvio('adicao_insumo', rascunho);
+  const recipientes = useRecipientes()
+  const envio = useEnvio('adicao_insumo', rascunho)
   const [d, setD] = useState(() => ({
     ...comum(),
     insumos: [insumoVazio(recipienteDaUrl())] as InsumoLinha[],
     localEstoqueId: '',
     ...rascunho?.formulario,
-  }));
+  }))
   const set = (p: Partial<typeof d>) => {
-    envio.limpar();
-    setD({ ...d, ...p });
-  };
-  const comVinho = (recipientes.data ?? []).filter((r) => !!r.lote);
+    envio.limpar()
+    setD({ ...d, ...p })
+  }
+  const comVinho = (recipientes.data ?? []).filter((r) => !!r.lote)
   const projetoId =
-    comVinho.find((r) => d.insumos.some((i) => i.recipienteId === r.id))?.lote?.projetoId ?? '';
+    comVinho.find((r) => d.insumos.some((i) => i.recipienteId === r.id))?.lote?.projetoId ?? ''
   const corpo = () => ({
     ...cabecalhoApi(d),
     insumos: insumosParaApi(d.insumos),
     localEstoqueId: d.localEstoqueId || null,
-  });
+  })
   return (
     <Pagina titulo="Adição de insumo" trilha={['EnoTrace', 'Operações']}>
       <p className="text-sm text-muted-foreground">
@@ -89,27 +89,27 @@ function Adicao({ rascunho }: { rascunho: Rascunho | null }) {
       />
       <Rodape envio={envio} corpo={corpo} formulario={() => ({ ...d, projetoId })} />
     </Pagina>
-  );
+  )
 }
 
 // Chaptalização ---------------------------------------------------------------------------------
 
 export function PaginaChaptalizacao() {
-  return <ComRascunho>{(r) => <Chaptalizacao rascunho={r} />}</ComRascunho>;
+  return <ComRascunho>{(r) => <Chaptalizacao rascunho={r} />}</ComRascunho>
 }
 
 function Chaptalizacao({ rascunho }: { rascunho: Rascunho | null }) {
-  const recipientes = useRecipientes();
-  const itens = useItens();
-  const locais = useLocais();
-  const envio = useEnvio('chaptalizacao', rascunho);
+  const recipientes = useRecipientes()
+  const itens = useItens()
+  const locais = useLocais()
+  const envio = useEnvio('chaptalizacao', rascunho)
   const chaptalizacao = useQuery({
     queryKey: ['cantina', 'chaptalizacao'],
     queryFn: () =>
       api.get<{ acucarPorGrau: number; limitePratica: number | null }>(
         '/api/cantina/chaptalizacao',
       ),
-  });
+  })
   const [d, setD] = useState(() => ({
     ...comum(),
     recipienteId: recipienteDaUrl(),
@@ -121,18 +121,18 @@ function Chaptalizacao({ rascunho }: { rascunho: Rascunho | null }) {
     quantidade: null as string | null,
     localEstoqueId: '',
     ...rascunho?.formulario,
-  }));
+  }))
   const set = (p: Partial<typeof d>) => {
-    envio.limpar();
-    setD({ ...d, ...p });
-  };
-  const item = itens.data?.find((x) => x.id === d.itemId);
-  const lotes = useLotes(item?.controlaLote ? d.itemId : '');
-  const recipiente = recipientes.data?.find((r) => r.id === d.recipienteId);
-  const volume = Number(recipiente?.volume ?? 0);
-  const q = Number(d.quantidade ?? 0);
-  const gL = d.modo === 'gL' ? q : volume ? (q * 1000) / volume : 0;
-  const fator = chaptalizacao.data?.acucarPorGrau ?? 17;
+    envio.limpar()
+    setD({ ...d, ...p })
+  }
+  const item = itens.data?.find((x) => x.id === d.itemId)
+  const lotes = useLotes(item?.controlaLote ? d.itemId : '')
+  const recipiente = recipientes.data?.find((r) => r.id === d.recipienteId)
+  const volume = Number(recipiente?.volume ?? 0)
+  const q = Number(d.quantidade ?? 0)
+  const gL = d.modo === 'gL' ? q : volume ? (q * 1000) / volume : 0
+  const fator = chaptalizacao.data?.acucarPorGrau ?? 17
   const corpo = () => ({
     ...cabecalhoApi(d),
     recipienteId: d.recipienteId,
@@ -142,7 +142,7 @@ function Chaptalizacao({ rascunho }: { rascunho: Rascunho | null }) {
     kg: d.modo === 'kg' ? d.quantidade : null,
     gramasPorLitro: d.modo === 'gL' ? d.quantidade : null,
     localEstoqueId: d.localEstoqueId || null,
-  });
+  })
   return (
     <Pagina titulo="Chaptalização" trilha={['EnoTrace', 'Operações']}>
       <p className="text-sm text-muted-foreground">
@@ -283,36 +283,36 @@ function Chaptalizacao({ rascunho }: { rascunho: Rascunho | null }) {
         formulario={() => ({ ...d, projetoId: recipiente?.lote?.projetoId ?? '' })}
       />
     </Pagina>
-  );
+  )
 }
 
 // Tratamento ------------------------------------------------------------------------------------
 
 export function PaginaTratamento() {
-  return <ComRascunho>{(r) => <Tratamento rascunho={r} />}</ComRascunho>;
+  return <ComRascunho>{(r) => <Tratamento rascunho={r} />}</ComRascunho>
 }
 
 interface ParametroTratamento {
-  id: string;
-  tipoTratamento: string;
-  nome: string;
-  unidade: string | null;
-  obrigatorio: boolean;
-  ativo: boolean;
+  id: string
+  tipoTratamento: string
+  nome: string
+  unidade: string | null
+  obrigatorio: boolean
+  ativo: boolean
 }
 
 export function useParametrosTratamento() {
   return useQuery({
     queryKey: ['parametros-tratamento'],
     queryFn: () => api.get<ParametroTratamento[]>('/api/cantina/parametros-tratamento'),
-  });
+  })
 }
 
 function Tratamento({ rascunho }: { rascunho: Rascunho | null }) {
-  const recipientes = useRecipientes();
-  const { data: ref } = useReferencia();
-  const parametros = useParametrosTratamento();
-  const envio = useEnvio('tratamento', rascunho);
+  const recipientes = useRecipientes()
+  const { data: ref } = useReferencia()
+  const parametros = useParametrosTratamento()
+  const envio = useEnvio('tratamento', rascunho)
   const [d, setD] = useState(() => ({
     ...comum(),
     tipoTratamento: '',
@@ -322,17 +322,17 @@ function Tratamento({ rascunho }: { rascunho: Rascunho | null }) {
     insumos: [] as InsumoLinha[],
     localEstoqueId: '',
     ...rascunho?.formulario,
-  }));
+  }))
   const set = (p: Partial<typeof d>) => {
-    envio.limpar();
-    setD({ ...d, ...p });
-  };
-  const comVinho = (recipientes.data ?? []).filter((r) => !!r.lote);
-  const escolhidos = comVinho.filter((r) => d.recipientes.includes(r.id));
+    envio.limpar()
+    setD({ ...d, ...p })
+  }
+  const comVinho = (recipientes.data ?? []).filter((r) => !!r.lote)
+  const escolhidos = comVinho.filter((r) => d.recipientes.includes(r.id))
   const doTipo = (parametros.data ?? []).filter(
     (p) => p.ativo && p.tipoTratamento === d.tipoTratamento,
-  );
-  const projetoId = escolhidos[0]?.lote?.projetoId ?? '';
+  )
+  const projetoId = escolhidos[0]?.lote?.projetoId ?? ''
   const corpo = () => ({
     ...cabecalhoApi(d),
     tipoTratamento: d.tipoTratamento,
@@ -345,7 +345,7 @@ function Tratamento({ rascunho }: { rascunho: Rascunho | null }) {
       .map((p) => ({ parametroId: p.id, valor: d.valores[p.id]! })),
     insumos: insumosParaApi(d.insumos),
     localEstoqueId: d.localEstoqueId || null,
-  });
+  })
   return (
     <Pagina titulo="Tratamento" trilha={['EnoTrace', 'Operações']}>
       <p className="text-sm text-muted-foreground">
@@ -508,5 +508,5 @@ function Tratamento({ rascunho }: { rascunho: Rascunho | null }) {
       </Cartao>
       <Rodape envio={envio} corpo={corpo} formulario={() => ({ ...d, projetoId })} />
     </Pagina>
-  );
+  )
 }

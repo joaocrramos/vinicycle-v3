@@ -6,17 +6,17 @@ import {
   paraCentavos,
   type Periodicidade,
   somarMeses,
-} from '@vinicycle/shared';
-import { and, asc, desc, eq, gte, isNull, lte, or, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import type { Tx } from '../db/cliente';
-import * as s from '../db/schema';
-import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros';
-import { naEmpresa, naPlataforma } from '../nucleo/requisicao';
-import { type Assinatura, limitesEfetivos, proximaRenovacao, usoAtual } from './assinaturas';
-import { estadoNaRenovacao } from './cobranca';
-import { hoje, precoDoAdicional } from './planos';
+} from '@vinicycle/shared'
+import { and, asc, desc, eq, gte, isNull, lte, or, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import type { Tx } from '../db/cliente'
+import * as s from '../db/schema'
+import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros'
+import { naEmpresa, naPlataforma } from '../nucleo/requisicao'
+import { type Assinatura, limitesEfetivos, proximaRenovacao, usoAtual } from './assinaturas'
+import { estadoNaRenovacao } from './cobranca'
+import { hoje, precoDoAdicional } from './planos'
 
 /** Valor mensal de um conjunto plano + adicionais, com os descontos válidos na data (centavos). */
 async function mensal(
@@ -26,7 +26,7 @@ async function mensal(
   recorrente: number,
   data: string,
 ): Promise<number> {
-  const meses = MESES_PERIODICIDADE[periodicidade];
+  const meses = MESES_PERIODICIDADE[periodicidade]
   const descontos = await tx
     .select()
     .from(s.desconto)
@@ -37,43 +37,43 @@ async function mensal(
         lte(s.desconto.inicio, data),
         or(isNull(s.desconto.fim), gte(s.desconto.fim, data)),
       ),
-    );
-  let valor = recorrente;
+    )
+  let valor = recorrente
   for (const d of descontos) {
     valor -=
       d.tipo === 'percentual'
         ? Math.round((recorrente * Number(d.valor)) / 100)
-        : paraCentavos(d.valor);
+        : paraCentavos(d.valor)
   }
-  return Math.max(0, Math.round(valor / meses));
+  return Math.max(0, Math.round(valor / meses))
 }
 
 /** Receita mensal da assinatura hoje e depois do que está agendado (para a previsão). */
 async function receitaDaAssinatura(tx: Tx, a: Assinatura, data: string) {
-  const atualEstado = await estadoNaRenovacao(tx, { ...a, cicloFim: null }, data);
+  const atualEstado = await estadoNaRenovacao(tx, { ...a, cicloFim: null }, data)
   const recorrente = (e: {
-    valorPlano: string;
-    itens: Array<{ quantidade: number; valorUnitario: string }>;
+    valorPlano: string
+    itens: Array<{ quantidade: number; valorUnitario: string }>
   }) =>
     paraCentavos(e.valorPlano) +
-    e.itens.reduce((t, i) => t + i.quantidade * paraCentavos(i.valorUnitario), 0);
+    e.itens.reduce((t, i) => t + i.quantidade * paraCentavos(i.valorUnitario), 0)
   const atual = await mensal(
     tx,
     a.empresaId,
     a.periodicidade as Periodicidade,
     recorrente(atualEstado),
     data,
-  );
-  const renovacao = await proximaRenovacao(tx, a);
-  const depoisEstado = await estadoNaRenovacao(tx, a, renovacao);
+  )
+  const renovacao = await proximaRenovacao(tx, a)
+  const depoisEstado = await estadoNaRenovacao(tx, a, renovacao)
   const depois = depoisEstado.agendadas.length
     ? await mensal(tx, a.empresaId, depoisEstado.periodicidade, recorrente(depoisEstado), renovacao)
-    : atual;
-  return { atual, depois, renovacao };
+    : atual
+  return { atual, depois, renovacao }
 }
 
 export async function rotasPainelComercial(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
 
   // ---- Vitrine (cliente) ----
 
@@ -82,28 +82,26 @@ export async function rotasPainelComercial(app: FastifyInstance): Promise<void> 
       const [a] = await ctx.tx
         .select()
         .from(s.assinatura)
-        .where(
-          and(eq(s.assinatura.empresaId, ctx.empresaId), eq(s.assinatura.situacao, 'vigente')),
-        );
-      const modulos = await ctx.tx.select().from(s.modulo).orderBy(asc(s.modulo.ordem));
+        .where(and(eq(s.assinatura.empresaId, ctx.empresaId), eq(s.assinatura.situacao, 'vigente')))
+      const modulos = await ctx.tx.select().from(s.modulo).orderBy(asc(s.modulo.ordem))
       const avulsos = await ctx.tx
         .select({ id: s.adicional.id, moduloId: s.adicional.moduloId, nome: s.adicional.nome })
         .from(s.adicional)
-        .where(and(eq(s.adicional.tipo, 'modulo'), eq(s.adicional.ativo, true)));
+        .where(and(eq(s.adicional.tipo, 'modulo'), eq(s.adicional.ativo, true)))
       const interesses = await ctx.tx
         .select({ moduloId: s.interesseModulo.moduloId })
         .from(s.interesseModulo)
         .where(
           and(eq(s.interesseModulo.empresaId, ctx.empresaId), isNull(s.interesseModulo.atendidoEm)),
-        );
-      const r = [];
+        )
+      const r = []
       for (const m of modulos) {
-        if (ctx.acesso.modulos.has(m.codigo)) continue;
-        const avulso = avulsos.find((x) => x.moduloId === m.id);
+        if (ctx.acesso.modulos.has(m.codigo)) continue
+        const avulso = avulsos.find((x) => x.moduloId === m.id)
         const preco =
           avulso && a
             ? await precoDoAdicional(ctx.tx, avulso.id, a.periodicidade as Periodicidade, hoje())
-            : null;
+            : null
         r.push({
           codigo: m.codigo,
           nome: m.nome,
@@ -115,24 +113,21 @@ export async function rotasPainelComercial(app: FastifyInstance): Promise<void> 
               : null,
           periodicidade: a?.periodicidade ?? null,
           interesse: interesses.some((i) => i.moduloId === m.id),
-        });
+        })
       }
-      return r;
+      return r
     }),
-  );
+  )
 
   app.post<{ Params: { codigo: string } }>('/api/vitrine/:codigo/interesse', async (req) =>
     naEmpresa(db, req, null, async (ctx) => {
       const { observacao } = z
         .object({ observacao: z.string().trim().max(500).optional() })
-        .parse(req.body ?? {});
-      const [m] = await ctx.tx
-        .select()
-        .from(s.modulo)
-        .where(eq(s.modulo.codigo, req.params.codigo));
-      if (!m) throw new ErroNaoEncontrado('Módulo não encontrado.');
+        .parse(req.body ?? {})
+      const [m] = await ctx.tx.select().from(s.modulo).where(eq(s.modulo.codigo, req.params.codigo))
+      if (!m) throw new ErroNaoEncontrado('Módulo não encontrado.')
       if (ctx.acesso.modulos.has(m.codigo)) {
-        throw new ErroRegra('A empresa já tem esse módulo.', 'modulo_contratado');
+        throw new ErroRegra('A empresa já tem esse módulo.', 'modulo_contratado')
       }
       const r = await ctx.tx
         .insert(s.interesseModulo)
@@ -144,47 +139,47 @@ export async function rotasPainelComercial(app: FastifyInstance): Promise<void> 
           criadoPor: ctx.usuarioId,
         })
         .onConflictDoNothing()
-        .returning({ id: s.interesseModulo.id });
+        .returning({ id: s.interesseModulo.id })
       if (r.length) {
         await ctx.auditar({
           acao: 'registrar_interesse',
           entidade: 'modulo',
           registroId: m.id,
           dados: { modulo: m.codigo, observacao },
-        });
+        })
       }
-      return { ok: true };
+      return { ok: true }
     }),
-  );
+  )
 
   // ---- Painel da plataforma ----
 
   app.get('/api/plataforma/painel', async (req) =>
     naPlataforma(db, req, ['plataforma.painel', 'visualizar'], async ({ tx }) => {
-      const data = hoje();
-      const inicioMes = `${data.slice(0, 8)}01`;
+      const data = hoje()
+      const inicioMes = `${data.slice(0, 8)}01`
       const situacoes = await tx
         .select({ situacao: s.empresa.situacao, n: sql<number>`count(*)::int` })
         .from(s.empresa)
-        .groupBy(s.empresa.situacao);
+        .groupBy(s.empresa.situacao)
       const [novos] = await tx
         .select({ n: sql<number>`count(*)::int` })
         .from(s.empresa)
-        .where(sql`${s.empresa.criadoEm} >= ${inicioMes}::date`);
+        .where(sql`${s.empresa.criadoEm} >= ${inicioMes}::date`)
       const [usuarios] = (
         await tx.execute<{ ativos: number; recentes: number }>(sql`
           select
             (select count(distinct usuario_id) from vinculo where ativo)::int as ativos,
             (select count(*) from usuario u where u.ultimo_acesso_em > now() - interval '30 days'
               and exists (select 1 from vinculo v where v.usuario_id = u.id and v.ativo))::int as recentes`)
-      ).rows;
+      ).rows
       const faturas = (
         await tx.execute<{ situacao: string; n: number; saldo: string }>(sql`
           select f.situacao, count(*)::int as n,
             sum(f.total - coalesce((select sum(r.valor) from recebimento r
               where r.fatura_id = f.id and r.estornado_em is null), 0))::text as saldo
           from fatura f where f.situacao in ('aberta', 'parcial', 'vencida') group by f.situacao`)
-      ).rows;
+      ).rows
 
       const assinaturas = await tx
         .select({
@@ -196,35 +191,35 @@ export async function rotasPainelComercial(app: FastifyInstance): Promise<void> 
         .from(s.assinatura)
         .innerJoin(s.empresa, eq(s.empresa.id, s.assinatura.empresaId))
         .innerJoin(s.ficha, eq(s.ficha.id, s.empresa.fichaId))
-        .where(and(eq(s.assinatura.situacao, 'vigente'), eq(s.assinatura.emTeste, false)));
-      const meses = Array.from({ length: 6 }, (_, k) => somarMeses(inicioMes, k + 1));
-      const previsao = meses.map((m) => ({ mes: m, valor: 0 }));
-      const receitas: Array<{ empresaId: string; cliente: string; mensal: number }> = [];
-      let mrr = 0;
+        .where(and(eq(s.assinatura.situacao, 'vigente'), eq(s.assinatura.emTeste, false)))
+      const meses = Array.from({ length: 6 }, (_, k) => somarMeses(inicioMes, k + 1))
+      const previsao = meses.map((m) => ({ mes: m, valor: 0 }))
+      const receitas: Array<{ empresaId: string; cliente: string; mensal: number }> = []
+      let mrr = 0
       for (const l of assinaturas) {
-        if (l.situacao === 'inativo') continue;
-        const r = await receitaDaAssinatura(tx, l.a, data);
-        mrr += r.atual;
-        receitas.push({ empresaId: l.a.empresaId, cliente: l.fantasia || l.nome, mensal: r.atual });
+        if (l.situacao === 'inativo') continue
+        const r = await receitaDaAssinatura(tx, l.a, data)
+        mrr += r.atual
+        receitas.push({ empresaId: l.a.empresaId, cliente: l.fantasia || l.nome, mensal: r.atual })
         previsao.forEach((p) => {
-          p.valor += p.mes >= r.renovacao ? r.depois : r.atual;
-        });
+          p.valor += p.mes >= r.renovacao ? r.depois : r.atual
+        })
       }
 
       // Perto dos limites: 80% ou mais de algum limite da assinatura.
       const perto: Array<{
-        empresaId: string;
-        cliente: string;
-        item: string;
-        uso: string;
-        limite: string;
-      }> = [];
+        empresaId: string
+        cliente: string
+        item: string
+        uso: string
+        limite: string
+      }> = []
       for (const l of assinaturas) {
-        if (!['ativo', 'somente_leitura'].includes(l.situacao)) continue;
-        const lim = await limitesEfetivos(tx, l.a.empresaId, data);
-        if (!lim) continue;
-        const uso = await usoAtual(tx, l.a.empresaId);
-        const cliente = l.fantasia || l.nome;
+        if (!['ativo', 'somente_leitura'].includes(l.situacao)) continue
+        const lim = await limitesEfetivos(tx, l.a.empresaId, data)
+        if (!lim) continue
+        const uso = await usoAtual(tx, l.a.empresaId)
+        const cliente = l.fantasia || l.nome
         const conferir = (
           item: string,
           u: number,
@@ -238,17 +233,17 @@ export async function rotasPainelComercial(app: FastifyInstance): Promise<void> 
               item,
               uso: formato(u),
               limite: formato(max),
-            });
+            })
           }
-        };
-        conferir('Estabelecimentos', uso.estabelecimentos, lim.estabelecimentos);
-        conferir('Usuários', uso.usuarios, lim.usuarios);
+        }
+        conferir('Estabelecimentos', uso.estabelecimentos, lim.estabelecimentos)
+        conferir('Usuários', uso.usuarios, lim.usuarios)
         conferir(
           'Anexos',
           uso.armazenamentoBytes / 1024 ** 3,
           lim.armazenamentoGb,
           (x) => `${x.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} GB`,
-        );
+        )
       }
 
       const emTeste = await tx
@@ -261,11 +256,11 @@ export async function rotasPainelComercial(app: FastifyInstance): Promise<void> 
         .innerJoin(s.empresa, eq(s.empresa.id, s.assinatura.empresaId))
         .innerJoin(s.ficha, eq(s.ficha.id, s.empresa.fichaId))
         .where(and(eq(s.assinatura.situacao, 'vigente'), eq(s.assinatura.emTeste, true)))
-        .orderBy(asc(s.assinatura.fimTeste));
+        .orderBy(asc(s.assinatura.fimTeste))
       const [oportunidades] = await tx
         .select({ n: sql<number>`count(*)::int` })
         .from(s.interesseModulo)
-        .where(isNull(s.interesseModulo.atendidoEm));
+        .where(isNull(s.interesseModulo.atendidoEm))
 
       return {
         clientes: {
@@ -285,13 +280,13 @@ export async function rotasPainelComercial(app: FastifyInstance): Promise<void> 
         pertoDosLimites: perto,
         emTeste,
         oportunidades: oportunidades?.n ?? 0,
-      };
+      }
     }),
-  );
+  )
 
   app.get('/api/plataforma/interesses', async (req) =>
     naPlataforma(db, req, ['plataforma.painel', 'visualizar'], async ({ tx }) => {
-      const { todos } = z.object({ todos: z.literal('1').optional() }).parse(req.query);
+      const { todos } = z.object({ todos: z.literal('1').optional() }).parse(req.query)
       return tx
         .select({
           id: s.interesseModulo.id,
@@ -310,28 +305,28 @@ export async function rotasPainelComercial(app: FastifyInstance): Promise<void> 
         .innerJoin(s.usuario, eq(s.usuario.id, s.interesseModulo.usuarioId))
         .where(todos ? undefined : isNull(s.interesseModulo.atendidoEm))
         .orderBy(desc(s.interesseModulo.criadoEm))
-        .limit(200);
+        .limit(200)
     }),
-  );
+  )
 
   app.post<{ Params: { id: string } }>('/api/plataforma/interesses/:id/atender', async (req) =>
     naPlataforma(db, req, ['plataforma.clientes', 'editar'], async ({ tx, usuarioId, auditar }) => {
-      const id = z.uuid().parse(req.params.id);
+      const id = z.uuid().parse(req.params.id)
       const r = await tx
         .update(s.interesseModulo)
         .set({ atendidoEm: sql`now()`, atendidoPor: usuarioId })
         .where(and(eq(s.interesseModulo.id, id), isNull(s.interesseModulo.atendidoEm)))
-        .returning();
-      if (!r.length) throw new ErroNaoEncontrado('Oportunidade não encontrada.');
+        .returning()
+      if (!r.length) throw new ErroNaoEncontrado('Oportunidade não encontrada.')
       await auditar({
         acao: 'atender_interesse',
         entidade: 'interesse_modulo',
         registroId: id,
         empresaId: r[0]!.empresaId,
-      });
-      return { ok: true };
+      })
+      return { ok: true }
     }),
-  );
+  )
 
   // ---- Prazos da régua (Configurações da plataforma) ----
 
@@ -343,11 +338,11 @@ export async function rotasPainelComercial(app: FastifyInstance): Promise<void> 
     faturaAntecedenciaDias: z.number().int().min(0).max(60),
     avisosVencimentoDias: z.array(z.number().int().min(0).max(60)).max(5),
     chamadoCategorias: z.array(z.string().trim().min(2).max(60)).min(1).max(30),
-  });
+  })
 
   app.get('/api/plataforma/configuracoes', async (req) =>
     naPlataforma(db, req, ['plataforma.configuracoes', 'visualizar'], async ({ tx }) => {
-      const [c] = await tx.select().from(s.configPlataforma);
+      const [c] = await tx.select().from(s.configPlataforma)
       return prazos.parse({
         testeDias: c!.testeDias,
         avisosTesteDias: c!.avisosTesteDias,
@@ -356,9 +351,9 @@ export async function rotasPainelComercial(app: FastifyInstance): Promise<void> 
         faturaAntecedenciaDias: c!.faturaAntecedenciaDias,
         avisosVencimentoDias: c!.avisosVencimentoDias,
         chamadoCategorias: c!.chamadoCategorias,
-      });
+      })
     }),
-  );
+  )
 
   app.put('/api/plataforma/configuracoes', async (req) =>
     naPlataforma(
@@ -366,8 +361,8 @@ export async function rotasPainelComercial(app: FastifyInstance): Promise<void> 
       req,
       ['plataforma.configuracoes', 'editar'],
       async ({ tx, usuarioId, auditar }) => {
-        const d = prazos.parse(req.body);
-        const [antes] = await tx.select().from(s.configPlataforma);
+        const d = prazos.parse(req.body)
+        const [antes] = await tx.select().from(s.configPlataforma)
         await tx
           .update(s.configPlataforma)
           .set({
@@ -376,15 +371,15 @@ export async function rotasPainelComercial(app: FastifyInstance): Promise<void> 
             atualizadoPor: usuarioId,
             versao: sql`${s.configPlataforma.versao} + 1`,
           })
-          .where(eq(s.configPlataforma.id, true));
+          .where(eq(s.configPlataforma.id, true))
         await auditar({
           acao: 'editar',
           entidade: 'config_plataforma',
           antes: antes ?? null,
           depois: d,
-        });
-        return { ok: true };
+        })
+        return { ok: true }
       },
     ),
-  );
+  )
 }

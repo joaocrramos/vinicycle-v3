@@ -1,10 +1,10 @@
 // Bloco cadastral padrão (P2; 03-modelo-de-dados.md, 1.12 e 1.13).
-import { REDES, ROTULOS_ENDERECO, TIPOS_CONTATO, TIPOS_PESSOA, UFS } from '@vinicycle/shared';
-import { sql } from 'drizzle-orm';
-import { boolean, check, index, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
-import { alteracao, criacao, emLista, id } from './comum';
+import { REDES, ROTULOS_ENDERECO, TIPOS_CONTATO, TIPOS_PESSOA, UFS } from '@vinicycle/shared'
+import { sql } from 'drizzle-orm'
+import { boolean, check, index, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import { alteracao, criacao, emLista, id } from './comum'
 
-export const DONOS_FICHA = ['empresa', 'estabelecimento', 'pessoa', 'usuario'] as const;
+export const DONOS_FICHA = ['empresa', 'estabelecimento', 'pessoa', 'usuario'] as const
 
 /**
  * Ficha cadastral. Empresa, estabelecimento, pessoa e usuário apontam cada um para uma ficha.
@@ -47,7 +47,7 @@ export const ficha = pgTable(
       .on(t.empresaId, t.dono, t.documento)
       .where(sql`dono in ('estabelecimento', 'pessoa') and documento is not null`),
   ],
-);
+)
 
 export const fichaEndereco = pgTable(
   'ficha_endereco',
@@ -76,7 +76,7 @@ export const fichaEndereco = pgTable(
       .on(t.fichaId)
       .where(sql`principal`),
   ],
-);
+)
 
 export const fichaContato = pgTable(
   'ficha_contato',
@@ -100,4 +100,4 @@ export const fichaContato = pgTable(
       .on(t.fichaId)
       .where(sql`principal and tipo = 'email'`),
   ],
-);
+)

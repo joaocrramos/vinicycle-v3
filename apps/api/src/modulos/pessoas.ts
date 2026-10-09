@@ -6,27 +6,27 @@ import {
   type DadosPessoa,
   dadosPessoa,
   motivo,
-} from '@vinicycle/shared';
-import { and, asc, count, eq, notInArray, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import type { Tx } from '../db/cliente';
-import * as s from '../db/schema';
-import { conferirVersao } from '../nucleo/entidades';
-import { ErroNaoAutenticado, ErroNaoEncontrado } from '../nucleo/erros';
-import { buscaTexto, listar } from '../nucleo/listagem';
-import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao';
-import { atualizarFicha, criarFicha, lerFicha, resumoFicha } from './fichas';
+} from '@vinicycle/shared'
+import { and, asc, count, eq, notInArray, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import type { Tx } from '../db/cliente'
+import * as s from '../db/schema'
+import { conferirVersao } from '../nucleo/entidades'
+import { ErroNaoAutenticado, ErroNaoEncontrado } from '../nucleo/erros'
+import { buscaTexto, listar } from '../nucleo/listagem'
+import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao'
+import { atualizarFicha, criarFicha, lerFicha, resumoFicha } from './fichas'
 
-const F = 'gestao.pessoas';
+const F = 'gestao.pessoas'
 
 async function carregar(ctx: ContextoEmpresa, id: string) {
   const [p] = await ctx.tx
     .select()
     .from(s.pessoa)
-    .where(and(eq(s.pessoa.id, id), eq(s.pessoa.empresaId, ctx.empresaId)));
-  if (!p) throw new ErroNaoEncontrado('Pessoa não encontrada.');
-  return p;
+    .where(and(eq(s.pessoa.id, id), eq(s.pessoa.empresaId, ctx.empresaId)))
+  if (!p) throw new ErroNaoEncontrado('Pessoa não encontrada.')
+  return p
 }
 
 /** Papéis, extensões e contatos, no formato do esquema de entrada. */
@@ -34,13 +34,13 @@ export async function lerComplementos(tx: Tx, pessoaId: string) {
   const papeis = await tx
     .select({ papel: s.pessoaPapel.papel })
     .from(s.pessoaPapel)
-    .where(and(eq(s.pessoaPapel.pessoaId, pessoaId), eq(s.pessoaPapel.ativo, true)));
-  const um = async <T>(q: Promise<T[]>) => (await q)[0];
+    .where(and(eq(s.pessoaPapel.pessoaId, pessoaId), eq(s.pessoaPapel.ativo, true)))
+  const um = async <T>(q: Promise<T[]>) => (await q)[0]
   const sem = <T extends Record<string, unknown>>(r: T | undefined) => {
-    if (!r) return undefined;
-    const { pessoaId: _p, empresaId: _e, ...resto } = r;
-    return resto;
-  };
+    if (!r) return undefined
+    const { pessoaId: _p, empresaId: _e, ...resto } = r
+    return resto
+  }
   return {
     papeis: papeis.map((p) => p.papel as DadosPessoa['papeis'][number]),
     cliente: sem(
@@ -92,7 +92,7 @@ export async function lerComplementos(tx: Tx, pessoaId: string) {
         .where(eq(s.pessoaContato.pessoaId, pessoaId))
         .orderBy(asc(s.pessoaContato.nome))
     ).map(({ nome, cargo, emails, telefones }) => ({ nome, cargo, emails, telefones })),
-  };
+  }
 }
 
 /** Grava papéis, extensões e contatos. Papel retirado fica inativo; os dados dele são mantidos. */
@@ -102,11 +102,11 @@ async function gravarComplementos(
   pessoaId: string,
   d: DadosPessoa,
 ): Promise<void> {
-  const base = { pessoaId, empresaId };
+  const base = { pessoaId, empresaId }
   await tx
     .update(s.pessoaPapel)
     .set({ ativo: false })
-    .where(and(eq(s.pessoaPapel.pessoaId, pessoaId), notInArray(s.pessoaPapel.papel, d.papeis)));
+    .where(and(eq(s.pessoaPapel.pessoaId, pessoaId), notInArray(s.pessoaPapel.papel, d.papeis)))
   for (const papel of d.papeis) {
     await tx
       .insert(s.pessoaPapel)
@@ -114,45 +114,45 @@ async function gravarComplementos(
       .onConflictDoUpdate({
         target: [s.pessoaPapel.pessoaId, s.pessoaPapel.papel],
         set: { ativo: true },
-      });
+      })
   }
-  const tem = (p: DadosPessoa['papeis'][number]) => d.papeis.includes(p);
+  const tem = (p: DadosPessoa['papeis'][number]) => d.papeis.includes(p)
   const upsert = async <T extends Record<string, unknown>>(
     tabela: typeof s.pessoaCliente,
     valores: T | undefined,
   ) => {
-    if (!valores) return;
+    if (!valores) return
     await tx
       .insert(tabela)
       .values({ ...base, ...valores } as never)
-      .onConflictDoUpdate({ target: tabela.pessoaId, set: valores as never });
-  };
-  if (tem('cliente')) await upsert(s.pessoaCliente, d.cliente);
-  if (tem('fornecedor')) await upsert(s.pessoaFornecedor as never, d.fornecedor);
-  if (tem('produtor_uva')) await upsert(s.pessoaProdutorUva as never, d.produtorUva);
-  if (tem('funcionario')) await upsert(s.pessoaFuncionario as never, d.funcionario);
-  if (tem('laboratorio')) await upsert(s.pessoaLaboratorio as never, d.laboratorio);
-  if (tem('responsavel_tecnico')) await upsert(s.pessoaRt as never, d.rt);
+      .onConflictDoUpdate({ target: tabela.pessoaId, set: valores as never })
+  }
+  if (tem('cliente')) await upsert(s.pessoaCliente, d.cliente)
+  if (tem('fornecedor')) await upsert(s.pessoaFornecedor as never, d.fornecedor)
+  if (tem('produtor_uva')) await upsert(s.pessoaProdutorUva as never, d.produtorUva)
+  if (tem('funcionario')) await upsert(s.pessoaFuncionario as never, d.funcionario)
+  if (tem('laboratorio')) await upsert(s.pessoaLaboratorio as never, d.laboratorio)
+  if (tem('responsavel_tecnico')) await upsert(s.pessoaRt as never, d.rt)
   if (tem('fabricante') && d.fabricante) {
-    await tx.delete(s.pessoaFabricanteMarca).where(eq(s.pessoaFabricanteMarca.pessoaId, pessoaId));
+    await tx.delete(s.pessoaFabricanteMarca).where(eq(s.pessoaFabricanteMarca.pessoaId, pessoaId))
     // Repetidas (sem diferenciar maiúsculas): fica a primeira grafia.
     const marcas = d.fabricante.marcas.filter(
       (m, i, todas) => todas.findIndex((x) => x.toLowerCase() === m.toLowerCase()) === i,
-    );
+    )
     if (marcas.length)
-      await tx.insert(s.pessoaFabricanteMarca).values(marcas.map((marca) => ({ ...base, marca })));
+      await tx.insert(s.pessoaFabricanteMarca).values(marcas.map((marca) => ({ ...base, marca })))
   }
   if (tem('transportador') && d.transportador) {
     await tx
       .delete(s.pessoaTransportadorPlaca)
-      .where(eq(s.pessoaTransportadorPlaca.pessoaId, pessoaId));
-    const placas = [...new Set(d.transportador.placas)];
+      .where(eq(s.pessoaTransportadorPlaca.pessoaId, pessoaId))
+    const placas = [...new Set(d.transportador.placas)]
     if (placas.length)
       await tx
         .insert(s.pessoaTransportadorPlaca)
-        .values(placas.map((placa) => ({ ...base, placa })));
+        .values(placas.map((placa) => ({ ...base, placa })))
   }
-  await tx.delete(s.pessoaContato).where(eq(s.pessoaContato.pessoaId, pessoaId));
+  await tx.delete(s.pessoaContato).where(eq(s.pessoaContato.pessoaId, pessoaId))
   if (d.contatos.length) {
     await tx.insert(s.pessoaContato).values(
       d.contatos.map((c) => ({
@@ -162,18 +162,18 @@ async function gravarComplementos(
         emails: c.emails,
         telefones: c.telefones,
       })),
-    );
+    )
   }
 }
 
 function resumoComplementos(d: Awaited<ReturnType<typeof lerComplementos>> | DadosPessoa) {
-  const { papeis, contatos, ...extensoes } = d as DadosPessoa;
-  return { papeis: [...papeis].sort(), contatos, ...extensoes };
+  const { papeis, contatos, ...extensoes } = d as DadosPessoa
+  return { papeis: [...papeis].sort(), contatos, ...extensoes }
 }
 
 /** Cadastra a pessoa com a ficha (P2), os papéis e as extensões; também usada na importação de NF-e (P11). */
 export async function criarPessoa(ctx: ContextoEmpresa, d: DadosPessoa): Promise<string> {
-  const fichaId = await criarFicha(ctx.tx, d.ficha, 'pessoa', ctx.empresaId, ctx.usuarioId);
+  const fichaId = await criarFicha(ctx.tx, d.ficha, 'pessoa', ctx.empresaId, ctx.usuarioId)
   const [p] = await ctx.tx
     .insert(s.pessoa)
     .values({
@@ -182,19 +182,19 @@ export async function criarPessoa(ctx: ContextoEmpresa, d: DadosPessoa): Promise
       criadoPor: ctx.usuarioId,
       atualizadoPor: ctx.usuarioId,
     })
-    .returning({ id: s.pessoa.id });
-  await gravarComplementos(ctx.tx, ctx.empresaId, p!.id, d);
+    .returning({ id: s.pessoa.id })
+  await gravarComplementos(ctx.tx, ctx.empresaId, p!.id, d)
   await ctx.auditar({
     acao: 'criar',
     entidade: 'pessoa',
     registroId: p!.id,
     depois: { ...resumoFicha(d.ficha), ...resumoComplementos(d) },
-  });
-  return p!.id;
+  })
+  return p!.id
 }
 
 export async function rotasPessoas(app: FastifyInstance): Promise<void> {
-  const { db, consultas } = app.deps;
+  const { db, consultas } = app.deps
 
   app.get('/api/pessoas', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
@@ -203,7 +203,7 @@ export async function rotasPessoas(app: FastifyInstance): Promise<void> {
           situacao: z.enum(['ativos', 'inativos', 'todos']).default('ativos'),
           papel: z.enum(CODIGOS_PAPEL).optional(),
         })
-        .parse(req.query);
+        .parse(req.query)
       const filtro = and(
         eq(s.pessoa.empresaId, ctx.empresaId),
         q.situacao === 'todos' ? undefined : eq(s.pessoa.ativo, q.situacao === 'ativos'),
@@ -211,7 +211,7 @@ export async function rotasPessoas(app: FastifyInstance): Promise<void> {
           ? sql`exists (select 1 from pessoa_papel pp where pp.pessoa_id = ${s.pessoa.id} and pp.papel = ${q.papel} and pp.ativo)`
           : undefined,
         buscaTexto(q.busca, [s.ficha.nome, s.ficha.nomeFantasia, s.ficha.documento]),
-      );
+      )
       return listar({
         consulta: q,
         ordenaveis: { nome: s.ficha.nome, documento: s.ficha.documento },
@@ -252,15 +252,15 @@ export async function rotasPessoas(app: FastifyInstance): Promise<void> {
             .orderBy(...ordem)
             .limit(limite)
             .offset(deslocamento),
-      });
+      })
     }),
-  );
+  )
 
   /** Lista curta para os campos de escolha (ex.: responsável técnico, fabricante). */
   app.get('/api/pessoas/opcoes', async (req) =>
     naEmpresa(db, req, null, async (ctx) => {
       // Sem papel: todas as pessoas ativas (ex.: remetente e destinatário do granel).
-      const { papel } = z.object({ papel: z.enum(CODIGOS_PAPEL).optional() }).parse(req.query);
+      const { papel } = z.object({ papel: z.enum(CODIGOS_PAPEL).optional() }).parse(req.query)
       return ctx.tx
         .select({
           id: s.pessoa.id,
@@ -280,13 +280,13 @@ export async function rotasPessoas(app: FastifyInstance): Promise<void> {
           ),
         )
         .orderBy(asc(s.ficha.nome))
-        .limit(1000);
+        .limit(1000)
     }),
-  );
+  )
 
   app.get<{ Params: { id: string } }>('/api/pessoas/:id', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const p = await carregar(ctx, z.uuid().parse(req.params.id));
+      const p = await carregar(ctx, z.uuid().parse(req.params.id))
       return {
         id: p.id,
         ativo: p.ativo,
@@ -294,27 +294,27 @@ export async function rotasPessoas(app: FastifyInstance): Promise<void> {
         motivoInativacao: p.motivoInativacao,
         ficha: await lerFicha(ctx.tx, p.fichaId),
         ...(await lerComplementos(ctx.tx, p.id)),
-      };
+      }
     }),
-  );
+  )
 
   app.post('/api/pessoas', async (req) =>
     naEmpresa(db, req, [F, 'criar'], async (ctx) => {
-      const d = dadosPessoa.parse(req.body);
-      return { id: await criarPessoa(ctx, d) };
+      const d = dadosPessoa.parse(req.body)
+      return { id: await criarPessoa(ctx, d) }
     }),
-  );
+  )
 
   app.put<{ Params: { id: string } }>('/api/pessoas/:id', async (req) =>
     naEmpresa(db, req, [F, 'editar'], async (ctx) => {
-      const id = z.uuid().parse(req.params.id);
-      const d = dadosPessoa.parse(req.body);
-      const p = await carregar(ctx, id);
-      conferirVersao(p.versao, d.versao);
-      const fichaAntes = await lerFicha(ctx.tx, p.fichaId);
-      const antes = await lerComplementos(ctx.tx, id);
-      await atualizarFicha(ctx.tx, p.fichaId, d.ficha, ctx.usuarioId);
-      await gravarComplementos(ctx.tx, ctx.empresaId, id, d);
+      const id = z.uuid().parse(req.params.id)
+      const d = dadosPessoa.parse(req.body)
+      const p = await carregar(ctx, id)
+      conferirVersao(p.versao, d.versao)
+      const fichaAntes = await lerFicha(ctx.tx, p.fichaId)
+      const antes = await lerComplementos(ctx.tx, id)
+      await atualizarFicha(ctx.tx, p.fichaId, d.ficha, ctx.usuarioId)
+      await gravarComplementos(ctx.tx, ctx.empresaId, id, d)
       await ctx.tx
         .update(s.pessoa)
         .set({
@@ -322,25 +322,25 @@ export async function rotasPessoas(app: FastifyInstance): Promise<void> {
           atualizadoPor: ctx.usuarioId,
           versao: sql`${s.pessoa.versao} + 1`,
         })
-        .where(eq(s.pessoa.id, id));
-      const depois = await lerComplementos(ctx.tx, id);
+        .where(eq(s.pessoa.id, id))
+      const depois = await lerComplementos(ctx.tx, id)
       await ctx.auditar({
         acao: 'editar',
         entidade: 'pessoa',
         registroId: id,
         antes: { ...resumoFicha(fichaAntes), ...resumoComplementos(antes) },
         depois: { ...resumoFicha(d.ficha), ...resumoComplementos(depois) },
-      });
-      return { ok: true };
+      })
+      return { ok: true }
     }),
-  );
+  )
 
   for (const acao of ['inativar', 'reativar'] as const) {
     app.post<{ Params: { id: string } }>(`/api/pessoas/:id/${acao}`, async (req) =>
       naEmpresa(db, req, [F, 'inativar'], async (ctx) => {
-        const id = z.uuid().parse(req.params.id);
-        const m = acao === 'inativar' ? motivo.parse(req.body).motivo : null;
-        await carregar(ctx, id);
+        const id = z.uuid().parse(req.params.id)
+        const m = acao === 'inativar' ? motivo.parse(req.body).motivo : null
+        await carregar(ctx, id)
         await ctx.tx
           .update(s.pessoa)
           .set(
@@ -353,23 +353,23 @@ export async function rotasPessoas(app: FastifyInstance): Promise<void> {
                 }
               : { ativo: true, inativadoEm: null, inativadoPor: null, motivoInativacao: null },
           )
-          .where(eq(s.pessoa.id, id));
-        await ctx.auditar({ acao, entidade: 'pessoa', registroId: id, motivo: m });
-        return { ok: true };
+          .where(eq(s.pessoa.id, id))
+        await ctx.auditar({ acao, entidade: 'pessoa', registroId: id, motivo: m })
+        return { ok: true }
       }),
-    );
+    )
   }
 
   // Busca de CEP e CNPJ (P2): só pré-preenche; o usuário confere.
-  const limite = { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } };
+  const limite = { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } }
   app.get<{ Params: { cep: string } }>('/api/consultas/cep/:cep', limite, async (req) => {
-    if (!req.sessao) throw new ErroNaoAutenticado();
-    const r = await consultas.cep(req.params.cep);
-    return r ? { encontrado: true, ...r } : { encontrado: false };
-  });
+    if (!req.sessao) throw new ErroNaoAutenticado()
+    const r = await consultas.cep(req.params.cep)
+    return r ? { encontrado: true, ...r } : { encontrado: false }
+  })
   app.get<{ Params: { cnpj: string } }>('/api/consultas/cnpj/:cnpj', limite, async (req) => {
-    if (!req.sessao) throw new ErroNaoAutenticado();
-    const r = await consultas.cnpj(req.params.cnpj);
-    return r ? { encontrado: true, ...r } : { encontrado: false };
-  });
+    if (!req.sessao) throw new ErroNaoAutenticado()
+    const r = await consultas.cnpj(req.params.cnpj)
+    return r ? { encontrado: true, ...r } : { encontrado: false }
+  })
 }

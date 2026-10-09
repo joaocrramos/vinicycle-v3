@@ -15,9 +15,9 @@ export const ACOES = [
   'importar',
   'reabrir_periodo',
   'aprovar',
-] as const;
+] as const
 
-export type Acao = (typeof ACOES)[number];
+export type Acao = (typeof ACOES)[number]
 
 export const NOMES_ACOES: Record<Acao, string> = {
   visualizar: 'Visualizar',
@@ -30,7 +30,7 @@ export const NOMES_ACOES: Record<Acao, string> = {
   importar: 'Importar',
   reabrir_periodo: 'Reabrir período',
   aprovar: 'Aprovar',
-};
+}
 
 export const MODULOS = [
   { codigo: 'GESTAO', nome: 'Gestão', funcao: 'Gestão', situacao: 'disponivel', ordem: 1 },
@@ -38,12 +38,12 @@ export const MODULOS = [
   { codigo: 'VITITRACK', nome: 'VitiTrack', funcao: 'Campo', situacao: 'em_breve', ordem: 3 },
   { codigo: 'ENOTUR', nome: 'EnoTur', funcao: 'Enoturismo', situacao: 'em_breve', ordem: 4 },
   { codigo: 'ENOMESA', nome: 'EnoMesa', funcao: 'Gastronomia', situacao: 'em_breve', ordem: 5 },
-] as const;
+] as const
 
-export type CodigoModulo = (typeof MODULOS)[number]['codigo'];
+export type CodigoModulo = (typeof MODULOS)[number]['codigo']
 
 /** Gestão está em todos os planos (ambiente-cliente.md, Módulos). */
-export const MODULO_SEMPRE_PRESENTE: CodigoModulo = 'GESTAO';
+export const MODULO_SEMPRE_PRESENTE: CodigoModulo = 'GESTAO'
 
 /** Áreas da grade inicial dos perfis-modelo (P27). */
 export type AreaGrade =
@@ -66,22 +66,22 @@ export type AreaGrade =
   | 'cadastros_cantina'
   | 'relatorios'
   | 'configuracoes'
-  | 'faturas';
+  | 'faturas'
 
 export interface Funcionalidade {
-  codigo: string;
-  nome: string;
+  codigo: string
+  nome: string
   /** Vazio nas funcionalidades da plataforma. */
-  modulo: CodigoModulo | null;
-  escopo: 'empresa' | 'plataforma';
-  acoes: readonly Acao[];
+  modulo: CodigoModulo | null
+  escopo: 'empresa' | 'plataforma'
+  acoes: readonly Acao[]
   /** Só o Master; não aparece na grade dos demais perfis (P27). */
-  somenteMaster?: boolean;
-  area?: AreaGrade;
-  ordem: number;
+  somenteMaster?: boolean
+  area?: AreaGrade
+  ordem: number
 }
 
-const CRUD = ['visualizar', 'criar', 'editar', 'inativar', 'exportar'] as const;
+const CRUD = ['visualizar', 'criar', 'editar', 'inativar', 'exportar'] as const
 const LANCAMENTO = [
   'visualizar',
   'criar',
@@ -90,9 +90,9 @@ const LANCAMENTO = [
   'estornar',
   'exportar',
   'aprovar',
-] as const;
+] as const
 
-let ordem = 0;
+let ordem = 0
 function f(
   codigo: string,
   nome: string,
@@ -100,7 +100,7 @@ function f(
   acoes: readonly Acao[],
   extra: Partial<Pick<Funcionalidade, 'somenteMaster' | 'area'>> = {},
 ): Funcionalidade {
-  ordem += 10;
+  ordem += 10
   return {
     codigo,
     nome,
@@ -109,7 +109,7 @@ function f(
     acoes,
     ordem,
     ...extra,
-  };
+  }
 }
 
 export const FUNCIONALIDADES: readonly Funcionalidade[] = [
@@ -237,16 +237,16 @@ export const FUNCIONALIDADES: readonly Funcionalidade[] = [
   f('plataforma.troca_master', 'Troca do Master pelo suporte', null, ['criar']),
   f('plataforma.manutencao', 'Manutenção', null, ['visualizar', 'criar', 'exportar']),
   f('plataforma.configuracoes', 'Configurações da plataforma', null, ['visualizar', 'editar']),
-];
+]
 
 export function buscarFuncionalidade(codigo: string): Funcionalidade | undefined {
-  return FUNCIONALIDADES.find((x) => x.codigo === codigo);
+  return FUNCIONALIDADES.find((x) => x.codigo === codigo)
 }
 
 // Grade inicial dos perfis-modelo (P27, Decidido em 03/10/2026).
 // Legenda: '-' sem acesso; 'V' ver; 'E' ver e lançar; '*' lançar e também confirmar,
 // estornar ou aprovar.
-type Nivel = '-' | 'V' | 'E' | '*';
+type Nivel = '-' | 'V' | 'E' | '*'
 
 export const PERFIS_MODELO = [
   { codigo: 'MASTER', nome: 'Master', eMaster: true },
@@ -255,9 +255,9 @@ export const PERFIS_MODELO = [
   { codigo: 'CANTINEIRO', nome: 'Cantineiro', eMaster: false },
   { codigo: 'AGRONOMO', nome: 'Agrônomo', eMaster: false },
   { codigo: 'FINANCEIRO', nome: 'Financeiro / Administrativo', eMaster: false },
-] as const;
+] as const
 
-export type CodigoPerfilModelo = (typeof PERFIS_MODELO)[number]['codigo'];
+export type CodigoPerfilModelo = (typeof PERFIS_MODELO)[number]['codigo']
 
 const GRADE_MODELO: Record<AreaGrade, Record<Exclude<CodigoPerfilModelo, 'MASTER'>, Nivel>> = {
   inicio: { RT: 'E', ENOLOGO: 'E', CANTINEIRO: 'E', AGRONOMO: 'E', FINANCEIRO: 'E' },
@@ -287,7 +287,7 @@ const GRADE_MODELO: Record<AreaGrade, Record<Exclude<CodigoPerfilModelo, 'MASTER
   relatorios: { RT: 'E', ENOLOGO: 'E', CANTINEIRO: 'V', AGRONOMO: 'V', FINANCEIRO: 'E' },
   configuracoes: { RT: '-', ENOLOGO: '-', CANTINEIRO: '-', AGRONOMO: '-', FINANCEIRO: '-' },
   faturas: { RT: '-', ENOLOGO: '-', CANTINEIRO: '-', AGRONOMO: '-', FINANCEIRO: 'V' },
-};
+}
 
 const ACOES_POR_NIVEL: Record<Nivel, readonly Acao[]> = {
   '-': [],
@@ -307,7 +307,7 @@ const ACOES_POR_NIVEL: Record<Nivel, readonly Acao[]> = {
     'aprovar',
     'reabrir_periodo',
   ],
-};
+}
 
 /**
  * Grade inicial de um perfil-modelo: pares (funcionalidade, ação). O Master não tem grade, porque
@@ -316,17 +316,16 @@ const ACOES_POR_NIVEL: Record<Nivel, readonly Acao[]> = {
 export function gradeDoModelo(
   perfil: Exclude<CodigoPerfilModelo, 'MASTER'>,
 ): Array<{ funcionalidade: string; acao: Acao }> {
-  const exporta =
-    GRADE_MODELO.relatorios[perfil] !== 'V' && GRADE_MODELO.relatorios[perfil] !== '-';
-  const grade: Array<{ funcionalidade: string; acao: Acao }> = [];
+  const exporta = GRADE_MODELO.relatorios[perfil] !== 'V' && GRADE_MODELO.relatorios[perfil] !== '-'
+  const grade: Array<{ funcionalidade: string; acao: Acao }> = []
   for (const func of FUNCIONALIDADES) {
-    if (func.escopo !== 'empresa' || func.somenteMaster || !func.area) continue;
-    const nivel = GRADE_MODELO[func.area][perfil];
+    if (func.escopo !== 'empresa' || func.somenteMaster || !func.area) continue
+    const nivel = GRADE_MODELO[func.area][perfil]
     for (const acao of ACOES_POR_NIVEL[nivel]) {
-      if (!func.acoes.includes(acao)) continue;
-      if (acao === 'exportar' && !exporta && func.area !== 'relatorios') continue;
-      grade.push({ funcionalidade: func.codigo, acao });
+      if (!func.acoes.includes(acao)) continue
+      if (acao === 'exportar' && !exporta && func.area !== 'relatorios') continue
+      grade.push({ funcionalidade: func.codigo, acao })
     }
   }
-  return grade;
+  return grade
 }

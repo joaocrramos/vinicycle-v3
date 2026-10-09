@@ -1,45 +1,45 @@
 // Menu do avatar: Meu perfil, Segurança e Preferências (P9, P10, P21).
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { fichaEntrada, SENHA_MINIMO, trocarEmail, trocarSenha } from '@vinicycle/shared';
-import { type FormEvent, useState } from 'react';
-import { z } from 'zod';
-import { FichaCadastral } from '@/componentes/FichaCadastral';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { RelatoriosEmail } from './RelatoriosEmail';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { type Preferencias, useSessao } from '@/lib/sessao';
-import { aplicarTema, PALETAS } from '@/lib/tema';
-import { cn, formatarDataHora } from '@/lib/utils';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { fichaEntrada, SENHA_MINIMO, trocarEmail, trocarSenha } from '@vinicycle/shared'
+import { type FormEvent, useState } from 'react'
+import { z } from 'zod'
+import { FichaCadastral } from '@/componentes/FichaCadastral'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { RelatoriosEmail } from './RelatoriosEmail'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { type Preferencias, useSessao } from '@/lib/sessao'
+import { aplicarTema, PALETAS } from '@/lib/tema'
+import { cn, formatarDataHora } from '@/lib/utils'
 
 interface Eu {
-  email: string;
-  segundoFatorAtivo: boolean;
-  senhaAlteradaEm: string | null;
-  ficha: z.input<typeof fichaEntrada>;
+  email: string
+  segundoFatorAtivo: boolean
+  senhaAlteradaEm: string | null
+  ficha: z.input<typeof fichaEntrada>
 }
 
 function FormularioPerfil({ eu }: { eu: Eu }) {
-  const qc = useQueryClient();
-  const form = useFormulario(z.object({ ficha: fichaEntrada }), { ficha: eu.ficha });
-  const [salvo, setSalvo] = useState(false);
-  const [trocar, setTrocar] = useState(false);
-  const [enviado, setEnviado] = useState<string | null>(null);
+  const qc = useQueryClient()
+  const form = useFormulario(z.object({ ficha: fichaEntrada }), { ficha: eu.ficha })
+  const [salvo, setSalvo] = useState(false)
+  const [trocar, setTrocar] = useState(false)
+  const [enviado, setEnviado] = useState<string | null>(null)
   async function enviar(ev: FormEvent) {
-    ev.preventDefault();
-    setSalvo(false);
-    const d = form.validar();
-    if (!d) return;
+    ev.preventDefault()
+    setSalvo(false)
+    const d = form.validar()
+    if (!d) return
     try {
-      await api.put('/api/eu/ficha', d.ficha);
-      setSalvo(true);
-      await qc.invalidateQueries({ queryKey: ['sessao'] });
+      await api.put('/api/eu/ficha', d.ficha)
+      setSalvo(true)
+      await qc.invalidateQueries({ queryKey: ['sessao'] })
     } catch (e) {
-      form.erroDaApi(e);
+      form.erroDaApi(e)
     }
   }
   return (
@@ -63,8 +63,8 @@ function FormularioPerfil({ eu }: { eu: Eu }) {
       {trocar && (
         <TrocaDeEmail
           aoFechar={(novo) => {
-            setTrocar(false);
-            if (novo) setEnviado(novo);
+            setTrocar(false)
+            if (novo) setEnviado(novo)
           }}
         />
       )}
@@ -73,12 +73,12 @@ function FormularioPerfil({ eu }: { eu: Eu }) {
         <Botao type="submit">Salvar</Botao>
       </div>
     </form>
-  );
+  )
 }
 
 /** Troca de e-mail (P10): confirma a senha atual; o novo endereço recebe o link. */
 function TrocaDeEmail({ aoFechar }: { aoFechar: (novo?: string) => void }) {
-  const form = useFormulario(trocarEmail, { email: '', senha: '' });
+  const form = useFormulario(trocarEmail, { email: '', senha: '' })
   return (
     <Dialogo
       aberto
@@ -92,13 +92,13 @@ function TrocaDeEmail({ aoFechar }: { aoFechar: (novo?: string) => void }) {
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                await api.post('/api/eu/email', d);
-                aoFechar(d.email);
+                await api.post('/api/eu/email', d)
+                aoFechar(d.email)
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -130,18 +130,18 @@ function TrocaDeEmail({ aoFechar }: { aoFechar: (novo?: string) => void }) {
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function MeuPerfil() {
-  const q = useQuery({ queryKey: ['eu'], queryFn: () => api.get<Eu>('/api/eu') });
+  const q = useQuery({ queryKey: ['eu'], queryFn: () => api.get<Eu>('/api/eu') })
   return (
     <Pagina titulo="Meu perfil">
       <Cartao>
         <CorpoCartao>{q.data && <FormularioPerfil eu={q.data} />}</CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }
 
 const novaSenha = trocarSenha
@@ -149,12 +149,12 @@ const novaSenha = trocarSenha
   .refine((d) => d.senha === d.confirmacao, {
     path: ['confirmacao'],
     message: 'As senhas não conferem',
-  });
+  })
 
 function TrocaDeSenha() {
-  const [codigoEnviado, setCodigoEnviado] = useState(false);
-  const [pronto, setPronto] = useState(false);
-  const form = useFormulario(novaSenha, { codigo: '', senha: '', confirmacao: '' });
+  const [codigoEnviado, setCodigoEnviado] = useState(false)
+  const [pronto, setPronto] = useState(false)
+  const form = useFormulario(novaSenha, { codigo: '', senha: '', confirmacao: '' })
   return (
     <Cartao>
       <CabecalhoCartao
@@ -170,11 +170,11 @@ function TrocaDeSenha() {
               variante="secundario"
               onClick={async () => {
                 try {
-                  await api.post('/api/eu/senha/codigo');
-                  setCodigoEnviado(true);
-                  setPronto(false);
+                  await api.post('/api/eu/senha/codigo')
+                  setCodigoEnviado(true)
+                  setPronto(false)
                 } catch (e) {
-                  form.erroDaApi(e);
+                  form.erroDaApi(e)
                 }
               }}
             >
@@ -186,16 +186,16 @@ function TrocaDeSenha() {
             className="grid gap-4 sm:grid-cols-3"
             noValidate
             onSubmit={async (ev) => {
-              ev.preventDefault();
-              const d = form.validar();
-              if (!d) return;
+              ev.preventDefault()
+              const d = form.validar()
+              if (!d) return
               try {
-                await api.post('/api/eu/senha', { codigo: d.codigo, senha: d.senha });
-                setPronto(true);
-                setCodigoEnviado(false);
-                form.setValores({ codigo: '', senha: '', confirmacao: '' });
+                await api.post('/api/eu/senha', { codigo: d.codigo, senha: d.senha })
+                setPronto(true)
+                setCodigoEnviado(false)
+                form.setValores({ codigo: '', senha: '', confirmacao: '' })
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -241,20 +241,20 @@ function TrocaDeSenha() {
         )}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 interface Sessao {
-  id: string;
-  criadaEm: string;
-  ultimoUsoEm: string;
-  ip: string | null;
-  navegador: string | null;
-  atual: boolean;
+  id: string
+  criadaEm: string
+  ultimoUsoEm: string
+  ip: string | null
+  navegador: string | null
+  atual: boolean
 }
 
 function descreverNavegador(ua: string | null): string {
-  if (!ua) return 'Navegador desconhecido';
+  if (!ua) return 'Navegador desconhecido'
   const nav = /Edg\//.test(ua)
     ? 'Edge'
     : /Chrome\//.test(ua)
@@ -263,7 +263,7 @@ function descreverNavegador(ua: string | null): string {
         ? 'Firefox'
         : /Safari\//.test(ua)
           ? 'Safari'
-          : 'Navegador';
+          : 'Navegador'
   const so = /iPhone|iPad/.test(ua)
     ? 'iPhone/iPad'
     : /Android/.test(ua)
@@ -274,16 +274,16 @@ function descreverNavegador(ua: string | null): string {
           ? 'Windows'
           : /Linux/.test(ua)
             ? 'Linux'
-            : '';
-  return so ? `${nav} no ${so}` : nav;
+            : ''
+  return so ? `${nav} no ${so}` : nav
 }
 
 function Sessoes() {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const q = useQuery({
     queryKey: ['sessoes'],
     queryFn: () => api.get<Sessao[]>('/api/eu/sessoes'),
-  });
+  })
   return (
     <Cartao>
       <CabecalhoCartao
@@ -311,8 +311,8 @@ function Sessoes() {
                 variante="secundario"
                 tamanho="pequeno"
                 onClick={async () => {
-                  await api.post(`/api/eu/sessoes/${s.id}/encerrar`);
-                  await qc.invalidateQueries({ queryKey: ['sessoes'] });
+                  await api.post(`/api/eu/sessoes/${s.id}/encerrar`)
+                  await qc.invalidateQueries({ queryKey: ['sessoes'] })
                 }}
               >
                 Encerrar
@@ -322,15 +322,15 @@ function Sessoes() {
         ))}
       </ul>
     </Cartao>
-  );
+  )
 }
 
 export function ConfigurarSegundoFator({ aoConcluir }: { aoConcluir?: () => void }) {
-  const [dados, setDados] = useState<{ segredo: string; qrSvg: string } | null>(null);
-  const [codigo, setCodigo] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
-  const [pronto, setPronto] = useState(false);
-  if (pronto) return <Aviso tom="sucesso">Segundo fator ativado.</Aviso>;
+  const [dados, setDados] = useState<{ segredo: string; qrSvg: string } | null>(null)
+  const [codigo, setCodigo] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
+  const [pronto, setPronto] = useState(false)
+  if (pronto) return <Aviso tom="sucesso">Segundo fator ativado.</Aviso>
   if (!dados) {
     return (
       <div className="flex flex-col gap-3">
@@ -339,9 +339,9 @@ export function ConfigurarSegundoFator({ aoConcluir }: { aoConcluir?: () => void
           <Botao
             onClick={async () => {
               try {
-                setDados(await api.post('/api/auth/segundo-fator/iniciar'));
+                setDados(await api.post('/api/auth/segundo-fator/iniciar'))
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               }
             }}
           >
@@ -349,7 +349,7 @@ export function ConfigurarSegundoFator({ aoConcluir }: { aoConcluir?: () => void
           </Botao>
         </div>
       </div>
-    );
+    )
   }
   return (
     <div className="flex flex-col gap-4">
@@ -373,13 +373,13 @@ export function ConfigurarSegundoFator({ aoConcluir }: { aoConcluir?: () => void
       <form
         className="flex flex-wrap items-end gap-2"
         onSubmit={async (ev) => {
-          ev.preventDefault();
+          ev.preventDefault()
           try {
-            await api.post('/api/auth/segundo-fator/ativar', { codigo });
-            setPronto(true);
-            aoConcluir?.();
+            await api.post('/api/auth/segundo-fator/ativar', { codigo })
+            setPronto(true)
+            aoConcluir?.()
           } catch (e) {
-            setErro((e as Error).message);
+            setErro((e as Error).message)
           }
         }}
       >
@@ -396,11 +396,11 @@ export function ConfigurarSegundoFator({ aoConcluir }: { aoConcluir?: () => void
         <Botao type="submit">Ativar</Botao>
       </form>
     </div>
-  );
+  )
 }
 
 export function Seguranca() {
-  const q = useQuery({ queryKey: ['eu'], queryFn: () => api.get<Eu>('/api/eu') });
+  const q = useQuery({ queryKey: ['eu'], queryFn: () => api.get<Eu>('/api/eu') })
   return (
     <Pagina titulo="Segurança">
       <TrocaDeSenha />
@@ -419,18 +419,18 @@ export function Seguranca() {
       </Cartao>
       <Sessoes />
     </Pagina>
-  );
+  )
 }
 
 export function PreferenciasUsuario() {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const p = (s?.usuario.preferencias ?? {}) as Preferencias;
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const p = (s?.usuario.preferencias ?? {}) as Preferencias
   async function mudar(novo: Partial<Preferencias>) {
-    const prefs = { ...p, ...novo };
-    aplicarTema(prefs);
-    await api.put('/api/eu/preferencias', novo);
-    await qc.invalidateQueries({ queryKey: ['sessao'] });
+    const prefs = { ...p, ...novo }
+    aplicarTema(prefs)
+    await api.put('/api/eu/preferencias', novo)
+    await qc.invalidateQueries({ queryKey: ['sessao'] })
   }
   return (
     <Pagina titulo="Preferências">
@@ -514,5 +514,5 @@ export function PreferenciasUsuario() {
       </Cartao>
       <RelatoriosEmail />
     </Pagina>
-  );
+  )
 }

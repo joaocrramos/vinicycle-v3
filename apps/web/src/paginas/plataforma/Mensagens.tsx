@@ -1,61 +1,61 @@
 // Administração › Envios e Modelos de mensagem (administracao.md, Mapa de telas): a fila de
 // e-mail, WhatsApp e SMS com tentativas e reenvio; os textos editáveis, com variáveis e versões.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CANAIS_MENSAGEM,
   type CanalMensagem,
   NOMES_CANAL,
   preencherModelo,
-} from '@vinicycle/shared';
-import { useState } from 'react';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
+} from '@vinicycle/shared'
+import { useState } from 'react'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
 
 interface LinhaEnvio {
-  id: string;
-  canal: CanalMensagem;
-  destinatario: string;
-  modelo: string;
-  assunto: string | null;
-  origem: string;
-  situacao: 'pendente' | 'enviado' | 'falhou';
-  tentativas: number;
-  ultimoErro: string | null;
-  provedor: string | null;
-  criadoEm: string;
-  enviadoEm: string | null;
+  id: string
+  canal: CanalMensagem
+  destinatario: string
+  modelo: string
+  assunto: string | null
+  origem: string
+  situacao: 'pendente' | 'enviado' | 'falhou'
+  tentativas: number
+  ultimoErro: string | null
+  provedor: string | null
+  criadoEm: string
+  enviadoEm: string | null
 }
 
-const TOM = { pendente: 'alerta', enviado: 'sucesso', falhou: 'erro' } as const;
-const NOME_SITUACAO = { pendente: 'Na fila', enviado: 'Enviado', falhou: 'Falhou' } as const;
+const TOM = { pendente: 'alerta', enviado: 'sucesso', falhou: 'erro' } as const
+const NOME_SITUACAO = { pendente: 'Na fila', enviado: 'Enviado', falhou: 'Falhou' } as const
 
 function DetalheEnvio({ id, aoFechar }: { id: string; aoFechar: () => void }) {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
   const q = useQuery({
     queryKey: ['envio', id],
     queryFn: () =>
       api.get<
         LinhaEnvio & {
-          corpoTexto: string;
+          corpoTexto: string
           tentativas: Array<{
-            id: string;
-            ocorridaEm: string;
-            sucesso: boolean;
-            resposta: unknown;
-          }>;
+            id: string
+            ocorridaEm: string
+            sucesso: boolean
+            resposta: unknown
+          }>
         }
       >(`/api/plataforma/envios/${id}`),
-  });
-  const [erro, setErro] = useState<string | null>(null);
-  const e = q.data;
+  })
+  const [erro, setErro] = useState<string | null>(null)
+  const e = q.data
   return (
     <Dialogo
       aberto
@@ -70,11 +70,11 @@ function DetalheEnvio({ id, aoFechar }: { id: string; aoFechar: () => void }) {
           <Botao
             onClick={async () => {
               try {
-                await api.post(`/api/plataforma/envios/${id}/reenviar`, {});
-                await qc.invalidateQueries({ queryKey: ['envio', id] });
-                await qc.invalidateQueries({ queryKey: ['lista'] });
+                await api.post(`/api/plataforma/envios/${id}/reenviar`, {})
+                await qc.invalidateQueries({ queryKey: ['envio', id] })
+                await qc.invalidateQueries({ queryKey: ['lista'] })
               } catch (x) {
-                setErro((x as Error).message);
+                setErro((x as Error).message)
               }
             }}
           >
@@ -106,11 +106,11 @@ function DetalheEnvio({ id, aoFechar }: { id: string; aoFechar: () => void }) {
         </div>
       )}
     </Dialogo>
-  );
+  )
 }
 
 export function PaginaEnvios() {
-  const [aberto, setAberto] = useState<string | null>(null);
+  const [aberto, setAberto] = useState<string | null>(null)
   return (
     <Pagina titulo="Envios" trilha={['Administração']}>
       <p className="text-sm text-muted-foreground">
@@ -193,22 +193,22 @@ export function PaginaEnvios() {
       />
       {aberto && <DetalheEnvio id={aberto} aoFechar={() => setAberto(null)} />}
     </Pagina>
-  );
+  )
 }
 
 interface Modelo {
-  codigo: string;
-  nome: string;
-  variaveis: string[];
-  padrao: { assunto: string; corpo: string };
+  codigo: string
+  nome: string
+  variaveis: string[]
+  padrao: { assunto: string; corpo: string }
   versoes: Array<{
-    id: string;
-    versao: number;
-    assunto: string;
-    corpo: string;
-    ativa: boolean;
-    criadoEm: string;
-  }>;
+    id: string
+    versao: number
+    assunto: string
+    corpo: string
+    ativa: boolean
+    criadoEm: string
+  }>
 }
 
 const EXEMPLO: Record<string, string> = {
@@ -226,14 +226,14 @@ const EXEMPLO: Record<string, string> = {
   excessos: '3 usuários para 2',
   canal: 'WhatsApp',
   mes: '01/2027',
-};
+}
 
 function EditarModelo({ modelo, aoFechar }: { modelo: Modelo; aoFechar: () => void }) {
-  const qc = useQueryClient();
-  const ativa = modelo.versoes.find((v) => v.ativa);
-  const [assunto, setAssunto] = useState(ativa?.assunto ?? modelo.padrao.assunto);
-  const [corpo, setCorpo] = useState(ativa?.corpo ?? modelo.padrao.corpo);
-  const [erro, setErro] = useState<string | null>(null);
+  const qc = useQueryClient()
+  const ativa = modelo.versoes.find((v) => v.ativa)
+  const [assunto, setAssunto] = useState(ativa?.assunto ?? modelo.padrao.assunto)
+  const [corpo, setCorpo] = useState(ativa?.corpo ?? modelo.padrao.corpo)
+  const [erro, setErro] = useState<string | null>(null)
   return (
     <Dialogo
       aberto
@@ -249,11 +249,11 @@ function EditarModelo({ modelo, aoFechar }: { modelo: Modelo; aoFechar: () => vo
           <Botao
             onClick={async () => {
               try {
-                await api.post(`/api/plataforma/modelos/${modelo.codigo}`, { assunto, corpo });
-                await qc.invalidateQueries({ queryKey: ['modelos'] });
-                aoFechar();
+                await api.post(`/api/plataforma/modelos/${modelo.codigo}`, { assunto, corpo })
+                await qc.invalidateQueries({ queryKey: ['modelos'] })
+                aoFechar()
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               }
             }}
           >
@@ -288,18 +288,18 @@ function EditarModelo({ modelo, aoFechar }: { modelo: Modelo; aoFechar: () => vo
         </div>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function PaginaModelos() {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
   const q = useQuery({
     queryKey: ['modelos'],
     queryFn: () => api.get<Modelo[]>('/api/plataforma/modelos'),
-  });
-  const [editar, setEditar] = useState<Modelo | null>(null);
-  const podeEditar = pode(s, 'plataforma.envios', 'editar');
+  })
+  const [editar, setEditar] = useState<Modelo | null>(null)
+  const podeEditar = pode(s, 'plataforma.envios', 'editar')
   return (
     <Pagina titulo="Modelos de mensagem" trilha={['Administração']}>
       <p className="text-sm text-muted-foreground">
@@ -308,7 +308,7 @@ export function PaginaModelos() {
       </p>
       <div className="grid gap-5 lg:grid-cols-2">
         {q.data?.map((m) => {
-          const ativa = m.versoes.find((v) => v.ativa);
+          const ativa = m.versoes.find((v) => v.ativa)
           return (
             <Cartao key={m.codigo}>
               <CabecalhoCartao
@@ -329,8 +329,8 @@ export function PaginaModelos() {
                           variante="secundario"
                           tamanho="pequeno"
                           onClick={async () => {
-                            await api.post(`/api/plataforma/modelos/${m.codigo}/padrao`, {});
-                            await qc.invalidateQueries({ queryKey: ['modelos'] });
+                            await api.post(`/api/plataforma/modelos/${m.codigo}/padrao`, {})
+                            await qc.invalidateQueries({ queryKey: ['modelos'] })
                           }}
                         >
                           Voltar ao padrão
@@ -352,10 +352,10 @@ export function PaginaModelos() {
                 )}
               </CorpoCartao>
             </Cartao>
-          );
+          )
         })}
       </div>
       {editar && <EditarModelo modelo={editar} aoFechar={() => setEditar(null)} />}
     </Pagina>
-  );
+  )
 }

@@ -1,5 +1,5 @@
-import { Tooltip } from 'radix-ui';
-import type { ReactNode } from 'react';
+import { Tooltip } from 'radix-ui'
+import type { ReactNode } from 'react'
 
 /** Dica que aparece ao passar o mouse ou ao focar pelo teclado (botões só com ícone). */
 export function Dica({ texto, children }: { texto: string; children: ReactNode }) {
@@ -18,5 +18,5 @@ export function Dica({ texto, children }: { texto: string; children: ReactNode }
         </Tooltip.Portal>
       </Tooltip.Root>
     </Tooltip.Provider>
-  );
+  )
 }

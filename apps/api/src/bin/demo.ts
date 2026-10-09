@@ -5,46 +5,46 @@
 // Cria também equipe@vinicycle.local, Administrador da plataforma com a mesma senha e um segredo
 // fixo de segundo fator, para conferir a Administração no navegador. O código do momento:
 //   pnpm --filter @vinicycle/api demo codigo
-import { FORMATOS_CODIGO_PADRAO } from '@vinicycle/shared';
-import { and, eq, sql } from 'drizzle-orm';
-import { v7 as uuidv7 } from 'uuid';
-import { lerConfig } from '../config';
-import { criarBanco, definirContexto, emContexto } from '../db/cliente';
-import { PERFIL_ADMINISTRADOR, PLANO_COMPLETO } from '../db/referencia';
-import * as s from '../db/schema';
-import { cifrar, codigoTotp, gerarHashSenha } from '../nucleo/seguranca';
-import { criarFicha } from '../modulos/fichas';
-import { copiarPerfisModelo } from '../modulos/plataforma';
+import { FORMATOS_CODIGO_PADRAO } from '@vinicycle/shared'
+import { and, eq, sql } from 'drizzle-orm'
+import { v7 as uuidv7 } from 'uuid'
+import { lerConfig } from '../config'
+import { criarBanco, definirContexto, emContexto } from '../db/cliente'
+import { PERFIL_ADMINISTRADOR, PLANO_COMPLETO } from '../db/referencia'
+import * as s from '../db/schema'
+import { cifrar, codigoTotp, gerarHashSenha } from '../nucleo/seguranca'
+import { criarFicha } from '../modulos/fichas'
+import { copiarPerfisModelo } from '../modulos/plataforma'
 
-const config = lerConfig();
+const config = lerConfig()
 if (config.NODE_ENV === 'production' || config.URL_APLICACAO.startsWith('https://app.')) {
-  throw new Error('Dados de demonstração não vão para a produção (P6).');
+  throw new Error('Dados de demonstração não vão para a produção (P6).')
 }
-const EMAIL = 'demo@vinicycle.local';
-const EMAIL_EQUIPE = 'equipe@vinicycle.local';
+const EMAIL = 'demo@vinicycle.local'
+const EMAIL_EQUIPE = 'equipe@vinicycle.local'
 /** Segredo de segundo fator só da demonstração local (nunca usado fora dela). */
-const SEGREDO_EQUIPE = 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP';
-const SENHA = process.env.DEMO_SENHA ?? 'demonstracao-local';
+const SEGREDO_EQUIPE = 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP'
+const SENHA = process.env.DEMO_SENHA ?? 'demonstracao-local'
 
 if (process.argv[2] === 'codigo') {
-  console.log(codigoTotp(SEGREDO_EQUIPE));
-  process.exit(0);
+  console.log(codigoTotp(SEGREDO_EQUIPE))
+  process.exit(0)
 }
 
-const { pool, db } = criarBanco(config.DATABASE_URL, 1);
+const { pool, db } = criarBanco(config.DATABASE_URL, 1)
 
 try {
   await emContexto(db, { plataforma: true, autenticacao: true }, async (tx) => {
     const [existe] = await tx
       .select({ id: s.usuario.id })
       .from(s.usuario)
-      .where(eq(sql`lower(${s.usuario.email})`, EMAIL));
+      .where(eq(sql`lower(${s.usuario.email})`, EMAIL))
     if (existe) {
-      console.log(`Demonstração já existe: ${EMAIL}`);
-      return;
+      console.log(`Demonstração já existe: ${EMAIL}`)
+      return
     }
-    const [plano] = await tx.select().from(s.plano).where(eq(s.plano.nome, PLANO_COMPLETO));
-    const empresaId = uuidv7();
+    const [plano] = await tx.select().from(s.plano).where(eq(s.plano.nome, PLANO_COMPLETO))
+    const empresaId = uuidv7()
     const fichaEmpresa = await criarFicha(
       tx,
       {
@@ -58,24 +58,24 @@ try {
       'empresa',
       empresaId,
       null,
-    );
-    await tx.insert(s.empresa).values({ id: empresaId, fichaId: fichaEmpresa, situacao: 'ativo' });
-    await tx.insert(s.empresaSituacao).values({ empresaId, situacao: 'ativo', origem: 'criacao' });
+    )
+    await tx.insert(s.empresa).values({ id: empresaId, fichaId: fichaEmpresa, situacao: 'ativo' })
+    await tx.insert(s.empresaSituacao).values({ empresaId, situacao: 'ativo', origem: 'criacao' })
     await tx.insert(s.assinatura).values({
       empresaId,
       planoId: plano!.id,
       periodicidade: 'mensal',
       inicio: '2026-10-01',
       situacao: 'vigente',
-    });
-    const perfis = await copiarPerfisModelo(tx, empresaId, null);
+    })
+    const perfis = await copiarPerfisModelo(tx, empresaId, null)
     await tx.insert(s.formatoCodigo).values(
       Object.entries(FORMATOS_CODIGO_PADRAO).map(([tipo, mascara]) => ({
         empresaId,
         tipo,
         mascara,
       })),
-    );
+    )
     const fichaUsuario = await criarFicha(
       tx,
       {
@@ -88,7 +88,7 @@ try {
       'usuario',
       null,
       null,
-    );
+    )
     const [u] = await tx
       .insert(s.usuario)
       .values({
@@ -96,16 +96,16 @@ try {
         fichaId: fichaUsuario,
         senhaHash: await gerarHashSenha(SENHA),
       })
-      .returning({ id: s.usuario.id });
+      .returning({ id: s.usuario.id })
     await definirContexto(tx, {
       plataforma: true,
       autenticacao: true,
       empresaId,
       usuarioId: u!.id,
-    });
+    })
     await tx
       .insert(s.vinculo)
-      .values({ empresaId, usuarioId: u!.id, perfilId: perfis.get('MASTER')!, eMaster: true });
+      .values({ empresaId, usuarioId: u!.id, perfilId: perfis.get('MASTER')!, eMaster: true })
     const fichaEstab = await criarFicha(
       tx,
       {
@@ -130,7 +130,7 @@ try {
       'estabelecimento',
       empresaId,
       null,
-    );
+    )
     const [e] = await tx
       .insert(s.estabelecimento)
       .values({
@@ -140,29 +140,29 @@ try {
         atividadesMapa: ['produtor', 'engarrafador'],
         capacidadeLitros: '45000.00',
       })
-      .returning({ id: s.estabelecimento.id });
+      .returning({ id: s.estabelecimento.id })
     await tx.insert(s.local).values({
       empresaId,
       estabelecimentoId: e!.id,
       nome: 'Adega',
       uso: 'ambos',
       moduloEstoque: 'ENOTRACE',
-    });
+    })
     const [cs] = await tx
       .select({ id: s.variedade.id })
       .from(s.variedade)
-      .where(and(eq(s.variedade.codigoOficial, '1058')));
-    await tx.insert(s.empresaVariedade).values({ empresaId, variedadeId: cs!.id });
+      .where(and(eq(s.variedade.codigoOficial, '1058')))
+    await tx.insert(s.empresaVariedade).values({ empresaId, variedadeId: cs!.id })
     console.log(
       `Demonstração criada: entre com ${EMAIL} (senha em DEMO_SENHA ou "demonstracao-local").`,
-    );
-  });
+    )
+  })
   await emContexto(db, { plataforma: true, autenticacao: true }, async (tx) => {
     const [existe] = await tx
       .select({ id: s.usuario.id })
       .from(s.usuario)
-      .where(eq(sql`lower(${s.usuario.email})`, EMAIL_EQUIPE));
-    if (existe) return;
+      .where(eq(sql`lower(${s.usuario.email})`, EMAIL_EQUIPE))
+    if (existe) return
     const ficha = await criarFicha(
       tx,
       {
@@ -175,7 +175,7 @@ try {
       'usuario',
       null,
       null,
-    );
+    )
     const [u] = await tx
       .insert(s.usuario)
       .values({
@@ -185,14 +185,14 @@ try {
         totpSegredoCifrado: cifrar(config.CHAVE_CIFRA, SEGREDO_EQUIPE),
         totpAtivoEm: new Date(),
       })
-      .returning({ id: s.usuario.id });
+      .returning({ id: s.usuario.id })
     const [admin] = await tx
       .select({ id: s.perfil.id })
       .from(s.perfil)
-      .where(and(eq(s.perfil.escopo, 'plataforma'), eq(s.perfil.codigo, PERFIL_ADMINISTRADOR)));
-    await tx.insert(s.equipeMembro).values({ usuarioId: u!.id, perfilId: admin!.id });
-    console.log(`Equipe da plataforma: ${EMAIL_EQUIPE}; código do segundo fator: "demo codigo".`);
-  });
+      .where(and(eq(s.perfil.escopo, 'plataforma'), eq(s.perfil.codigo, PERFIL_ADMINISTRADOR)))
+    await tx.insert(s.equipeMembro).values({ usuarioId: u!.id, perfilId: admin!.id })
+    console.log(`Equipe da plataforma: ${EMAIL_EQUIPE}; código do segundo fator: "demo codigo".`)
+  })
 } finally {
-  await pool.end();
+  await pool.end()
 }

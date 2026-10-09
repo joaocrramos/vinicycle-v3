@@ -1,14 +1,14 @@
 // Gestão › Diário (ambiente-cliente.md, Diário; 04, roteiro do ciclo 8): notas datadas por
 // estabelecimento, com autor, anexos e vínculo opcional a projeto, recipiente ou parcela. As notas
 // aparecem também na ficha do que foi vinculado. Alterar e inativar ficam na auditoria (P14).
-import { and, eq, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import * as s from '../db/schema';
-import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros';
-import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao';
+import { and, eq, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import * as s from '../db/schema'
+import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros'
+import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao'
 
-const F = 'gestao.diario';
+const F = 'gestao.diario'
 
 const esquemaNota = z.object({
   data: z.iso.date('Informe a data'),
@@ -16,7 +16,7 @@ const esquemaNota = z.object({
   projetoId: z.uuid().nullable().optional(),
   recipienteId: z.uuid().nullable().optional(),
   parcelaId: z.uuid().nullable().optional(),
-});
+})
 
 /** Os vínculos têm de ser da empresa (e o projeto e o recipiente, do estabelecimento). */
 async function conferirVinculos(
@@ -25,28 +25,28 @@ async function conferirVinculos(
   d: z.infer<typeof esquemaNota>,
 ) {
   const confere = async (ok: boolean, nome: string) => {
-    if (!ok) throw new ErroRegra(`${nome} não encontrado neste estabelecimento.`, 'vinculo');
-  };
+    if (!ok) throw new ErroRegra(`${nome} não encontrado neste estabelecimento.`, 'vinculo')
+  }
   if (d.projetoId) {
     const [p] = await ctx.tx
       .select({ e: s.projeto.estabelecimentoId })
       .from(s.projeto)
-      .where(and(eq(s.projeto.id, d.projetoId), eq(s.projeto.empresaId, ctx.empresaId)));
-    await confere(p?.e === estab, 'Projeto');
+      .where(and(eq(s.projeto.id, d.projetoId), eq(s.projeto.empresaId, ctx.empresaId)))
+    await confere(p?.e === estab, 'Projeto')
   }
   if (d.recipienteId) {
     const [r] = await ctx.tx
       .select({ e: s.recipiente.estabelecimentoId })
       .from(s.recipiente)
-      .where(and(eq(s.recipiente.id, d.recipienteId), eq(s.recipiente.empresaId, ctx.empresaId)));
-    await confere(r?.e === estab, 'Recipiente');
+      .where(and(eq(s.recipiente.id, d.recipienteId), eq(s.recipiente.empresaId, ctx.empresaId)))
+    await confere(r?.e === estab, 'Recipiente')
   }
   if (d.parcelaId) {
     const [p] = await ctx.tx
       .select({ id: s.parcela.id })
       .from(s.parcela)
-      .where(and(eq(s.parcela.id, d.parcelaId), eq(s.parcela.empresaId, ctx.empresaId)));
-    await confere(!!p, 'Parcela');
+      .where(and(eq(s.parcela.id, d.parcelaId), eq(s.parcela.empresaId, ctx.empresaId)))
+    await confere(!!p, 'Parcela')
   }
 }
 
@@ -55,18 +55,18 @@ async function carregar(ctx: ContextoEmpresa, id: string) {
     .select()
     .from(s.diarioNota)
     .where(and(eq(s.diarioNota.id, id), eq(s.diarioNota.empresaId, ctx.empresaId)))
-    .for('update');
+    .for('update')
   if (!n || n.estabelecimentoId !== ctx.exigirEstabelecimento() || !n.ativo)
-    throw new ErroNaoEncontrado('Nota não encontrada.');
-  return n;
+    throw new ErroNaoEncontrado('Nota não encontrada.')
+  return n
 }
 
 export async function rotasDiario(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
 
   app.get('/api/diario', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
+      const estab = ctx.exigirEstabelecimento()
       const q = z
         .object({
           projeto: z.uuid().optional(),
@@ -77,22 +77,22 @@ export async function rotasDiario(app: FastifyInstance): Promise<void> {
           ate: z.iso.date().optional(),
           busca: z.string().trim().max(100).optional(),
         })
-        .parse(req.query);
+        .parse(req.query)
       const r = await ctx.tx.execute<{
-        id: string;
-        data: string;
-        texto: string;
-        autor: string | null;
-        criado_por: string;
-        criado_em: string;
-        editada: boolean;
-        projeto_id: string | null;
-        projeto: string | null;
-        recipiente_id: string | null;
-        recipiente: string | null;
-        parcela_id: string | null;
-        parcela: string | null;
-        anexos: number;
+        id: string
+        data: string
+        texto: string
+        autor: string | null
+        criado_por: string
+        criado_em: string
+        editada: boolean
+        projeto_id: string | null
+        projeto: string | null
+        recipiente_id: string | null
+        recipiente: string | null
+        parcela_id: string | null
+        parcela: string | null
+        anexos: number
       }>(sql`
         select n.id, n.data::text as data, n.texto, n.criado_por, n.criado_em::text as criado_em,
           n.atualizado_em <> n.criado_em as editada, n.projeto_id, n.recipiente_id, n.parcela_id,
@@ -111,7 +111,7 @@ export async function rotasDiario(app: FastifyInstance): Promise<void> {
           ${q.de ? sql`and n.data >= ${q.de}::date` : sql``}
           ${q.ate ? sql`and n.data <= ${q.ate}::date` : sql``}
           ${q.busca ? sql`and n.texto ilike ${`%${q.busca.replace(/[%_\\]/g, '\\$&')}%`}` : sql``}
-        order by n.data desc, n.criado_em desc limit 300`);
+        order by n.data desc, n.criado_em desc limit 300`)
       return r.rows.map((n) => ({
         id: n.id,
         data: n.data,
@@ -124,15 +124,15 @@ export async function rotasDiario(app: FastifyInstance): Promise<void> {
         recipiente: n.recipiente_id ? { id: n.recipiente_id, codigo: n.recipiente } : null,
         parcela: n.parcela_id ? { id: n.parcela_id, nome: n.parcela } : null,
         anexos: n.anexos,
-      }));
+      }))
     }),
-  );
+  )
 
   app.post('/api/diario', async (req) =>
     naEmpresa(db, req, [F, 'criar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
-      const d = esquemaNota.parse(req.body);
-      await conferirVinculos(ctx, estab, d);
+      const estab = ctx.exigirEstabelecimento()
+      const d = esquemaNota.parse(req.body)
+      await conferirVinculos(ctx, estab, d)
       const [n] = await ctx.tx
         .insert(s.diarioNota)
         .values({
@@ -146,30 +146,30 @@ export async function rotasDiario(app: FastifyInstance): Promise<void> {
           criadoPor: ctx.usuarioId,
           atualizadoPor: ctx.usuarioId,
         })
-        .returning({ id: s.diarioNota.id });
-      await ctx.auditar({ acao: 'criar', entidade: 'diario_nota', registroId: n!.id, dados: d });
-      return { id: n!.id };
+        .returning({ id: s.diarioNota.id })
+      await ctx.auditar({ acao: 'criar', entidade: 'diario_nota', registroId: n!.id, dados: d })
+      return { id: n!.id }
     }),
-  );
+  )
 
   /** O autor altera a própria nota; os demais precisam da ação "editar". */
   app.put<{ Params: { id: string } }>('/api/diario/:id', async (req) =>
     naEmpresa(db, req, [F, 'criar'], async (ctx) => {
-      const n = await carregar(ctx, z.uuid().parse(req.params.id));
-      if (n.criadoPor !== ctx.usuarioId) ctx.exigir(F, 'editar');
-      const d = esquemaNota.parse(req.body);
-      await conferirVinculos(ctx, n.estabelecimentoId, d);
+      const n = await carregar(ctx, z.uuid().parse(req.params.id))
+      if (n.criadoPor !== ctx.usuarioId) ctx.exigir(F, 'editar')
+      const d = esquemaNota.parse(req.body)
+      await conferirVinculos(ctx, n.estabelecimentoId, d)
       const novo = {
         data: d.data,
         texto: d.texto,
         projetoId: d.projetoId ?? null,
         recipienteId: d.recipienteId ?? null,
         parcelaId: d.parcelaId ?? null,
-      };
+      }
       await ctx.tx
         .update(s.diarioNota)
         .set({ ...novo, atualizadoEm: sql`now()`, atualizadoPor: ctx.usuarioId })
-        .where(eq(s.diarioNota.id, n.id));
+        .where(eq(s.diarioNota.id, n.id))
       await ctx.auditar({
         acao: 'editar',
         entidade: 'diario_nota',
@@ -184,18 +184,18 @@ export async function rotasDiario(app: FastifyInstance): Promise<void> {
           },
           depois: novo,
         },
-      });
-      return { ok: true };
+      })
+      return { ok: true }
     }),
-  );
+  )
 
   app.post<{ Params: { id: string } }>('/api/diario/:id/inativar', async (req) =>
     naEmpresa(db, req, [F, 'criar'], async (ctx) => {
-      const n = await carregar(ctx, z.uuid().parse(req.params.id));
-      if (n.criadoPor !== ctx.usuarioId) ctx.exigir(F, 'inativar');
+      const n = await carregar(ctx, z.uuid().parse(req.params.id))
+      if (n.criadoPor !== ctx.usuarioId) ctx.exigir(F, 'inativar')
       const { motivo } = z
         .object({ motivo: z.string().trim().min(3, 'Informe o motivo').max(500) })
-        .parse(req.body);
+        .parse(req.body)
       await ctx.tx
         .update(s.diarioNota)
         .set({
@@ -204,15 +204,15 @@ export async function rotasDiario(app: FastifyInstance): Promise<void> {
           inativadoPor: ctx.usuarioId,
           motivoInativacao: motivo,
         })
-        .where(eq(s.diarioNota.id, n.id));
+        .where(eq(s.diarioNota.id, n.id))
       await ctx.auditar({
         acao: 'inativar',
         entidade: 'diario_nota',
         registroId: n.id,
         motivo,
         dados: {},
-      });
-      return { ok: true };
+      })
+      return { ok: true }
     }),
-  );
+  )
 }

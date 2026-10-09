@@ -1,62 +1,62 @@
 // EnoTrace › Saídas (cantina.md, Saídas de produto): venda, degustação e cortesia, quebra e avaria,
 // consumo interno, doação (lista configurável), manual ou pela nota de venda; a baixa por lote pela
 // estratégia da empresa; devolução ao lote de origem; e o recolhimento ("quem recebeu o lote X").
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatarDecimal } from '@vinicycle/shared';
-import { Plus, Trash2, Undo2 } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { BotaoIcone } from '@/componentes/AcoesLinha';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { nomeNaLista, useReferencia } from '@/lib/referencia';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
-import { useLocais } from './Estoque';
-import { agora, doCampo } from './operacoes/comum';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { formatarDecimal } from '@vinicycle/shared'
+import { Plus, Trash2, Undo2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { BotaoIcone } from '@/componentes/AcoesLinha'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { nomeNaLista, useReferencia } from '@/lib/referencia'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
+import { useLocais } from './Estoque'
+import { agora, doCampo } from './operacoes/comum'
 
-const F = 'enotrace.saidas';
+const F = 'enotrace.saidas'
 
 const mensagem = (e: unknown) =>
   e instanceof ErroApi && e.campos.length
     ? `${e.message} ${e.campos.map((c) => c.mensagem).join(' ')}`
-    : (e as Error).message;
-const un = (v: string) => formatarDecimal(v, Number(v) % 1 ? 3 : 0);
+    : (e as Error).message
+const un = (v: string) => formatarDecimal(v, Number(v) % 1 ? 3 : 0)
 
 const ESTRATEGIAS: Record<string, string> = {
   documento: 'lote da nota',
   escolha: 'lote escolhido',
   mais_antigo: 'mais antigo primeiro',
   sem_lote: 'sem lote',
-};
+}
 
 // Lista ------------------------------------------------------------------------------------------
 
 interface LinhaSaida {
-  id: string;
-  tipo: string;
-  origem: 'manual' | 'xml';
-  executadoEm: string;
-  documento: string | null;
-  destinatario: string | null;
-  situacao: 'lancada' | 'estornada';
-  itens: string | null;
+  id: string
+  tipo: string
+  origem: 'manual' | 'xml'
+  executadoEm: string
+  documento: string | null
+  destinatario: string | null
+  situacao: 'lancada' | 'estornada'
+  itens: string | null
 }
 
 export function ListaSaidas() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const { data: ref } = useReferencia();
-  const fuso = fusoAtivo(s);
-  const [tipo, setTipo] = useState('');
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const { data: ref } = useReferencia()
+  const fuso = fusoAtivo(s)
+  const [tipo, setTipo] = useState('')
   const q = useQuery({
     queryKey: ['saidas', tipo],
     queryFn: () => api.get<LinhaSaida[]>(`/api/saidas${tipo ? `?tipo=${tipo}` : ''}`),
-  });
+  })
   return (
     <Pagina
       titulo="Saídas"
@@ -143,29 +143,29 @@ export function ListaSaidas() {
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }
 
 // Nova saída -------------------------------------------------------------------------------------
 
 interface Disponivel {
-  itemId: string;
-  item: string;
-  saldo: string;
-  lotes: Array<{ id: string; codigo: string; saldo: string }>;
+  itemId: string
+  item: string
+  saldo: string
+  lotes: Array<{ id: string; codigo: string; saldo: string }>
 }
 
 interface PreviaSaida {
-  bloqueios: string[];
-  avisos: Array<{ codigo: string; mensagem: string }>;
-  baixas: Array<{ itemId: string; lote: string | null; quantidade: string; estrategia: string }>;
+  bloqueios: string[]
+  avisos: Array<{ codigo: string; mensagem: string }>
+  baixas: Array<{ itemId: string; lote: string | null; quantidade: string; estrategia: string }>
 }
 
 export function NovaSaida() {
-  const navegar = useNavigate();
-  const qc = useQueryClient();
-  const { data: ref } = useReferencia();
-  const locais = useLocais();
+  const navegar = useNavigate()
+  const qc = useQueryClient()
+  const { data: ref } = useReferencia()
+  const locais = useLocais()
   const [d, setD] = useState({
     tipo: 'venda',
     executadoEm: agora(),
@@ -177,27 +177,27 @@ export function NovaSaida() {
     titularId: '',
     pessoaId: '',
     itens: [{ itemId: '', quantidade: '', loteItemId: '' }],
-  });
+  })
   const clientes = useQuery({
     queryKey: ['pessoas-opcoes', 'cliente_vinificacao'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=cliente_vinificacao'),
-  });
+  })
   const pessoas = useQuery({
     queryKey: ['pessoas-opcoes', 'todas'],
     queryFn: () => api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes'),
-  });
-  const doTitular = d.tipo === 'devolucao_titular' || d.tipo === 'entrega_ordem_titular';
-  const [previa, setPrevia] = useState<PreviaSaida | null>(null);
-  const [cientes, setCientes] = useState<string[]>([]);
-  const [erro, setErro] = useState<string | null>(null);
+  })
+  const doTitular = d.tipo === 'devolucao_titular' || d.tipo === 'entrega_ordem_titular'
+  const [previa, setPrevia] = useState<PreviaSaida | null>(null)
+  const [cientes, setCientes] = useState<string[]>([])
+  const [erro, setErro] = useState<string | null>(null)
   const set = (p: Partial<typeof d>) => {
-    setPrevia(null);
-    setCientes([]);
-    setD({ ...d, ...p });
-  };
+    setPrevia(null)
+    setCientes([])
+    setD({ ...d, ...p })
+  }
   const setItem = (n: number, p: Partial<(typeof d.itens)[number]>) =>
-    set({ itens: d.itens.map((x, j) => (j === n ? { ...x, ...p } : x)) });
+    set({ itens: d.itens.map((x, j) => (j === n ? { ...x, ...p } : x)) })
   const disponivel = useQuery({
     queryKey: ['saidas-disponivel', d.localId, d.titularId, d.tipo],
     queryFn: () =>
@@ -207,7 +207,7 @@ export function NovaSaida() {
         }`,
       ),
     enabled: !!d.localId,
-  });
+  })
   const corpo = () => ({
     ...d,
     executadoEm: doCampo(d.executadoEm),
@@ -222,18 +222,18 @@ export function NovaSaida() {
         loteItemId: i.loteItemId || null,
       })),
     cientes,
-  });
+  })
   async function executar(acao: () => Promise<void>) {
-    setErro(null);
+    setErro(null)
     try {
-      await acao();
+      await acao()
     } catch (e) {
-      setErro(mensagem(e));
+      setErro(mensagem(e))
     }
   }
   const podeLancar =
-    !!previa && !previa.bloqueios.length && previa.avisos.every((a) => cientes.includes(a.codigo));
-  const tipos = (ref?.listas.tipo_saida ?? []).filter((o) => o.codigo !== 'transferencia');
+    !!previa && !previa.bloqueios.length && previa.avisos.every((a) => cientes.includes(a.codigo))
+  const tipos = (ref?.listas.tipo_saida ?? []).filter((o) => o.codigo !== 'transferencia')
   return (
     <Pagina titulo="Nova saída" trilha={['EnoTrace', 'Saídas']}>
       <Cartao>
@@ -360,7 +360,7 @@ export function NovaSaida() {
           )}
           {d.localId &&
             d.itens.map((i, n) => {
-              const prod = disponivel.data?.find((x) => x.itemId === i.itemId);
+              const prod = disponivel.data?.find((x) => x.itemId === i.itemId)
               return (
                 <div key={n} className="grid items-end gap-2 sm:grid-cols-[1fr_9rem_12rem_auto]">
                   <Campo rotulo="Produto" id={`sd-item-${n}`}>
@@ -412,7 +412,7 @@ export function NovaSaida() {
                     <Trash2 />
                   </Botao>
                 </div>
-              );
+              )
             })}
           {d.localId && (
             <div>
@@ -470,8 +470,8 @@ export function NovaSaida() {
           variante="secundario"
           onClick={() =>
             executar(async () => {
-              setPrevia(await api.post<PreviaSaida>('/api/saidas/previa', corpo()));
-              setCientes([]);
+              setPrevia(await api.post<PreviaSaida>('/api/saidas/previa', corpo()))
+              setCientes([])
             })
           }
         >
@@ -481,9 +481,9 @@ export function NovaSaida() {
           disabled={!podeLancar}
           onClick={() =>
             executar(async () => {
-              const r = await api.post<{ id: string }>('/api/saidas', corpo());
-              await qc.invalidateQueries({ queryKey: ['saidas'] });
-              navegar(`/enotrace/saidas/${r.id}`);
+              const r = await api.post<{ id: string }>('/api/saidas', corpo())
+              await qc.invalidateQueries({ queryKey: ['saidas'] })
+              navegar(`/enotrace/saidas/${r.id}`)
             })
           }
         >
@@ -491,76 +491,76 @@ export function NovaSaida() {
         </Botao>
       </div>
     </Pagina>
-  );
+  )
 }
 
 // Ficha ------------------------------------------------------------------------------------------
 
 interface FichaSaida {
-  id: string;
-  tipo: string;
-  origem: 'manual' | 'xml';
-  nfeId: string | null;
-  executadoEm: string;
-  documento: string | null;
-  destinatarioDocumento: string | null;
-  destinatarioNome: string | null;
-  pessoa: string | null;
-  titular: string | null;
-  motivo: string | null;
-  situacao: 'lancada' | 'estornada';
-  motivoEstorno: string | null;
+  id: string
+  tipo: string
+  origem: 'manual' | 'xml'
+  nfeId: string | null
+  executadoEm: string
+  documento: string | null
+  destinatarioDocumento: string | null
+  destinatarioNome: string | null
+  pessoa: string | null
+  titular: string | null
+  motivo: string | null
+  situacao: 'lancada' | 'estornada'
+  motivoEstorno: string | null
   baixas: Array<{
-    id: string;
-    item: string;
-    unidade: string;
-    quantidade: string;
-    estrategia: string;
-    lote: string | null;
-    local: string;
-    localId: string;
-    devolvido: string;
-  }>;
+    id: string
+    item: string
+    unidade: string
+    quantidade: string
+    estrategia: string
+    lote: string | null
+    local: string
+    localId: string
+    devolvido: string
+  }>
   devolucoes: Array<{
-    id: string;
-    executadoEm: string;
-    documento: string | null;
-    motivo: string | null;
+    id: string
+    executadoEm: string
+    documento: string | null
+    motivo: string | null
     itens: Array<{
-      item: string;
-      quantidade: string;
-      lote: string | null;
-      local: string;
-      avariada: boolean;
-    }>;
-  }>;
+      item: string
+      quantidade: string
+      lote: string | null
+      local: string
+      avariada: boolean
+    }>
+  }>
 }
 
 export function FichaSaida() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const { data: ref } = useReferencia();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const [estornando, setEstornando] = useState(false);
-  const [devolvendo, setDevolvendo] = useState(false);
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const { data: ref } = useReferencia()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const [estornando, setEstornando] = useState(false)
+  const [devolvendo, setDevolvendo] = useState(false)
   const q = useQuery({
     queryKey: ['saida', id],
     queryFn: () => api.get<FichaSaida>(`/api/saidas/${id}`),
-  });
+  })
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const sa = q.data;
+    )
+  const sa = q.data
   const atualizar = () =>
     Promise.all([
       qc.invalidateQueries({ queryKey: ['saida', id] }),
       qc.invalidateQueries({ queryKey: ['saidas'] }),
-    ]);
-  const lancada = sa.situacao === 'lancada';
+    ])
+  const lancada = sa.situacao === 'lancada'
   return (
     <Pagina
       titulo={`${nomeNaLista(ref, 'tipo_saida', sa.tipo)} · ${formatarDataHora(sa.executadoEm, fuso)}`}
@@ -605,8 +605,8 @@ export function FichaSaida() {
           saida={sa}
           aoFechar={() => setDevolvendo(false)}
           aoConfirmar={async () => {
-            setDevolvendo(false);
-            await atualizar();
+            setDevolvendo(false)
+            await atualizar()
           }}
         />
       )}
@@ -656,13 +656,13 @@ export function FichaSaida() {
         descricao="As garrafas voltam ao estoque, nos mesmos lotes, com a data original. Saída com devolução não se estorna."
         rotuloBotao="Estornar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/saidas/${id}/estorno`, { motivo });
-          setEstornando(false);
-          await atualizar();
+          await api.post(`/api/saidas/${id}/estorno`, { motivo })
+          setEstornando(false)
+          await atualizar()
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 function Devolucao({
@@ -670,14 +670,14 @@ function Devolucao({
   aoFechar,
   aoConfirmar,
 }: {
-  saida: FichaSaida;
-  aoFechar: () => void;
-  aoConfirmar: () => Promise<unknown>;
+  saida: FichaSaida
+  aoFechar: () => void
+  aoConfirmar: () => Promise<unknown>
 }) {
-  const locais = useLocais();
-  const [executadoEm, setExecutadoEm] = useState(agora());
-  const [documento, setDocumento] = useState('');
-  const [motivo, setMotivo] = useState('');
+  const locais = useLocais()
+  const [executadoEm, setExecutadoEm] = useState(agora())
+  const [documento, setDocumento] = useState('')
+  const [motivo, setMotivo] = useState('')
   const [linhas, setLinhas] = useState(() =>
     saida.baixas.map((b) => ({
       baixaId: b.id,
@@ -685,10 +685,10 @@ function Devolucao({
       localId: b.localId,
       avariada: false,
     })),
-  );
-  const [erro, setErro] = useState<string | null>(null);
+  )
+  const [erro, setErro] = useState<string | null>(null)
   const set = (n: number, p: Partial<(typeof linhas)[number]>) =>
-    setLinhas(linhas.map((l, j) => (j === n ? { ...l, ...p } : l)));
+    setLinhas(linhas.map((l, j) => (j === n ? { ...l, ...p } : l)))
   return (
     <Cartao>
       <CabecalhoCartao
@@ -713,7 +713,7 @@ function Devolucao({
           </Campo>
         </div>
         {saida.baixas.map((b, n) => {
-          const resta = Number(b.quantidade) - Number(b.devolvido);
+          const resta = Number(b.quantidade) - Number(b.devolvido)
           return (
             <div key={b.id} className="grid items-end gap-2 sm:grid-cols-[1fr_8rem_12rem_auto]">
               <p className="text-sm">
@@ -749,13 +749,13 @@ function Devolucao({
                 onChange={(e) => set(n, { avariada: e.target.checked })}
               />
             </div>
-          );
+          )
         })}
         {erro && <Aviso tom="erro">{erro}</Aviso>}
         <div className="flex gap-2">
           <Botao
             onClick={async () => {
-              setErro(null);
+              setErro(null)
               try {
                 await api.post(`/api/saidas/${saida.id}/devolucao`, {
                   executadoEm: doCampo(executadoEm),
@@ -764,10 +764,10 @@ function Devolucao({
                   itens: linhas
                     .filter((l) => Number(l.quantidade.replace(',', '.')) > 0)
                     .map((l) => ({ ...l, quantidade: l.quantidade.replace(',', '.') })),
-                });
-                await aoConfirmar();
+                })
+                await aoConfirmar()
               } catch (e) {
-                setErro(mensagem(e));
+                setErro(mensagem(e))
               }
             }}
           >
@@ -779,38 +779,38 @@ function Devolucao({
         </div>
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 // Recolhimento -----------------------------------------------------------------------------------
 
 export function RecolhimentoLote() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const { data: ref } = useReferencia();
-  const fuso = fusoAtivo(s);
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const { data: ref } = useReferencia()
+  const fuso = fusoAtivo(s)
   const q = useQuery({
     queryKey: ['recolhimento', id],
     queryFn: () =>
       api.get<{
-        codigo: string;
-        saidasSemLote: number;
+        codigo: string
+        saidasSemLote: number
         destinos: Array<{
-          saidaId: string;
-          executadoEm: string;
-          tipo: string;
-          documento: string | null;
-          destinatario: string | null;
-          destinatarioDocumento: string | null;
-          item: string;
-          quantidade: string;
-          devolvido: string;
-        }>;
+          saidaId: string
+          executadoEm: string
+          tipo: string
+          documento: string | null
+          destinatario: string | null
+          destinatarioDocumento: string | null
+          item: string
+          quantidade: string
+          devolvido: string
+        }>
       }>(`/api/lotes-comerciais/${id}/destinos`),
-  });
-  if (!q.data) return <p className="text-sm text-muted-foreground">Carregando…</p>;
-  const r = q.data;
-  const total = r.destinos.reduce((t, x) => t + Number(x.quantidade) - Number(x.devolvido), 0);
+  })
+  if (!q.data) return <p className="text-sm text-muted-foreground">Carregando…</p>
+  const r = q.data
+  const total = r.destinos.reduce((t, x) => t + Number(x.quantidade) - Number(x.devolvido), 0)
   return (
     <Pagina titulo={`Quem recebeu o lote ${r.codigo}`} trilha={['EnoTrace', 'Lotes comerciais']}>
       <p className="text-sm text-muted-foreground">
@@ -874,5 +874,5 @@ export function RecolhimentoLote() {
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }

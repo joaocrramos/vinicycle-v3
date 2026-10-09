@@ -6,19 +6,19 @@
 //   parcela e cultivar, uva comprada por fornecedor e uva de terceiros;
 // - entrega registrada com o protocolo (o instantâneo dos números fica guardado). A anual entregue
 //   trava o ano do estabelecimento (nucleo/periodo.ts); mudanças só por retificação (P13).
-import { and, desc, eq, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import * as s from '../db/schema';
-import { TIPOS_DECLARACAO } from '../db/schema/declaracoes';
-import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros';
-import { exigeAprovacao, pedirAprovacao } from '../nucleo/aprovacoes';
-import { type Aviso, exigirCientes } from '../nucleo/regras';
-import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao';
+import { and, desc, eq, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import * as s from '../db/schema'
+import { TIPOS_DECLARACAO } from '../db/schema/declaracoes'
+import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros'
+import { exigeAprovacao, pedirAprovacao } from '../nucleo/aprovacoes'
+import { type Aviso, exigirCientes } from '../nucleo/regras'
+import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao'
 
-const F = 'enotrace.declaracoes';
+const F = 'enotrace.declaracoes'
 
-type Grupo = 'producao' | 'entradas' | 'engarrafado' | 'saidas' | 'perdas' | 'ajustes' | 'internos';
+type Grupo = 'producao' | 'entradas' | 'engarrafado' | 'saidas' | 'perdas' | 'ajustes' | 'internos'
 
 /**
  * Livro de volumes → colunas da declaração. Produção = o vinho elaborado no ano: a entrada do mosto
@@ -37,7 +37,7 @@ const GRUPO_GRANEL: Record<string, Grupo> = {
   perda: 'perdas',
   evaporacao: 'perdas',
   ajuste_inventario: 'ajustes',
-};
+}
 /** Livro de estoque (produto acabado) → colunas. */
 const GRUPO_ENGARRAFADO: Record<string, Grupo> = {
   producao: 'producao',
@@ -48,9 +48,9 @@ const GRUPO_ENGARRAFADO: Record<string, Grupo> = {
   saida: 'saidas',
   descarte: 'perdas',
   ajuste_inventario: 'ajustes',
-};
+}
 
-const COLUNAS = ['producao', 'entradas', 'engarrafado', 'saidas', 'perdas', 'ajustes', 'internos'];
+const COLUNAS = ['producao', 'entradas', 'engarrafado', 'saidas', 'perdas', 'ajustes', 'internos']
 
 async function limitesAno(ctx: ContextoEmpresa, estab: string, ano: number) {
   const [r] = (
@@ -59,27 +59,27 @@ async function limitesAno(ctx: ContextoEmpresa, estab: string, ano: number) {
         make_timestamptz(${ano + 1}, 1, 1, 0, 0, 0, e.fuso)::text as fim,
         make_timestamptz(${ano + 1}, 1, 1, 0, 0, 0, e.fuso) <= now() as terminou
       from estabelecimento e where e.id = ${estab}`)
-  ).rows;
-  return r!;
+  ).rows
+  return r!
 }
 
-const centavos = (v: string | number | null) => Math.round(Number(v ?? 0) * 100);
-const litros = (c: number) => (c / 100).toFixed(2);
+const centavos = (v: string | number | null) => Math.round(Number(v ?? 0) * 100)
+const litros = (c: number) => (c / 100).toFixed(2)
 
 /** Números da declaração anual do estabelecimento no ano. */
 export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: number) {
-  const { inicio, fim } = await limitesAno(ctx, estab, ano);
+  const { inicio, fim } = await limitesAno(ctx, estab, ano)
 
   // Granel: o estorno conta no tipo do movimento que ele desfaz.
   const vol = await ctx.tx.execute<{
-    titular_id: string | null;
-    titular: string | null;
-    classe: string | null;
-    classe_ordem: number | null;
-    cor: string | null;
-    tipo: string;
-    antes: string;
-    durante: string;
+    titular_id: string | null
+    titular: string | null
+    classe: string | null
+    classe_ordem: number | null
+    cor: string | null
+    tipo: string
+    antes: string
+    durante: string
   }>(sql`
     select l.titular_id,
       (select f.nome from pessoa pe join ficha f on f.id = pe.ficha_id where pe.id = l.titular_id) as titular,
@@ -92,20 +92,20 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
       left join classe_produto c on c.id = p.classe_produto_id
       left join movimento_volume orig on orig.id = m.estorno_de_id
     where m.estabelecimento_id = ${estab} and m.executado_em < ${fim}::timestamptz
-    group by 1, 2, 3, 4, 5, 6`);
+    group by 1, 2, 3, 4, 5, 6`)
   const granel = new Map<
     string,
     {
-      titularId: string | null;
-      titular: string | null;
-      classe: string | null;
-      ordem: number;
-      cor: string | null;
-      c: Record<string, number>;
+      titularId: string | null
+      titular: string | null
+      classe: string | null
+      ordem: number
+      cor: string | null
+      c: Record<string, number>
     }
-  >();
+  >()
   for (const r of vol.rows) {
-    const chave = `${r.titular_id}|${r.classe}|${r.cor}`;
+    const chave = `${r.titular_id}|${r.classe}|${r.cor}`
     const g = granel.get(chave) ?? {
       titularId: r.titular_id,
       titular: r.titular,
@@ -113,14 +113,14 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
       ordem: r.classe_ordem ?? 999,
       cor: r.cor,
       c: Object.fromEntries(['inicial', ...COLUNAS].map((k) => [k, 0])),
-    };
-    g.c.inicial! += centavos(r.antes);
-    g.c[GRUPO_GRANEL[r.tipo] ?? 'internos']! += centavos(r.durante);
-    granel.set(chave, g);
+    }
+    g.c.inicial! += centavos(r.antes)
+    g.c[GRUPO_GRANEL[r.tipo] ?? 'internos']! += centavos(r.durante)
+    granel.set(chave, g)
   }
   const linhasGranel = [...granel.values()]
     .map((g) => {
-      const cols = { ...g.c, final: Object.values(g.c).reduce((t, v) => t + v, 0) };
+      const cols = { ...g.c, final: Object.values(g.c).reduce((t, v) => t + v, 0) }
       return {
         titularId: g.titularId,
         titular: g.titular,
@@ -129,7 +129,7 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
         ordem: g.ordem,
         litros: Object.fromEntries(Object.entries(cols).map(([k, v]) => [k, litros(v)])),
         vazio: Object.values(cols).every((v) => v === 0),
-      };
+      }
     })
     .filter((g) => !g.vazio)
     .sort(
@@ -139,22 +139,22 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
         a.ordem - b.ordem ||
         (a.cor ?? '').localeCompare(b.cor ?? ''),
     )
-    .map(({ ordem: _o, vazio: _v, ...g }) => g);
+    .map(({ ordem: _o, vazio: _v, ...g }) => g)
 
   // Engarrafado: produto acabado por produto e formato; o titular é o do lote ou o do produto.
   const est = await ctx.tx.execute<{
-    titular_id: string | null;
-    titular: string | null;
-    produto_id: string | null;
-    produto: string | null;
-    item: string;
-    marca: string | null;
-    classe: string | null;
-    registro_mapa: string | null;
-    volume_ml: number | null;
-    tipo: string;
-    antes: string;
-    durante: string;
+    titular_id: string | null
+    titular: string | null
+    produto_id: string | null
+    produto: string | null
+    item: string
+    marca: string | null
+    classe: string | null
+    registro_mapa: string | null
+    volume_ml: number | null
+    tipo: string
+    antes: string
+    durante: string
   }>(sql`
     select coalesce(li.titular_id, p.titular_id) as titular_id,
       (select f.nome from pessoa pe join ficha f on f.id = pe.ficha_id where pe.id = coalesce(li.titular_id, p.titular_id)) as titular,
@@ -170,23 +170,23 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
       left join classe_produto c on c.id = p.classe_produto_id
       left join movimento_estoque orig on orig.id = m.estorno_de_id
     where m.estabelecimento_id = ${estab} and i.tipo = 'produto_acabado' and m.executado_em < ${fim}::timestamptz
-    group by 1, 2, 3, 4, 5, 6, 7, 8, 9, 10`);
+    group by 1, 2, 3, 4, 5, 6, 7, 8, 9, 10`)
   const garrafas = new Map<
     string,
     {
-      titularId: string | null;
-      titular: string | null;
-      produtoId: string | null;
-      produto: string;
-      marca: string | null;
-      classe: string | null;
-      registroMapa: string | null;
-      volumeMl: number | null;
-      c: Record<string, number>;
+      titularId: string | null
+      titular: string | null
+      produtoId: string | null
+      produto: string
+      marca: string | null
+      classe: string | null
+      registroMapa: string | null
+      volumeMl: number | null
+      c: Record<string, number>
     }
-  >();
+  >()
   for (const r of est.rows) {
-    const chave = `${r.titular_id}|${r.produto_id ?? r.item}|${r.volume_ml}`;
+    const chave = `${r.titular_id}|${r.produto_id ?? r.item}|${r.volume_ml}`
     const g = garrafas.get(chave) ?? {
       titularId: r.titular_id,
       titular: r.titular,
@@ -197,16 +197,16 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
       registroMapa: r.registro_mapa,
       volumeMl: r.volume_ml,
       c: Object.fromEntries(['inicial', ...COLUNAS].map((k) => [k, 0])),
-    };
-    g.c.inicial! += Math.round(Number(r.antes));
-    g.c[GRUPO_ENGARRAFADO[r.tipo] ?? 'internos']! += Math.round(Number(r.durante));
-    garrafas.set(chave, g);
+    }
+    g.c.inicial! += Math.round(Number(r.antes))
+    g.c[GRUPO_ENGARRAFADO[r.tipo] ?? 'internos']! += Math.round(Number(r.durante))
+    garrafas.set(chave, g)
   }
   const linhasEngarrafado = [...garrafas.values()]
     .map((g) => {
-      const final = Object.values(g.c).reduce((t, v) => t + v, 0);
-      const emLitros = (n: number) => (g.volumeMl ? ((n * g.volumeMl) / 1000).toFixed(2) : null);
-      const cols = { ...g.c, final };
+      const final = Object.values(g.c).reduce((t, v) => t + v, 0)
+      const emLitros = (n: number) => (g.volumeMl ? ((n * g.volumeMl) / 1000).toFixed(2) : null)
+      const cols = { ...g.c, final }
       return {
         titularId: g.titularId,
         titular: g.titular,
@@ -218,7 +218,7 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
         volumeMl: g.volumeMl,
         garrafas: cols,
         litros: Object.fromEntries(Object.entries(cols).map(([k, v]) => [k, emLitros(v)])),
-      };
+      }
     })
     .filter((g) => Object.values(g.garrafas).some((v) => v !== 0))
     .sort(
@@ -228,12 +228,12 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
         (a.marca ?? '').localeCompare(b.marca ?? '') ||
         a.produto.localeCompare(b.produto) ||
         (a.volumeMl ?? 0) - (b.volumeMl ?? 0),
-    );
+    )
 
   // Totais em litros por titular (própria primeiro).
-  const titulares = new Map<string, { titularId: string | null; titular: string | null }>();
+  const titulares = new Map<string, { titularId: string | null; titular: string | null }>()
   for (const x of [...linhasGranel, ...linhasEngarrafado])
-    titulares.set(`${x.titularId}`, { titularId: x.titularId, titular: x.titular });
+    titulares.set(`${x.titularId}`, { titularId: x.titularId, titular: x.titular })
   const totais = [...titulares.values()].map((t) => {
     const soma = (lista: Array<Record<string, unknown>>, campo: string, sub?: string) =>
       litros(
@@ -247,7 +247,7 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
               ),
             0,
           ),
-      );
+      )
     return {
       ...t,
       granel: {
@@ -260,34 +260,34 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
         producao: soma(linhasEngarrafado, 'producao', 'litros'),
         final: soma(linhasEngarrafado, 'final', 'litros'),
       },
-    };
-  });
+    }
+  })
 
   // Avisos: o sistema informa (P29); para marcar a entrega, cada um pede "ciente".
-  const avisos: Aviso[] = [];
+  const avisos: Aviso[] = []
   const [meses] = (
     await ctx.tx.execute<{ abertos: number[] | null }>(sql`
       select array_agg(m order by m) as abertos from generate_series(1, 12) m
       where not exists (select 1 from fechamento_mensal f where f.estabelecimento_id = ${estab}
         and f.ano = ${ano} and f.mes = m and f.situacao = 'fechado')`)
-  ).rows;
+  ).rows
   if (meses?.abertos?.length)
     avisos.push({
       codigo: 'declaracao:meses_abertos',
       mensagem: `Meses de ${ano} não fechados: ${meses.abertos.map((m) => String(m).padStart(2, '0')).join(', ')}. Feche-os antes, para os números não mudarem depois da entrega.`,
-    });
-  const semClasse = linhasGranel.filter((g) => !g.classe).length;
+    })
+  const semClasse = linhasGranel.filter((g) => !g.classe).length
   if (semClasse)
     avisos.push({
       codigo: 'declaracao:sem_classe',
       mensagem: 'Há vinho a granel de projeto sem classe: informe a classe no projeto.',
-    });
-  const semRegistro = linhasEngarrafado.filter((g) => g.produtoId && !g.registroMapa);
+    })
+  const semRegistro = linhasEngarrafado.filter((g) => g.produtoId && !g.registroMapa)
   if (semRegistro.length)
     avisos.push({
       codigo: 'declaracao:sem_registro',
       mensagem: `Produto sem registro no MAPA: ${[...new Set(semRegistro.map((g) => g.produto))].join(', ')}.`,
-    });
+    })
   const [semCodigo] = (
     await ctx.tx.execute<{ nomes: string[] | null }>(sql`
       select array_agg(distinct v.nome order by v.nome) as nomes from variedade v
@@ -302,21 +302,21 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
             order by cp.lote_id, cp.recipiente_id, cp.vigente_desde desc, cp.lancada_em desc
           ) ult on ult.id = ci.parte_id
           where ci.variedade_id = v.id and ult.volume_litros > 0))`)
-  ).rows;
+  ).rows
   if (semCodigo?.nomes?.length)
     avisos.push({
       codigo: 'declaracao:variedade_sem_codigo',
       mensagem: `Variedade sem código oficial na uva recebida ou no vinho em estoque: ${semCodigo.nomes.join(', ')}. Confira como declarar.`,
-    });
+    })
 
   // Espumante em elaboração: garrafas em processo (tiragem até a finalização), em litros.
   const [ep] = (
     await ctx.tx.execute<{
-      inicial: string;
-      tiragens: string;
-      perdas: string;
-      finalizadas: string;
-      final: string;
+      inicial: string
+      tiragens: string
+      perdas: string
+      finalizadas: string
+      final: string
     }>(sql`
       with l as (
         select l.*, e2.fuso from espumante_lote l join estabelecimento e2 on e2.id = l.estabelecimento_id
@@ -341,15 +341,15 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
         coalesce(sum(case when tiragem_em < ${fim}::timestamptz and (finalizado_em is null or finalizado_em >= ${fim}::timestamptz)
           then (garrafas_iniciais - perdas_antes - perdas_ano) * volume_ml end), 0)::numeric / 1000 as final
       from g`)
-  ).rows;
-  const L2 = (v: string | undefined) => Number(v ?? 0).toFixed(2);
+  ).rows
+  const L2 = (v: string | undefined) => Number(v ?? 0).toFixed(2)
   const emProcesso = {
     inicial: L2(ep?.inicial),
     tiragens: L2(ep?.tiragens),
     perdas: L2(ep?.perdas),
     finalizadas: L2(ep?.finalizadas),
     final: L2(ep?.final),
-  };
+  }
 
   // Vinho que voltou da cantina contratada ("vinho cigano"): já está nas entradas; a linha mostra
   // quanto delas é retorno de terceiro (perguntas-externas.md, ponto 2 em aberto).
@@ -361,12 +361,12 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
       from retorno_terceiro t join retorno_terceiro_item y on y.retorno_id = t.id
       where t.estabelecimento_id = ${estab} and t.situacao = 'lancada'
         and t.executado_em >= ${inicio}::timestamptz and t.executado_em < ${fim}::timestamptz`)
-  ).rows;
+  ).rows
   const retornosTerceiro = {
     granelLitros: L2(ret?.granel),
     engarrafadoLitros: L2(ret?.engarrafado),
     garrafas: Math.round(Number(ret?.garrafas ?? 0)),
-  };
+  }
 
   return {
     ano,
@@ -377,7 +377,7 @@ export async function declaracaoAnual(ctx: ContextoEmpresa, estab: string, ano: 
     totais,
     avisos,
     calculadoEm: new Date().toISOString(),
-  };
+  }
 }
 
 /** Relatórios de apoio à declaração de uvas no SIVIBE: vindima = colheita no ano civil. */
@@ -388,47 +388,47 @@ export async function apoioSivibe(ctx: ContextoEmpresa, estab: string, ano: numb
       left join parcela pa on pa.id = ri.parcela_id
       left join propriedade pr on pr.id = pa.propriedade_id
     where r.estabelecimento_id = ${estab} and r.situacao = 'confirmado'
-      and ri.data_colheita >= make_date(${ano}, 1, 1) and ri.data_colheita < make_date(${ano + 1}, 1, 1)`;
-  const kg = sql`coalesce(sum((select sum(p.bruto_kg - p.tara_kg) from pesagem p where p.item_id = ri.id)), 0)::text`;
+      and ri.data_colheita >= make_date(${ano}, 1, 1) and ri.data_colheita < make_date(${ano + 1}, 1, 1)`
+  const kg = sql`coalesce(sum((select sum(p.bruto_kg - p.tara_kg) from pesagem p where p.item_id = ri.id)), 0)::text`
   const propria = await ctx.tx.execute<{
-    propriedade: string | null;
-    numero_sivibe: string | null;
-    municipio: string | null;
-    uf: string | null;
-    parcela: string | null;
-    area_ha: string | null;
-    variedade: string;
-    codigo_oficial: string | null;
-    ciclo: string | null;
-    kg: string;
-    romaneios: number;
+    propriedade: string | null
+    numero_sivibe: string | null
+    municipio: string | null
+    uf: string | null
+    parcela: string | null
+    area_ha: string | null
+    variedade: string
+    codigo_oficial: string | null
+    ciclo: string | null
+    kg: string
+    romaneios: number
   }>(sql`
     select pr.nome as propriedade, pr.numero_sivibe, pr.municipio, pr.uf, pa.nome as parcela,
       pa.area_ha::text as area_ha, v.nome as variedade, v.codigo_oficial, ri.ciclo,
       ${kg} as kg, count(distinct r.id)::int as romaneios
     ${base} and r.origem = 'vinhedo_proprio' and r.dono_uva_id is null
     group by pr.nome, pr.numero_sivibe, pr.municipio, pr.uf, pa.nome, pa.area_ha, v.nome, v.codigo_oficial, ri.ciclo
-    order by pr.nome nulls last, pa.nome nulls last, v.nome, ri.ciclo nulls first`);
+    order by pr.nome nulls last, pa.nome nulls last, v.nome, ri.ciclo nulls first`)
   const pessoaSql = (coluna: ReturnType<typeof sql>) => sql`
     (select f.nome from pessoa pe join ficha f on f.id = pe.ficha_id where pe.id = ${coluna}) as nome,
     (select f.documento from pessoa pe join ficha f on f.id = pe.ficha_id where pe.id = ${coluna}) as documento,
     (select u.numero_sivibe from pessoa_produtor_uva u where u.pessoa_id = ${coluna}) as sivibe_pessoa,
     (select u.situacao_cadastro from pessoa_produtor_uva u where u.pessoa_id = ${coluna}) as situacao_cadastro,
-    (select u.declaracao_ano_anterior from pessoa_produtor_uva u where u.pessoa_id = ${coluna}) as declaracao_ano_anterior`;
+    (select u.declaracao_ano_anterior from pessoa_produtor_uva u where u.pessoa_id = ${coluna}) as declaracao_ano_anterior`
   type LinhaPessoa = {
-    pessoa_id: string | null;
-    nome: string | null;
-    documento: string | null;
-    sivibe_pessoa: string | null;
-    situacao_cadastro: string | null;
-    declaracao_ano_anterior: boolean | null;
-    propriedade: string | null;
-    numero_sivibe: string | null;
-    variedade: string;
-    codigo_oficial: string | null;
-    kg: string;
-    notas: string[] | null;
-  };
+    pessoa_id: string | null
+    nome: string | null
+    documento: string | null
+    sivibe_pessoa: string | null
+    situacao_cadastro: string | null
+    declaracao_ano_anterior: boolean | null
+    propriedade: string | null
+    numero_sivibe: string | null
+    variedade: string
+    codigo_oficial: string | null
+    kg: string
+    notas: string[] | null
+  }
   const porPessoa = (coluna: ReturnType<typeof sql>, filtro: ReturnType<typeof sql>) =>
     ctx.tx.execute<LinhaPessoa>(sql`
       select ${coluna} as pessoa_id, ${pessoaSql(coluna)}, pr.nome as propriedade, pr.numero_sivibe,
@@ -436,12 +436,12 @@ export async function apoioSivibe(ctx: ContextoEmpresa, estab: string, ano: numb
         array_agg(distinct r.nf_numero) filter (where r.nf_numero is not null) as notas
       ${base} and ${filtro}
       group by ${coluna}, pr.nome, pr.numero_sivibe, v.nome, v.codigo_oficial
-      order by 2, pr.nome nulls last, v.nome`);
+      order by 2, pr.nome nulls last, v.nome`)
   const compradas = await porPessoa(
     sql`r.fornecedor_id`,
     sql`r.origem = 'fornecedor' and r.dono_uva_id is null`,
-  );
-  const terceiros = await porPessoa(sql`r.dono_uva_id`, sql`r.dono_uva_id is not null`);
+  )
+  const terceiros = await porPessoa(sql`r.dono_uva_id`, sql`r.dono_uva_id is not null`)
   const mapear = (l: LinhaPessoa) => ({
     pessoaId: l.pessoa_id,
     nome: l.nome,
@@ -454,18 +454,18 @@ export async function apoioSivibe(ctx: ContextoEmpresa, estab: string, ano: numb
     codigoOficial: l.codigo_oficial,
     kg: Number(l.kg).toFixed(1),
     notas: l.notas ?? [],
-  });
+  })
   // Uva enviada para processamento por terceiros ("vinho cigano", entrega simples): pela data da
   // remessa no ano civil (04, roteiro do ciclo 10, bloco 5).
-  const { inicio: iniAno, fim: fimAno } = await limitesAno(ctx, estab, ano);
+  const { inicio: iniAno, fim: fimAno } = await limitesAno(ctx, estab, ano)
   const enviadas = await ctx.tx.execute<{
-    cantina: string;
-    documento: string | null;
-    variedade: string;
-    codigo_oficial: string | null;
-    origem: string;
-    kg: string;
-    notas: string[] | null;
+    cantina: string
+    documento: string | null
+    variedade: string
+    codigo_oficial: string | null
+    origem: string
+    kg: string
+    notas: string[] | null
   }>(sql`
     select f.nome as cantina, f.documento, v.nome as variedade, v.codigo_oficial, x.origem_uva as origem,
       sum(x.kg)::text as kg, array_agg(distinct r.nf_numero) filter (where r.nf_numero is not null) as notas
@@ -475,8 +475,8 @@ export async function apoioSivibe(ctx: ContextoEmpresa, estab: string, ano: numb
     where r.estabelecimento_id = ${estab} and r.situacao = 'lancada' and x.tipo = 'uva'
       and r.executado_em >= ${iniAno}::timestamptz and r.executado_em < ${fimAno}::timestamptz
     group by f.nome, f.documento, v.nome, v.codigo_oficial, x.origem_uva
-    order by f.nome, v.nome`);
-  const avisos: Aviso[] = [];
+    order by f.nome, v.nome`)
+  const avisos: Aviso[] = []
   const irregulares = new Set(
     [...compradas.rows, ...terceiros.rows]
       .filter(
@@ -486,25 +486,25 @@ export async function apoioSivibe(ctx: ContextoEmpresa, estab: string, ano: numb
           l.declaracao_ano_anterior === false,
       )
       .map((l) => l.nome ?? '—'),
-  );
+  )
   if (irregulares.size)
     avisos.push({
       codigo: 'sivibe:produtor',
       mensagem: `Uva de produtor sem número no SIVIBE, com cadastro não regular ou sem a declaração do ano anterior: ${[...irregulares].join(', ')} (IN MAPA 59/2020, art. 13; Decreto 12.709/2025, art. 203, V e VI).`,
-    });
-  const propriaSemSivibe = propria.rows.filter((l) => l.propriedade && !l.numero_sivibe);
+    })
+  const propriaSemSivibe = propria.rows.filter((l) => l.propriedade && !l.numero_sivibe)
   if (propriaSemSivibe.length)
     avisos.push({
       codigo: 'sivibe:propriedade',
       mensagem: `Propriedade própria sem número no SIVIBE: ${[...new Set(propriaSemSivibe.map((l) => l.propriedade))].join(', ')}.`,
-    });
-  const semParcela = propria.rows.filter((l) => !l.propriedade).length;
+    })
+  const semParcela = propria.rows.filter((l) => !l.propriedade).length
   if (semParcela)
     avisos.push({
       codigo: 'sivibe:parcela',
       mensagem:
         'Uva própria recebida sem a parcela de origem: o SIVIBE pede a quantidade por parreiral.',
-    });
+    })
   return {
     ano,
     propria: propria.rows.map((l) => ({
@@ -533,19 +533,19 @@ export async function apoioSivibe(ctx: ContextoEmpresa, estab: string, ano: numb
     })),
     avisos,
     calculadoEm: new Date().toISOString(),
-  };
+  }
 }
 
-export type Tipo = (typeof TIPOS_DECLARACAO)[number];
+export type Tipo = (typeof TIPOS_DECLARACAO)[number]
 const calcular = (ctx: ContextoEmpresa, estab: string, ano: number, tipo: Tipo) =>
-  tipo === 'anual_mapa' ? declaracaoAnual(ctx, estab, ano) : apoioSivibe(ctx, estab, ano);
+  tipo === 'anual_mapa' ? declaracaoAnual(ctx, estab, ano) : apoioSivibe(ctx, estab, ano)
 
 export async function rotasDeclaracoes(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
   const params = z.object({
     ano: z.coerce.number().int().min(2000).max(2200),
     tipo: z.enum(TIPOS_DECLARACAO),
-  });
+  })
 
   async function registro(ctx: ContextoEmpresa, estab: string, ano: number, tipo: Tipo) {
     const [d] = await ctx.tx
@@ -558,14 +558,14 @@ export async function rotasDeclaracoes(app: FastifyInstance): Promise<void> {
           eq(s.declaracao.ano, ano),
         ),
       )
-      .for('update');
-    return d;
+      .for('update')
+    return d
   }
 
   /** Anos com declaração registrada, para o histórico. */
   app.get('/api/declaracoes', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
+      const estab = ctx.exigirEstabelecimento()
       return ctx.tx
         .select({
           id: s.declaracao.id,
@@ -577,16 +577,16 @@ export async function rotasDeclaracoes(app: FastifyInstance): Promise<void> {
         })
         .from(s.declaracao)
         .where(eq(s.declaracao.estabelecimentoId, estab))
-        .orderBy(desc(s.declaracao.ano), s.declaracao.tipo);
+        .orderBy(desc(s.declaracao.ano), s.declaracao.tipo)
     }),
-  );
+  )
 
   /** A declaração do ano: entregue mostra o instantâneo; senão, os números de agora. */
   app.get<{ Params: { ano: string; tipo: string } }>('/api/declaracoes/:ano/:tipo', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
-      const { ano, tipo } = params.parse(req.params);
-      const { terminou } = await limitesAno(ctx, estab, ano);
+      const estab = ctx.exigirEstabelecimento()
+      const { ano, tipo } = params.parse(req.params)
+      const { terminou } = await limitesAno(ctx, estab, ano)
       const [d] = await ctx.tx
         .select({
           id: s.declaracao.id,
@@ -603,7 +603,7 @@ export async function rotasDeclaracoes(app: FastifyInstance): Promise<void> {
             eq(s.declaracao.tipo, tipo),
             eq(s.declaracao.ano, ano),
           ),
-        );
+        )
       const retificacoes = d
         ? await ctx.tx
             .select({
@@ -618,8 +618,8 @@ export async function rotasDeclaracoes(app: FastifyInstance): Promise<void> {
             .from(s.declaracaoRetificacao)
             .where(eq(s.declaracaoRetificacao.declaracaoId, d.id))
             .orderBy(desc(s.declaracaoRetificacao.abertaEm))
-        : [];
-      const entregue = d && d.situacao !== 'em_retificacao';
+        : []
+      const entregue = d && d.situacao !== 'em_retificacao'
       return {
         ano,
         tipo,
@@ -628,37 +628,37 @@ export async function rotasDeclaracoes(app: FastifyInstance): Promise<void> {
         retificacoes,
         numeros: entregue ? d.numeros : await calcular(ctx, estab, ano, tipo),
         instantaneo: !!entregue,
-      };
+      }
     }),
-  );
+  )
 
   /** Marca como entregue: guarda os números de agora e o protocolo; a anual trava o ano. */
   app.post<{ Params: { ano: string; tipo: string } }>(
     '/api/declaracoes/:ano/:tipo/declarar',
     async (req) =>
       naEmpresa(db, req, [F, 'confirmar'], async (ctx) => {
-        const estab = ctx.exigirEstabelecimento();
-        const { ano, tipo } = params.parse(req.params);
+        const estab = ctx.exigirEstabelecimento()
+        const { ano, tipo } = params.parse(req.params)
         const { protocolo, cientes } = z
           .object({
             protocolo: z.string().trim().min(1, 'Informe o protocolo').max(100),
             cientes: z.array(z.string().max(100)).max(50).default([]),
           })
-          .parse(req.body);
-        const { terminou } = await limitesAno(ctx, estab, ano);
+          .parse(req.body)
+        const { terminou } = await limitesAno(ctx, estab, ano)
         if (tipo === 'anual_mapa' && !terminou)
           throw new ErroRegra(
             `O ano de ${ano} ainda não terminou: a declaração é de 1º a 10 de janeiro de ${ano + 1}.`,
             'ano_aberto',
-          );
+          )
         if (await registro(ctx, estab, ano, tipo))
           throw new ErroRegra(
             'Esta declaração já foi marcada como entregue: para mudar, abra uma retificação.',
             'declarada',
-          );
-        const numeros = await calcular(ctx, estab, ano, tipo);
-        const avisos = numeros.avisos;
-        exigirCientes(avisos, cientes);
+          )
+        const numeros = await calcular(ctx, estab, ano, tipo)
+        const avisos = numeros.avisos
+        exigirCientes(avisos, cientes)
         const [d] = await ctx.tx
           .insert(s.declaracao)
           .values({
@@ -672,28 +672,28 @@ export async function rotasDeclaracoes(app: FastifyInstance): Promise<void> {
             declaradaEm: new Date(),
             declaradaPor: ctx.usuarioId,
           })
-          .returning({ id: s.declaracao.id });
+          .returning({ id: s.declaracao.id })
         await ctx.auditar({
           acao: 'declarar',
           entidade: 'declaracao',
           registroId: d!.id,
           dados: { tipo, ano, protocolo, avisos: avisos.map((a) => a.mensagem) },
-        });
-        return { id: d!.id };
+        })
+        return { id: d!.id }
       }),
-  );
+  )
 
   /** Abre a retificação: pede a permissão de reabrir período e o motivo; destrava o ano. */
   app.post<{ Params: { ano: string; tipo: string } }>(
     '/api/declaracoes/:ano/:tipo/retificacao',
     async (req) =>
       naEmpresa(db, req, ['enotrace.reabrir_periodo', 'reabrir_periodo'], async (ctx) => {
-        const estab = ctx.exigirEstabelecimento();
-        const { ano, tipo } = params.parse(req.params);
+        const estab = ctx.exigirEstabelecimento()
+        const { ano, tipo } = params.parse(req.params)
         const { motivo } = z
           .object({ motivo: z.string().trim().min(3, 'Informe o motivo').max(500) })
-          .parse(req.body);
-        const d = await paraRetificar(ctx, estab, ano, tipo);
+          .parse(req.body)
+        const d = await paraRetificar(ctx, estab, ano, tipo)
         if (await exigeAprovacao(ctx, 'retificacao'))
           return pedirAprovacao(ctx, {
             tipo: 'retificacao',
@@ -702,31 +702,31 @@ export async function rotasDeclaracoes(app: FastifyInstance): Promise<void> {
             registroId: d.id,
             resumo: `Retificar a declaração ${tipo === 'anual_mapa' ? 'anual' : 'de uvas'} de ${ano}: ${motivo}`,
             dados: { ano, tipo, motivo },
-          });
-        return abrirRetificacao(ctx, estab, ano, tipo, motivo, ctx.usuarioId);
+          })
+        return abrirRetificacao(ctx, estab, ano, tipo, motivo, ctx.usuarioId)
       }),
-  );
+  )
 
   /** Conclui a retificação: novo protocolo e os números de agora; a anual volta a travar o ano. */
   app.post<{ Params: { ano: string; tipo: string } }>(
     '/api/declaracoes/:ano/:tipo/retificacao/concluir',
     async (req) =>
       naEmpresa(db, req, [F, 'confirmar'], async (ctx) => {
-        const estab = ctx.exigirEstabelecimento();
-        const { ano, tipo } = params.parse(req.params);
+        const estab = ctx.exigirEstabelecimento()
+        const { ano, tipo } = params.parse(req.params)
         const { protocolo, cientes } = z
           .object({
             protocolo: z.string().trim().min(1, 'Informe o protocolo').max(100),
             cientes: z.array(z.string().max(100)).max(50).default([]),
           })
-          .parse(req.body);
-        const d = await registro(ctx, estab, ano, tipo);
+          .parse(req.body)
+        const d = await registro(ctx, estab, ano, tipo)
         if (d?.situacao !== 'em_retificacao')
-          throw new ErroRegra('Não há retificação aberta.', 'sem_retificacao');
-        const numeros = await calcular(ctx, estab, ano, tipo);
-        const avisos = numeros.avisos;
-        exigirCientes(avisos, cientes);
-        const agora = new Date();
+          throw new ErroRegra('Não há retificação aberta.', 'sem_retificacao')
+        const numeros = await calcular(ctx, estab, ano, tipo)
+        const avisos = numeros.avisos
+        exigirCientes(avisos, cientes)
+        const agora = new Date()
         await ctx.tx
           .update(s.declaracaoRetificacao)
           .set({ concluidaEm: agora, concluidaPor: ctx.usuarioId, protocolo })
@@ -735,7 +735,7 @@ export async function rotasDeclaracoes(app: FastifyInstance): Promise<void> {
               eq(s.declaracaoRetificacao.declaracaoId, d.id),
               sql`${s.declaracaoRetificacao.concluidaEm} is null`,
             ),
-          );
+          )
         await ctx.tx
           .update(s.declaracao)
           .set({
@@ -745,16 +745,16 @@ export async function rotasDeclaracoes(app: FastifyInstance): Promise<void> {
             declaradaEm: agora,
             declaradaPor: ctx.usuarioId,
           })
-          .where(eq(s.declaracao.id, d.id));
+          .where(eq(s.declaracao.id, d.id))
         await ctx.auditar({
           acao: 'concluir_retificacao',
           entidade: 'declaracao',
           registroId: d.id,
           dados: { tipo, ano, protocolo, avisos: avisos.map((a) => a.mensagem) },
-        });
-        return { ok: true };
+        })
+        return { ok: true }
       }),
-  );
+  )
 }
 
 async function paraRetificar(ctx: ContextoEmpresa, estab: string, ano: number, tipo: Tipo) {
@@ -768,11 +768,11 @@ async function paraRetificar(ctx: ContextoEmpresa, estab: string, ano: number, t
         eq(s.declaracao.ano, ano),
       ),
     )
-    .for('update');
-  if (!d) throw new ErroNaoEncontrado('Declaração não entregue: não há o que retificar.');
+    .for('update')
+  if (!d) throw new ErroNaoEncontrado('Declaração não entregue: não há o que retificar.')
   if (d.situacao === 'em_retificacao')
-    throw new ErroRegra('Já há uma retificação aberta.', 'em_retificacao');
-  return d;
+    throw new ErroRegra('Já há uma retificação aberta.', 'em_retificacao')
+  return d
 }
 
 /** Abre a retificação (direto ou na aprovação do pedido; "por" é quem pediu). */
@@ -784,7 +784,7 @@ export async function abrirRetificacao(
   motivo: string,
   por: string,
 ) {
-  const d = await paraRetificar(ctx, estab, ano, tipo);
+  const d = await paraRetificar(ctx, estab, ano, tipo)
   const [r] = await ctx.tx
     .insert(s.declaracaoRetificacao)
     .values({
@@ -796,16 +796,16 @@ export async function abrirRetificacao(
       numerosAnteriores: d.numeros,
       protocoloAnterior: d.protocolo,
     })
-    .returning({ id: s.declaracaoRetificacao.id });
+    .returning({ id: s.declaracaoRetificacao.id })
   await ctx.tx
     .update(s.declaracao)
     .set({ situacao: 'em_retificacao' })
-    .where(eq(s.declaracao.id, d.id));
+    .where(eq(s.declaracao.id, d.id))
   await ctx.auditar({
     acao: 'abrir_retificacao',
     entidade: 'declaracao',
     registroId: d.id,
     dados: { tipo, ano, motivo },
-  });
-  return { id: r!.id };
+  })
+  return { id: r!.id }
 }

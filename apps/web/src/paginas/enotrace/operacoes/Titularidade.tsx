@@ -1,17 +1,17 @@
 // EnoTrace › Operações: transferência de titularidade a granel (cantina.md, Mistura entre titulares;
 // Pagamento em produto; 04, roteiro do ciclo 10, bloco 2). Total no próprio recipiente ou parcial
 // para outro recipiente, vazio ou com vinho do novo titular.
-import { useQuery } from '@tanstack/react-query';
-import { MOTIVOS_TITULARIDADE } from '@vinicycle/shared';
-import { Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Botao } from '@/componentes/ui/botao';
-import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { litros } from '../Projetos';
+import { useQuery } from '@tanstack/react-query'
+import { MOTIVOS_TITULARIDADE } from '@vinicycle/shared'
+import { Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Botao } from '@/componentes/ui/botao'
+import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { litros } from '../Projetos'
 import {
   agora,
   Cabecalho,
@@ -28,48 +28,48 @@ import {
   useEnvio,
   useLotesDoProjeto,
   useRecipientes,
-} from './comum';
+} from './comum'
 
 const rotulo = (r: RecipienteSaldo) =>
   `${r.codigo} · ${litros(r.volume)} de ${litros(r.capacidadeLitros)}${
     r.lote ? ` · ${r.lote.codigo} (${r.lote.titular ?? 'própria empresa'})` : ''
-  }`;
+  }`
 
 interface Item {
-  origemId: string;
-  todo: boolean;
-  litros: string | null;
+  origemId: string
+  todo: boolean
+  litros: string | null
   /** Vazio = o próprio recipiente. */
-  destinoId: string;
-  lote: RefLote | null;
+  destinoId: string
+  lote: RefLote | null
 }
 
 export function PaginaTitularidade() {
-  return <ComRascunho>{(r) => <Titularidade rascunho={r} />}</ComRascunho>;
+  return <ComRascunho>{(r) => <Titularidade rascunho={r} />}</ComRascunho>
 }
 
 function Titularidade({ rascunho }: { rascunho: Rascunho | null }) {
-  const recipientes = useRecipientes();
-  const envio = useEnvio('titularidade', rascunho);
+  const recipientes = useRecipientes()
+  const envio = useEnvio('titularidade', rascunho)
   const clientes = useQuery({
     queryKey: ['pessoas-opcoes', 'cliente_vinificacao'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=cliente_vinificacao'),
-  });
+  })
   const contratos = useQuery({
     queryKey: ['contratos-opcoes'],
     queryFn: async () =>
       (
         await api.get<{
           itens: Array<{
-            id: string;
-            numero: string | null;
-            contraparteId: string;
-            contraparte: string;
-          }>;
+            id: string
+            numero: string | null
+            contraparteId: string
+            contraparte: string
+          }>
         }>('/api/contratos-terceirizacao?tamanho=0')
       ).itens,
-  });
+  })
   const [d, setD] = useState(() => ({
     executadoEm: agora(),
     responsavelId: '',
@@ -82,26 +82,26 @@ function Titularidade({ rascunho }: { rascunho: Rascunho | null }) {
       { origemId: recipienteDaUrl(), todo: true, litros: null, destinoId: '', lote: { novo: 'A' } },
     ] as Item[],
     ...rascunho?.formulario,
-  }));
+  }))
   const set = (p: Partial<typeof d>) => {
-    envio.limpar();
-    setD({ ...d, ...p });
-  };
+    envio.limpar()
+    setD({ ...d, ...p })
+  }
   const setItem = (n: number, p: Partial<Item>) =>
-    set({ itens: d.itens.map((x, j) => (j === n ? { ...x, ...p } : x)) });
-  const rec = (id: string) => recipientes.data?.find((r) => r.id === id);
-  const origem = rec(d.itens[0]?.origemId ?? '');
-  const projetoId = origem?.lote?.projetoId ?? '';
-  const de = origem?.lote ? (origem.lote.titularId ?? null) : undefined;
-  const para = d.paraTitularId || null;
-  const projeto = useLotesDoProjeto(projetoId);
+    set({ itens: d.itens.map((x, j) => (j === n ? { ...x, ...p } : x)) })
+  const rec = (id: string) => recipientes.data?.find((r) => r.id === id)
+  const origem = rec(d.itens[0]?.origemId ?? '')
+  const projetoId = origem?.lote?.projetoId ?? ''
+  const de = origem?.lote ? (origem.lote.titularId ?? null) : undefined
+  const para = d.paraTitularId || null
+  const projeto = useLotesDoProjeto(projetoId)
   const lotesDoPara = (projeto.data?.lotes ?? []).filter(
     (l) => l.situacao === 'ativo' && (l.titularId ?? null) === para,
-  );
+  )
   const contratosDasPartes = (contratos.data ?? []).filter(
     (c) => c.contraparteId === de || c.contraparteId === para,
-  );
-  const usados = new Set(d.itens.flatMap((i) => [i.origemId, i.destinoId]).filter(Boolean));
+  )
+  const usados = new Set(d.itens.flatMap((i) => [i.origemId, i.destinoId]).filter(Boolean))
   const corpo = () => ({
     executadoEm: doCampo(d.executadoEm),
     responsavelId: d.responsavelId || null,
@@ -115,7 +115,7 @@ function Titularidade({ rascunho }: { rascunho: Rascunho | null }) {
       destinoId: i.destinoId || null,
       lote: i.lote,
     })),
-  });
+  })
   return (
     <Pagina titulo="Transferência de titularidade" trilha={['EnoTrace', 'Operações']}>
       <p className="text-sm text-muted-foreground">
@@ -196,9 +196,9 @@ function Titularidade({ rascunho }: { rascunho: Rascunho | null }) {
         <CabecalhoCartao titulo="Recipientes" />
         <CorpoCartao className="flex flex-col gap-4">
           {d.itens.map((i, n) => {
-            const destino = i.destinoId ? rec(i.destinoId) : undefined;
+            const destino = i.destinoId ? rec(i.destinoId) : undefined
             const destinoDoPara =
-              destino?.lote && (destino.lote.titularId ?? null) === para ? destino.lote : null;
+              destino?.lote && (destino.lote.titularId ?? null) === para ? destino.lote : null
             return (
               <div key={n} className="grid items-end gap-2 border-b pb-4 sm:grid-cols-2">
                 <Campo rotulo="Recipiente de origem" id={`ti-orig-${n}`}>
@@ -302,7 +302,7 @@ function Titularidade({ rascunho }: { rascunho: Rascunho | null }) {
                   </Botao>
                 </div>
               </div>
-            );
+            )
           })}
           <div>
             <Botao
@@ -324,5 +324,5 @@ function Titularidade({ rascunho }: { rascunho: Rascunho | null }) {
       </Cartao>
       <Rodape envio={envio} corpo={corpo} formulario={() => ({ ...d, projetoId })} />
     </Pagina>
-  );
+  )
 }

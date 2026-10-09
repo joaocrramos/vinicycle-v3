@@ -1,6 +1,6 @@
 // Gestão (03-modelo-de-dados.md, 2.3; gestao.md).
-import { SITUACOES_SIVIBE } from '@vinicycle/shared';
-import { sql } from 'drizzle-orm';
+import { SITUACOES_SIVIBE } from '@vinicycle/shared'
+import { sql } from 'drizzle-orm'
 import {
   boolean,
   check,
@@ -15,12 +15,12 @@ import {
   unique,
   uniqueIndex,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, usuario } from './acesso';
-import { papel, tipoDocumento } from './catalogos';
-import { alteracao, criacao, emLista, id, inativacao } from './comum';
-import { ficha } from './ficha';
-import { empresa } from './plataforma';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento, usuario } from './acesso'
+import { papel, tipoDocumento } from './catalogos'
+import { alteracao, criacao, emLista, id, inativacao } from './comum'
+import { ficha } from './ficha'
+import { empresa } from './plataforma'
 
 /** Cadastro único de pessoas com papéis (P2). Documento único por empresa (na ficha). */
 export const pessoa = pgTable(
@@ -42,7 +42,7 @@ export const pessoa = pgTable(
     uniqueIndex('pessoa_ficha').on(t.fichaId),
     index('pessoa_empresa').on(t.empresaId),
   ],
-);
+)
 
 /** Referência composta à pessoa da mesma empresa. */
 const refPessoa = (t: { pessoaId: never; empresaId: never }, nome?: string) =>
@@ -50,7 +50,7 @@ const refPessoa = (t: { pessoaId: never; empresaId: never }, nome?: string) =>
     name: nome,
     columns: [t.pessoaId, t.empresaId],
     foreignColumns: [pessoa.id, pessoa.empresaId],
-  }).onDelete('cascade');
+  }).onDelete('cascade')
 
 export const pessoaPapel = pgTable(
   'pessoa_papel',
@@ -71,19 +71,19 @@ export const pessoaPapel = pgTable(
     unique('pessoa_papel_unico').on(t.pessoaId, t.papel),
     index('pessoa_papel_empresa').on(t.empresaId, t.papel),
   ],
-);
+)
 
 /** Extensões de papel: uma linha por pessoa, com a chave na própria pessoa. */
 const extensao = () => ({
   pessoaId: uuid('pessoa_id').primaryKey(),
   empresaId: uuid('empresa_id').notNull(),
-});
+})
 
 export const pessoaCliente = pgTable(
   'pessoa_cliente',
   { ...extensao(), condicoesComerciais: text('condicoes_comerciais') },
   (t) => [refPessoa(t as never)],
-);
+)
 
 export const pessoaFornecedor = pgTable(
   'pessoa_fornecedor',
@@ -96,7 +96,7 @@ export const pessoaFornecedor = pgTable(
       .default(sql`'{}'`),
   },
   (t) => [refPessoa(t as never)],
-);
+)
 
 export const pessoaProdutorUva = pgTable(
   'pessoa_produtor_uva',
@@ -114,7 +114,7 @@ export const pessoaProdutorUva = pgTable(
     refPessoa(t as never),
     check('pessoa_produtor_uva_situacao', emLista('situacao_cadastro', SITUACOES_SIVIBE)),
   ],
-);
+)
 
 export const pessoaFuncionario = pgTable(
   'pessoa_funcionario',
@@ -131,7 +131,7 @@ export const pessoaFuncionario = pgTable(
     refPessoa(t as never),
     check('pessoa_funcionario_situacao', emLista('situacao', ['ativo', 'afastado', 'desligado'])),
   ],
-);
+)
 
 export const pessoaLaboratorio = pgTable(
   'pessoa_laboratorio',
@@ -142,7 +142,7 @@ export const pessoaLaboratorio = pgTable(
     prazoMedioLaudoDias: integer('prazo_medio_laudo_dias'),
   },
   (t) => [refPessoa(t as never)],
-);
+)
 
 export const pessoaRt = pgTable(
   'pessoa_rt',
@@ -155,7 +155,7 @@ export const pessoaRt = pgTable(
     artValidade: date('art_validade'),
   },
   (t) => [refPessoa(t as never)],
-);
+)
 
 export const pessoaFabricanteMarca = pgTable(
   'pessoa_fabricante_marca',
@@ -169,7 +169,7 @@ export const pessoaFabricanteMarca = pgTable(
     refPessoa(t as never),
     uniqueIndex('pessoa_fabricante_marca_unica').on(t.pessoaId, sql`lower(marca)`),
   ],
-);
+)
 
 export const pessoaTransportadorPlaca = pgTable(
   'pessoa_transportador_placa',
@@ -183,7 +183,7 @@ export const pessoaTransportadorPlaca = pgTable(
     refPessoa(t as never),
     unique('pessoa_transportador_placa_unica').on(t.pessoaId, t.placa),
   ],
-);
+)
 
 /** Pessoas de contato de uma pessoa jurídica, sem documento obrigatório (gestao.md). */
 export const pessoaContato = pgTable(
@@ -204,7 +204,7 @@ export const pessoaContato = pgTable(
       .default(sql`'{}'`),
   },
   (t) => [refPessoa(t as never), index('pessoa_contato_pessoa').on(t.pessoaId)],
-);
+)
 
 /** Documento acompanhado (registro MAPA, licença, contrato…). Vazio no estabelecimento = empresa toda. */
 export const documento = pgTable(
@@ -237,7 +237,7 @@ export const documento = pgTable(
     unique('documento_id_empresa').on(t.id, t.empresaId),
     index('documento_empresa').on(t.empresaId),
   ],
-);
+)
 
 /** Cada emissão ou renovação. Renovar cria versão nova; a anterior vira "substituída". */
 export const documentoVersao = pgTable(
@@ -270,7 +270,7 @@ export const documentoVersao = pgTable(
       sql`vencimento is null or emissao is null or vencimento >= emissao`,
     ),
   ],
-);
+)
 
 export const etiqueta = pgTable(
   'etiqueta',
@@ -287,7 +287,7 @@ export const etiqueta = pgTable(
     unique('etiqueta_id_empresa').on(t.id, t.empresaId),
     uniqueIndex('etiqueta_nome').on(t.empresaId, sql`lower(nome)`),
   ],
-);
+)
 
 export const documentoEtiqueta = pgTable(
   'documento_etiqueta',
@@ -307,7 +307,7 @@ export const documentoEtiqueta = pgTable(
       foreignColumns: [etiqueta.id, etiqueta.empresaId],
     }).onDelete('cascade'),
   ],
-);
+)
 
 /** Configurações simples (gestao.md, Configurações). Estabelecimento vazio = da empresa. */
 export const parametro = pgTable(
@@ -330,4 +330,4 @@ export const parametro = pgTable(
     }),
     unique('parametro_chave').on(t.empresaId, t.estabelecimentoId, t.chave).nullsNotDistinct(),
   ],
-);
+)

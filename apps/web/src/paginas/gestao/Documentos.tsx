@@ -1,5 +1,5 @@
 // Gestão › Documentos (gestao.md, Documentos).
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   dadosDocumento,
   dadosEtiqueta,
@@ -7,52 +7,52 @@ import {
   novoDocumento,
   SITUACOES_VENCIMENTO,
   versaoDocumento,
-} from '@vinicycle/shared';
-import { Plus, Tag, Trash2 } from 'lucide-react';
-import { type FormEvent, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha';
-import { Anexos } from '@/componentes/Anexos';
-import { Catalogo, type ConfigCatalogo } from '@/componentes/Catalogo';
-import { Historico } from '@/componentes/Historico';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { type Formulario, useFormulario } from '@/lib/formulario';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarData } from '@/lib/utils';
+} from '@vinicycle/shared'
+import { Plus, Tag, Trash2 } from 'lucide-react'
+import { type FormEvent, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha'
+import { Anexos } from '@/componentes/Anexos'
+import { Catalogo, type ConfigCatalogo } from '@/componentes/Catalogo'
+import { Historico } from '@/componentes/Historico'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { type Formulario, useFormulario } from '@/lib/formulario'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarData } from '@/lib/utils'
 
-type SituacaoVenc = (typeof SITUACOES_VENCIMENTO)[number];
+type SituacaoVenc = (typeof SITUACOES_VENCIMENTO)[number]
 const TOM: Record<SituacaoVenc, 'sucesso' | 'alerta' | 'erro' | 'neutro'> = {
   em_dia: 'sucesso',
   vencendo: 'alerta',
   vencido: 'erro',
   sem_vencimento: 'neutro',
-};
+}
 
 interface Linha {
-  id: string;
-  titulo: string;
-  tipo: string;
-  orgaoEmissor: string | null;
-  estabelecimento: string | null;
-  numero: string | null;
-  vencimento: string | null;
-  situacaoVencimento: SituacaoVenc;
-  responsavel: string | null;
-  etiquetas: Array<{ id: string; nome: string; cor: string | null }>;
-  ativo: boolean;
+  id: string
+  titulo: string
+  tipo: string
+  orgaoEmissor: string | null
+  estabelecimento: string | null
+  numero: string | null
+  vencimento: string | null
+  situacaoVencimento: SituacaoVenc
+  responsavel: string | null
+  etiquetas: Array<{ id: string; nome: string; cor: string | null }>
+  ativo: boolean
 }
 
 interface Opcao {
-  id: string;
-  nome: string;
+  id: string
+  nome: string
 }
 
 function useTipos() {
@@ -64,14 +64,14 @@ function useTipos() {
           '/api/catalogos/tipo_documento?tamanho=0',
         )
       ).itens,
-  });
+  })
 }
 function useEtiquetas() {
   return useQuery({
     queryKey: ['etiquetas'],
     queryFn: () =>
       api.get<Array<Opcao & { cor: string | null; documentos: number }>>('/api/etiquetas'),
-  });
+  })
 }
 
 function MarcaEtiqueta({ nome, cor }: { nome: string; cor: string | null }) {
@@ -80,17 +80,17 @@ function MarcaEtiqueta({ nome, cor }: { nome: string; cor: string | null }) {
       <span className="size-2 rounded-full" style={{ background: cor ?? 'var(--texto-suave)' }} />
       {nome}
     </span>
-  );
+  )
 }
 
 export function ListaDocumentos() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [inativar, setInativar] = useState<Linha | null>(null);
-  const podeInativar = pode(s, 'gestao.documentos', 'inativar');
-  const tipos = useTipos();
-  const etiquetas = useEtiquetas();
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [inativar, setInativar] = useState<Linha | null>(null)
+  const podeInativar = pode(s, 'gestao.documentos', 'inativar')
+  const tipos = useTipos()
+  const etiquetas = useEtiquetas()
   return (
     <Pagina
       titulo="Documentos"
@@ -239,8 +239,8 @@ export function ListaDocumentos() {
               aoReativar={
                 podeInativar
                   ? async () => {
-                      await api.post(`/api/documentos/${d.id}/reativar`);
-                      await qc.invalidateQueries({ queryKey: ['lista', '/api/documentos'] });
+                      await api.post(`/api/documentos/${d.id}/reativar`)
+                      await qc.invalidateQueries({ queryKey: ['lista', '/api/documentos'] })
                     }
                   : undefined
               }
@@ -254,17 +254,17 @@ export function ListaDocumentos() {
         titulo={`Inativar ${inativar?.titulo ?? ''}`}
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/documentos/${inativar!.id}/inativar`, { motivo });
-          await qc.invalidateQueries({ queryKey: ['lista', '/api/documentos'] });
+          await api.post(`/api/documentos/${inativar!.id}/inativar`, { motivo })
+          await qc.invalidateQueries({ queryKey: ['lista', '/api/documentos'] })
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 function CamposVersao({ form, prefixo }: { form: Formulario; prefixo: string }) {
-  const c = (x: string) => (prefixo ? `${prefixo}.${x}` : x);
-  const v = (x: string) => (form.valor(c(x)) as string | null) ?? '';
+  const c = (x: string) => (prefixo ? `${prefixo}.${x}` : x)
+  const v = (x: string) => (form.valor(c(x)) as string | null) ?? ''
   const campo = (x: string, rotulo: string, tipo = 'text') => (
     <Campo rotulo={rotulo} id={c(x)} erro={form.erro(c(x))}>
       <Entrada
@@ -275,7 +275,7 @@ function CamposVersao({ form, prefixo }: { form: Formulario; prefixo: string }) 
         onBlur={() => form.tocar(c(x))}
       />
     </Campo>
-  );
+  )
   return (
     <div className="grid gap-4 sm:grid-cols-3">
       {campo('numero', 'Número')}
@@ -291,19 +291,19 @@ function CamposVersao({ form, prefixo }: { form: Formulario; prefixo: string }) 
         />
       </Campo>
     </div>
-  );
+  )
 }
 
 function CamposDocumento({ form }: { form: Formulario }) {
-  const { data: s } = useSessao();
-  const tipos = useTipos();
-  const etiquetas = useEtiquetas();
+  const { data: s } = useSessao()
+  const tipos = useTipos()
+  const etiquetas = useEtiquetas()
   const responsaveis = useQuery({
     queryKey: ['responsaveis'],
     queryFn: () => api.get<Opcao[]>('/api/documentos/responsaveis'),
-  });
-  const v = (x: string) => (form.valor(x) as string | null) ?? '';
-  const marcadas = (form.valor('etiquetas') as string[]) ?? [];
+  })
+  const v = (x: string) => (form.valor(x) as string | null) ?? ''
+  const marcadas = (form.valor('etiquetas') as string[]) ?? []
   return (
     <div className="flex flex-col gap-4">
       <div className="grid gap-4 sm:grid-cols-2">
@@ -414,11 +414,11 @@ function CamposDocumento({ form }: { form: Formulario }) {
         />
       </Campo>
     </div>
-  );
+  )
 }
 
 export function NovoDocumento() {
-  const navegar = useNavigate();
+  const navegar = useNavigate()
   const form = useFormulario(novoDocumento, {
     tipoDocumentoId: '',
     titulo: '',
@@ -436,16 +436,16 @@ export function NovoDocumento() {
       assinadoEm: '',
       observacoes: '',
     },
-  });
+  })
   async function enviar(ev: FormEvent) {
-    ev.preventDefault();
-    const d = form.validar();
-    if (!d) return;
+    ev.preventDefault()
+    const d = form.validar()
+    if (!d) return
     try {
-      const r = await api.post<{ id: string }>('/api/documentos', d);
-      navegar(`/gestao/documentos/${r.id}`, { replace: true });
+      const r = await api.post<{ id: string }>('/api/documentos', d)
+      navegar(`/gestao/documentos/${r.id}`, { replace: true })
     } catch (e) {
-      form.erroDaApi(e);
+      form.erroDaApi(e)
     }
   }
   return (
@@ -472,18 +472,18 @@ export function NovoDocumento() {
         </div>
       </form>
     </Pagina>
-  );
+  )
 }
 
 interface Versao {
-  id: string;
-  numero: string | null;
-  emissao: string | null;
-  vencimento: string | null;
-  situacao: 'vigente' | 'substituida';
-  assinadoPor: string | null;
-  assinadoEm: string | null;
-  observacoes: string | null;
+  id: string
+  numero: string | null
+  emissao: string | null
+  vencimento: string | null
+  situacao: 'vigente' | 'substituida'
+  assinadoPor: string | null
+  assinadoEm: string | null
+  observacoes: string | null
 }
 
 function DialogoVersao({
@@ -491,11 +491,11 @@ function DialogoVersao({
   versao,
   aoFechar,
 }: {
-  documentoId: string;
-  versao: Versao | null;
-  aoFechar: () => void;
+  documentoId: string
+  versao: Versao | null
+  aoFechar: () => void
 }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const form = useFormulario(versaoDocumento, {
     numero: versao?.numero ?? '',
     emissao: versao?.emissao ?? '',
@@ -503,7 +503,7 @@ function DialogoVersao({
     assinadoPor: versao?.assinadoPor ?? '',
     assinadoEm: versao?.assinadoEm ?? '',
     observacoes: versao?.observacoes ?? '',
-  });
+  })
   return (
     <Dialogo
       aberto
@@ -522,16 +522,16 @@ function DialogoVersao({
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                if (versao) await api.put(`/api/documentos/${documentoId}/versoes/${versao.id}`, d);
-                else await api.post(`/api/documentos/${documentoId}/versoes`, d);
-                await qc.invalidateQueries({ queryKey: ['documento', documentoId] });
-                await qc.invalidateQueries({ queryKey: ['historico', 'documento', documentoId] });
-                aoFechar();
+                if (versao) await api.put(`/api/documentos/${documentoId}/versoes/${versao.id}`, d)
+                else await api.post(`/api/documentos/${documentoId}/versoes`, d)
+                await qc.invalidateQueries({ queryKey: ['documento', documentoId] })
+                await qc.invalidateQueries({ queryKey: ['historico', 'documento', documentoId] })
+                aoFechar()
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -543,44 +543,44 @@ function DialogoVersao({
       {form.erroGeral && <Aviso tom="erro">{form.erroGeral}</Aviso>}
       <CamposVersao form={form} prefixo="" />
     </Dialogo>
-  );
+  )
 }
 
 type DocCompleto = {
-  id: string;
-  ativo: boolean;
-  versao: number;
-  tipoDocumentoId: string;
-  titulo: string;
-  estabelecimentoId: string | null;
-  modulo: string | null;
-  orgaoEmissor: string | null;
-  responsavelId: string | null;
-  observacoes: string | null;
-  etiquetas: string[];
-  versoes: Versao[];
-};
+  id: string
+  ativo: boolean
+  versao: number
+  tipoDocumentoId: string
+  titulo: string
+  estabelecimentoId: string | null
+  modulo: string | null
+  orgaoEmissor: string | null
+  responsavelId: string | null
+  observacoes: string | null
+  etiquetas: string[]
+  versoes: Versao[]
+}
 
 function FormularioDocumento({ d, podeEditar }: { d: DocCompleto; podeEditar: boolean }) {
-  const qc = useQueryClient();
-  const form = useFormulario(dadosDocumento, d);
-  const [salvo, setSalvo] = useState(false);
+  const qc = useQueryClient()
+  const form = useFormulario(dadosDocumento, d)
+  const [salvo, setSalvo] = useState(false)
   return (
     <form
       noValidate
       className="flex flex-col gap-4"
       onSubmit={async (ev) => {
-        ev.preventDefault();
-        setSalvo(false);
-        const dados = form.validar();
-        if (!dados) return;
+        ev.preventDefault()
+        setSalvo(false)
+        const dados = form.validar()
+        if (!dados) return
         try {
-          await api.put(`/api/documentos/${d.id}`, dados);
-          setSalvo(true);
-          await qc.invalidateQueries({ queryKey: ['documento', d.id] });
-          await qc.invalidateQueries({ queryKey: ['historico', 'documento', d.id] });
+          await api.put(`/api/documentos/${d.id}`, dados)
+          setSalvo(true)
+          await qc.invalidateQueries({ queryKey: ['documento', d.id] })
+          await qc.invalidateQueries({ queryKey: ['historico', 'documento', d.id] })
         } catch (e) {
-          form.erroDaApi(e);
+          form.erroDaApi(e)
         }
       }}
     >
@@ -595,28 +595,28 @@ function FormularioDocumento({ d, podeEditar }: { d: DocCompleto; podeEditar: bo
         </div>
       )}
     </form>
-  );
+  )
 }
 
 export function FichaDocumento() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [dialogo, setDialogo] = useState<Versao | 'nova' | null>(null);
-  const [inativar, setInativar] = useState(false);
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [dialogo, setDialogo] = useState<Versao | 'nova' | null>(null)
+  const [inativar, setInativar] = useState(false)
   const q = useQuery({
     queryKey: ['documento', id],
     queryFn: () => api.get<DocCompleto>(`/api/documentos/${id}`),
-  });
-  const podeEditar = pode(s, 'gestao.documentos', 'editar');
+  })
+  const podeEditar = pode(s, 'gestao.documentos', 'editar')
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const d = q.data;
-  const vigente = d.versoes.find((v) => v.situacao === 'vigente');
+    )
+  const d = q.data
+  const vigente = d.versoes.find((v) => v.situacao === 'vigente')
   return (
     <Pagina
       titulo={d.titulo}
@@ -634,8 +634,8 @@ export function FichaDocumento() {
               ativo={d.ativo}
               aoInativar={() => setInativar(true)}
               aoReativar={async () => {
-                await api.post(`/api/documentos/${id}/reativar`);
-                await qc.invalidateQueries({ queryKey: ['documento', id] });
+                await api.post(`/api/documentos/${id}/reativar`)
+                await qc.invalidateQueries({ queryKey: ['documento', id] })
               }}
             />
           )}
@@ -714,21 +714,21 @@ export function FichaDocumento() {
         titulo={`Inativar ${d.titulo}`}
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/documentos/${id}/inativar`, { motivo });
-          await qc.invalidateQueries({ queryKey: ['documento', id] });
+          await api.post(`/api/documentos/${id}/inativar`, { motivo })
+          await qc.invalidateQueries({ queryKey: ['documento', id] })
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 export function EtiquetasDocumentos() {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const q = useEtiquetas();
-  const form = useFormulario(dadosEtiqueta, { nome: '', cor: '#6b1f3a' });
-  const [excluir, setExcluir] = useState<Opcao | null>(null);
-  const recarregar = () => qc.invalidateQueries({ queryKey: ['etiquetas'] });
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const q = useEtiquetas()
+  const form = useFormulario(dadosEtiqueta, { nome: '', cor: '#6b1f3a' })
+  const [excluir, setExcluir] = useState<Opcao | null>(null)
+  const recarregar = () => qc.invalidateQueries({ queryKey: ['etiquetas'] })
   return (
     <Pagina titulo="Etiquetas" trilha={['Gestão', 'Documentos']}>
       {pode(s, 'gestao.documentos', 'criar') && (
@@ -736,15 +736,15 @@ export function EtiquetasDocumentos() {
           className="flex flex-wrap items-end gap-2"
           noValidate
           onSubmit={async (ev) => {
-            ev.preventDefault();
-            const d = form.validar();
-            if (!d) return;
+            ev.preventDefault()
+            const d = form.validar()
+            if (!d) return
             try {
-              await api.post('/api/etiquetas', d);
-              form.setValores({ nome: '', cor: d.cor ?? '#6b1f3a' });
-              await recarregar();
+              await api.post('/api/etiquetas', d)
+              form.setValores({ nome: '', cor: d.cor ?? '#6b1f3a' })
+              await recarregar()
             } catch (e) {
-              form.erroDaApi(e);
+              form.erroDaApi(e)
             }
           }}
         >
@@ -803,12 +803,12 @@ export function EtiquetasDocumentos() {
         descricao="A etiqueta sai dos documentos que a usam. Os documentos continuam como estão."
         rotuloBotao="Excluir"
         aoConfirmar={async () => {
-          await api.post(`/api/etiquetas/${excluir!.id}/excluir`);
-          await recarregar();
+          await api.post(`/api/etiquetas/${excluir!.id}/excluir`)
+          await recarregar()
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 /** Também na Administração › Catálogos. */
@@ -836,12 +836,12 @@ export const CONFIG_TIPOS_DOCUMENTO: ConfigCatalogo = {
       celula: (i) => ((i.avisosDias as number[]) ?? []).join(', '),
     },
   ],
-};
+}
 
 export function TiposDocumento() {
   return (
     <Pagina titulo="Tipos de documento" trilha={['Gestão', 'Documentos']}>
       <Catalogo config={CONFIG_TIPOS_DOCUMENTO} />
     </Pagina>
-  );
+  )
 }

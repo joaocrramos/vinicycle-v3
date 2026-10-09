@@ -1,59 +1,59 @@
 // Configurações › Usuários (P8, P12, P27). Só o Master.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { novoConvite } from '@vinicycle/shared';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { fusoAtivo, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { novoConvite } from '@vinicycle/shared'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { fusoAtivo, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
 
 interface Vinculo {
-  id: string;
-  usuarioId: string;
-  nome: string;
-  email: string;
-  perfilId: string;
-  perfil: string;
-  eMaster: boolean;
-  ativo: boolean;
-  ultimoAcessoEm: string | null;
-  versao: number;
-  estabelecimentos: string[];
+  id: string
+  usuarioId: string
+  nome: string
+  email: string
+  perfilId: string
+  perfil: string
+  eMaster: boolean
+  ativo: boolean
+  ultimoAcessoEm: string | null
+  versao: number
+  estabelecimentos: string[]
 }
 interface Convite {
-  id: string;
-  email: string;
-  perfil: string;
-  situacao: 'pendente' | 'expirado';
-  enviadoEm: string;
-  expiraEm: string;
-  reenvios: number;
+  id: string
+  email: string
+  perfil: string
+  situacao: 'pendente' | 'expirado'
+  enviadoEm: string
+  expiraEm: string
+  reenvios: number
 }
 interface Perfil {
-  id: string;
-  nome: string;
-  eMaster: boolean;
-  ativo: boolean;
+  id: string
+  nome: string
+  eMaster: boolean
+  ativo: boolean
 }
 
 function EscolhaEstabelecimentos({
   valor,
   aoMudar,
 }: {
-  valor: string[];
-  aoMudar: (v: string[]) => void;
+  valor: string[]
+  aoMudar: (v: string[]) => void
 }) {
-  const { data: s } = useSessao();
-  const lista = s?.empresa?.estabelecimentos ?? [];
+  const { data: s } = useSessao()
+  const lista = s?.empresa?.estabelecimentos ?? []
   return (
     <fieldset>
       <legend className="mb-1 text-sm font-medium">Estabelecimentos permitidos</legend>
@@ -73,12 +73,12 @@ function EscolhaEstabelecimentos({
         ))}
       </div>
     </fieldset>
-  );
+  )
 }
 
 function Convidar({ perfis, aoFechar }: { perfis: Perfil[]; aoFechar: () => void }) {
-  const qc = useQueryClient();
-  const form = useFormulario(novoConvite, { email: '', perfilId: '', estabelecimentos: [] });
+  const qc = useQueryClient()
+  const form = useFormulario(novoConvite, { email: '', perfilId: '', estabelecimentos: [] })
   return (
     <Dialogo
       aberto
@@ -92,14 +92,14 @@ function Convidar({ perfis, aoFechar }: { perfis: Perfil[]; aoFechar: () => void
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                await api.post('/api/usuarios/convites', d);
-                await qc.invalidateQueries({ queryKey: ['convites'] });
-                aoFechar();
+                await api.post('/api/usuarios/convites', d)
+                await qc.invalidateQueries({ queryKey: ['convites'] })
+                aoFechar()
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -142,21 +142,21 @@ function Convidar({ perfis, aoFechar }: { perfis: Perfil[]; aoFechar: () => void
         />
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function Editar({ v, perfis, aoFechar }: { v: Vinculo; perfis: Perfil[]; aoFechar: () => void }) {
-  const qc = useQueryClient();
-  const { data: s } = useSessao();
-  const [perfilId, setPerfilId] = useState(v.perfilId);
-  const [estabs, setEstabs] = useState(v.estabelecimentos);
-  const [erro, setErro] = useState<string | null>(null);
-  const [inativar, setInativar] = useState(false);
-  const [bastao, setBastao] = useState(false);
-  const proprio = v.usuarioId === s?.usuario.id;
-  const souMaster = !!s?.empresa?.eMaster;
-  const bloqueado = proprio || v.eMaster;
-  const recarregar = () => qc.invalidateQueries({ queryKey: ['lista', '/api/usuarios'] });
+  const qc = useQueryClient()
+  const { data: s } = useSessao()
+  const [perfilId, setPerfilId] = useState(v.perfilId)
+  const [estabs, setEstabs] = useState(v.estabelecimentos)
+  const [erro, setErro] = useState<string | null>(null)
+  const [inativar, setInativar] = useState(false)
+  const [bastao, setBastao] = useState(false)
+  const proprio = v.usuarioId === s?.usuario.id
+  const souMaster = !!s?.empresa?.eMaster
+  const bloqueado = proprio || v.eMaster
+  const recarregar = () => qc.invalidateQueries({ queryKey: ['lista', '/api/usuarios'] })
   return (
     <Dialogo
       aberto
@@ -176,11 +176,11 @@ function Editar({ v, perfis, aoFechar }: { v: Vinculo; perfis: Perfil[]; aoFecha
                 className="mr-auto"
                 onClick={async () => {
                   try {
-                    await api.post(`/api/usuarios/${v.id}/reativar`);
-                    await recarregar();
-                    aoFechar();
+                    await api.post(`/api/usuarios/${v.id}/reativar`)
+                    await recarregar()
+                    aoFechar()
                   } catch (e) {
-                    setErro((e as Error).message);
+                    setErro((e as Error).message)
                   }
                 }}
               >
@@ -203,11 +203,11 @@ function Editar({ v, perfis, aoFechar }: { v: Vinculo; perfis: Perfil[]; aoFecha
                     perfilId,
                     estabelecimentos: estabs,
                     versao: v.versao,
-                  });
-                  await recarregar();
-                  aoFechar();
+                  })
+                  await recarregar()
+                  aoFechar()
                 } catch (e) {
-                  setErro((e as Error).message);
+                  setErro((e as Error).message)
                 }
               }}
             >
@@ -250,9 +250,9 @@ function Editar({ v, perfis, aoFechar }: { v: Vinculo; perfis: Perfil[]; aoFecha
         descricao="A pessoa perde o acesso a esta empresa na hora. O cadastro e o histórico ficam guardados."
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/usuarios/${v.id}/inativar`, { motivo });
-          await recarregar();
-          aoFechar();
+          await api.post(`/api/usuarios/${v.id}/inativar`, { motivo })
+          await recarregar()
+          aoFechar()
         }}
       />
       {bastao && (
@@ -260,22 +260,22 @@ function Editar({ v, perfis, aoFechar }: { v: Vinculo; perfis: Perfil[]; aoFecha
           v={v}
           perfis={perfis}
           aoFechar={() => {
-            setBastao(false);
-            aoFechar();
+            setBastao(false)
+            aoFechar()
           }}
         />
       )}
     </Dialogo>
-  );
+  )
 }
 
 interface PedidoBastao {
-  id: string;
-  escolhido: string;
-  escolhidoEmail: string;
-  perfilAnterior: string | null;
-  iniciadoPor: 'master' | 'suporte';
-  expiraEm: string;
+  id: string
+  escolhido: string
+  escolhidoEmail: string
+  perfilAnterior: string | null
+  iniciadoPor: 'master' | 'suporte'
+  expiraEm: string
 }
 
 /** Passagem de bastão (administracao.md): o Master escolhe o perfil que passa a ter. */
@@ -284,13 +284,13 @@ function PassarBastao({
   perfis,
   aoFechar,
 }: {
-  v: Vinculo;
-  perfis: Perfil[];
-  aoFechar: () => void;
+  v: Vinculo
+  perfis: Perfil[]
+  aoFechar: () => void
 }) {
-  const qc = useQueryClient();
-  const [perfilId, setPerfilId] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
+  const qc = useQueryClient()
+  const [perfilId, setPerfilId] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
   return (
     <Dialogo
       aberto
@@ -306,11 +306,11 @@ function PassarBastao({
             disabled={!perfilId}
             onClick={async () => {
               try {
-                await api.post(`/api/usuarios/${v.id}/bastao`, { perfilAnteriorId: perfilId });
-                await qc.invalidateQueries({ queryKey: ['bastao'] });
-                aoFechar();
+                await api.post(`/api/usuarios/${v.id}/bastao`, { perfilAnteriorId: perfilId })
+                await qc.invalidateQueries({ queryKey: ['bastao'] })
+                aoFechar()
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               }
             }}
           >
@@ -343,18 +343,18 @@ function PassarBastao({
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function BastaoPendente({ fuso }: { fuso: string }) {
-  const qc = useQueryClient();
-  const [erro, setErro] = useState<string | null>(null);
+  const qc = useQueryClient()
+  const [erro, setErro] = useState<string | null>(null)
   const q = useQuery({
     queryKey: ['bastao'],
     queryFn: () => api.get<PedidoBastao | null>('/api/usuarios/bastao'),
-  });
-  if (!q.data) return null;
-  const p = q.data;
+  })
+  if (!q.data) return null
+  const p = q.data
   return (
     <Aviso tom="alerta">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -371,10 +371,10 @@ function BastaoPendente({ fuso }: { fuso: string }) {
             tamanho="pequeno"
             onClick={async () => {
               try {
-                await api.post('/api/usuarios/bastao/cancelar');
-                await qc.invalidateQueries({ queryKey: ['bastao'] });
+                await api.post('/api/usuarios/bastao/cancelar')
+                await qc.invalidateQueries({ queryKey: ['bastao'] })
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               }
             }}
           >
@@ -384,27 +384,27 @@ function BastaoPendente({ fuso }: { fuso: string }) {
       </div>
       {erro && <p className="mt-1 text-destructive">{erro}</p>}
     </Aviso>
-  );
+  )
 }
 
 export function PaginaUsuarios() {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
   const perfis = useQuery({
     queryKey: ['perfis'],
     queryFn: () => api.get<Perfil[]>('/api/perfis'),
-  });
+  })
   const convites = useQuery({
     queryKey: ['convites'],
     queryFn: () => api.get<Convite[]>('/api/usuarios/convites'),
-  });
-  const [convidar, setConvidar] = useState(false);
-  const [editando, setEditando] = useState<Vinculo | null>(null);
-  const [cancelar, setCancelar] = useState<Convite | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-  const [inativar, setInativar] = useState<Vinculo | null>(null);
-  const fuso = fusoAtivo(s);
+  })
+  const [convidar, setConvidar] = useState(false)
+  const [editando, setEditando] = useState<Vinculo | null>(null)
+  const [cancelar, setCancelar] = useState<Convite | null>(null)
+  const [aviso, setAviso] = useState<string | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const [inativar, setInativar] = useState<Vinculo | null>(null)
+  const fuso = fusoAtivo(s)
   return (
     <Pagina
       titulo="Usuários"
@@ -443,9 +443,9 @@ export function PaginaUsuarios() {
                     variante="secundario"
                     tamanho="pequeno"
                     onClick={async () => {
-                      await api.post(`/api/usuarios/convites/${c.id}/reenviar`);
-                      setAviso(`Convite reenviado para ${c.email}.`);
-                      await qc.invalidateQueries({ queryKey: ['convites'] });
+                      await api.post(`/api/usuarios/convites/${c.id}/reenviar`)
+                      setAviso(`Convite reenviado para ${c.email}.`)
+                      await qc.invalidateQueries({ queryKey: ['convites'] })
                     }}
                   >
                     Reenviar
@@ -530,7 +530,7 @@ export function PaginaUsuarios() {
             ),
           },
           colunaAcoes<Vinculo>((v) => {
-            const bloqueado = v.usuarioId === s?.usuario.id || v.eMaster;
+            const bloqueado = v.usuarioId === s?.usuario.id || v.eMaster
             return (
               <AcoesLinha
                 ativo={v.ativo}
@@ -540,17 +540,17 @@ export function PaginaUsuarios() {
                   bloqueado
                     ? undefined
                     : async () => {
-                        setErro(null);
+                        setErro(null)
                         try {
-                          await api.post(`/api/usuarios/${v.id}/reativar`);
-                          await qc.invalidateQueries({ queryKey: ['lista', '/api/usuarios'] });
+                          await api.post(`/api/usuarios/${v.id}/reativar`)
+                          await qc.invalidateQueries({ queryKey: ['lista', '/api/usuarios'] })
                         } catch (e) {
-                          setErro((e as Error).message);
+                          setErro((e as Error).message)
                         }
                       }
                 }
               />
-            );
+            )
           }),
         ]}
       />
@@ -567,8 +567,8 @@ export function PaginaUsuarios() {
         descricao="A pessoa perde o acesso a esta empresa na hora. O cadastro e o histórico ficam guardados."
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/usuarios/${inativar!.id}/inativar`, { motivo });
-          await qc.invalidateQueries({ queryKey: ['lista', '/api/usuarios'] });
+          await api.post(`/api/usuarios/${inativar!.id}/inativar`, { motivo })
+          await qc.invalidateQueries({ queryKey: ['lista', '/api/usuarios'] })
         }}
       />
       <PedirMotivo
@@ -577,10 +577,10 @@ export function PaginaUsuarios() {
         titulo={`Cancelar o convite de ${cancelar?.email ?? ''}`}
         rotuloBotao="Cancelar convite"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/usuarios/convites/${cancelar!.id}/cancelar`, { motivo });
-          await qc.invalidateQueries({ queryKey: ['convites'] });
+          await api.post(`/api/usuarios/convites/${cancelar!.id}/cancelar`, { motivo })
+          await qc.invalidateQueries({ queryKey: ['convites'] })
         }}
       />
     </Pagina>
-  );
+  )
 }

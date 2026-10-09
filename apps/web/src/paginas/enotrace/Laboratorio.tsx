@@ -2,134 +2,134 @@
 // parâmetros que a empresa mede, a unidade escolhida (convertida para a padrão) e o "fora da
 // faixa"; pedidos de análise externa (coletada → enviada → laudo recebido); as análises do lote,
 // com a curva de cada parâmetro.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { daUnidadePadrao, formatarDecimal, SITUACOES_AMOSTRA } from '@vinicycle/shared';
-import { Plus, TriangleAlert } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { Anexos } from '@/componentes/Anexos';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarData, formatarDataHora } from '@/lib/utils';
-import { Curva } from './Fermentacoes';
-import { agora, doCampo, paraCampo, useRecipientes } from './operacoes/comum';
-import { litros } from './Projetos';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { daUnidadePadrao, formatarDecimal, SITUACOES_AMOSTRA } from '@vinicycle/shared'
+import { Plus, TriangleAlert } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { Anexos } from '@/componentes/Anexos'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarData, formatarDataHora } from '@/lib/utils'
+import { Curva } from './Fermentacoes'
+import { agora, doCampo, paraCampo, useRecipientes } from './operacoes/comum'
+import { litros } from './Projetos'
 
-const F = 'enotrace.laboratorio';
+const F = 'enotrace.laboratorio'
 
 interface Parametro {
-  id: string;
-  codigo: string;
-  nome: string;
-  unidadePadrao: string;
-  unidadesAceitas: string[];
-  unidadePreferida: string | null;
-  casas: number;
-  minimo: string | null;
-  maximo: string | null;
+  id: string
+  codigo: string
+  nome: string
+  unidadePadrao: string
+  unidadesAceitas: string[]
+  unidadePreferida: string | null
+  casas: number
+  minimo: string | null
+  maximo: string | null
 }
 
 interface Resultado {
-  parametroId: string;
-  codigo: string;
-  nome: string;
-  unidadePadrao: string;
-  casas: number;
-  valor: string;
-  valorDigitado: string | null;
-  unidadeDigitada: string | null;
-  foraFaixa: boolean;
+  parametroId: string
+  codigo: string
+  nome: string
+  unidadePadrao: string
+  casas: number
+  valor: string
+  valorDigitado: string | null
+  unidadeDigitada: string | null
+  foraFaixa: boolean
 }
 
 export interface Analise {
-  id: string;
-  tipo: 'interna' | 'laudo';
-  amostraEm: string;
-  loteId: string;
-  lote: string;
-  recipienteId: string | null;
-  recipiente: string | null;
-  laboratorioId: string | null;
-  laboratorio: string | null;
-  amostraId: string | null;
-  amostra: string | null;
-  documento: string | null;
-  observacao: string | null;
-  versao: number;
-  resultados: Resultado[];
+  id: string
+  tipo: 'interna' | 'laudo'
+  amostraEm: string
+  loteId: string
+  lote: string
+  recipienteId: string | null
+  recipiente: string | null
+  laboratorioId: string | null
+  laboratorio: string | null
+  amostraId: string | null
+  amostra: string | null
+  documento: string | null
+  observacao: string | null
+  versao: number
+  resultados: Resultado[]
 }
 
 interface Amostra {
-  id: string;
-  codigo: string;
-  loteId: string;
-  lote: string;
-  recipiente: string | null;
-  coletadaEm: string;
-  enviadaEm: string | null;
-  laboratorioId: string;
-  laboratorio: string;
-  prazo: string | null;
-  situacao: keyof typeof SITUACOES_AMOSTRA;
-  atrasada: boolean;
-  analiseId: string | null;
+  id: string
+  codigo: string
+  loteId: string
+  lote: string
+  recipiente: string | null
+  coletadaEm: string
+  enviadaEm: string | null
+  laboratorioId: string
+  laboratorio: string
+  prazo: string | null
+  situacao: keyof typeof SITUACOES_AMOSTRA
+  atrasada: boolean
+  analiseId: string | null
 }
 
 interface Laboratorio {
-  id: string;
-  nome: string;
-  credenciamento: string | null;
-  validade: string | null;
-  prazoDias: number | null;
+  id: string
+  nome: string
+  credenciamento: string | null
+  validade: string | null
+  prazoDias: number | null
 }
 
 const mensagem = (e: unknown) =>
   e instanceof ErroApi && e.campos.length
     ? `${e.message} ${e.campos.map((c) => c.mensagem).join(' ')}`
-    : (e as Error).message;
+    : (e as Error).message
 
 export function useParametrosLab() {
   return useQuery({
     queryKey: ['laboratorio-parametros'],
     queryFn: () => api.get<Parametro[]>('/api/laboratorio/parametros'),
-  });
+  })
 }
 
 function useLaboratorios() {
   return useQuery({
     queryKey: ['laboratorios'],
     queryFn: () => api.get<Laboratorio[]>('/api/laboratorios'),
-  });
+  })
 }
 
 /** Valor na unidade preferida da empresa (ou na padrão), com as casas do parâmetro. */
 export function useValorExibido() {
-  const params = useParametrosLab();
+  const params = useParametrosLab()
   return (r: Resultado) => {
-    const p = params.data?.find((x) => x.id === r.parametroId);
-    const unidade = p?.unidadePreferida ?? r.unidadePadrao;
+    const p = params.data?.find((x) => x.id === r.parametroId)
+    const unidade = p?.unidadePreferida ?? r.unidadePadrao
     const v = daUnidadePadrao(
       { codigo: r.codigo, unidadePadrao: r.unidadePadrao },
       Number(r.valor),
       unidade,
-    );
-    const casas = unidade === r.unidadePadrao ? r.casas : 2;
+    )
+    const casas = unidade === r.unidadePadrao ? r.casas : 2
     return v === null
       ? `${formatarDecimal(Number(r.valor).toFixed(r.casas), r.casas)} ${r.unidadePadrao}`
-      : `${formatarDecimal(v.toFixed(casas), casas)} ${unidade}`;
-  };
+      : `${formatarDecimal(v.toFixed(casas), casas)} ${unidade}`
+  }
 }
 
 function ResumoResultados({ a }: { a: Analise }) {
-  const exibir = useValorExibido();
+  const exibir = useValorExibido()
   return (
     <span className="flex flex-wrap gap-x-3 gap-y-1">
       {a.resultados.map((r) => (
@@ -141,31 +141,31 @@ function ResumoResultados({ a }: { a: Analise }) {
         </span>
       ))}
     </span>
-  );
+  )
 }
 
 // Formulário da análise ---------------------------------------------------------------------------
 
 interface Inicial {
-  analise?: Analise;
-  tipo?: 'interna' | 'laudo';
-  recipienteId?: string;
-  loteId?: string;
-  amostra?: Amostra;
+  analise?: Analise
+  tipo?: 'interna' | 'laudo'
+  recipienteId?: string
+  loteId?: string
+  amostra?: Amostra
 }
 
 export function DialogoAnalise({
   inicial,
   aoFechar,
 }: {
-  inicial: Inicial;
-  aoFechar: (id?: string) => void;
+  inicial: Inicial
+  aoFechar: (id?: string) => void
 }) {
-  const qc = useQueryClient();
-  const params = useParametrosLab();
-  const labs = useLaboratorios();
-  const recipientes = useRecipientes();
-  const a = inicial.analise;
+  const qc = useQueryClient()
+  const params = useParametrosLab()
+  const labs = useLaboratorios()
+  const recipientes = useRecipientes()
+  const a = inicial.analise
   const [d, setD] = useState(() => ({
     tipo: a?.tipo ?? (inicial.amostra ? 'laudo' : (inicial.tipo ?? 'interna')),
     amostraEm: a
@@ -186,18 +186,18 @@ export function DialogoAnalise({
         },
       ]),
     ) as Record<string, { valor: string | null; unidade: string }>,
-  }));
-  const [erro, setErro] = useState<string | null>(null);
-  const [avisos, setAvisos] = useState<string[]>([]);
-  const fixo = !!a || !!inicial.amostra || !!inicial.loteId;
-  const loteId = a?.loteId ?? inicial.amostra?.loteId ?? inicial.loteId ?? null;
+  }))
+  const [erro, setErro] = useState<string | null>(null)
+  const [avisos, setAvisos] = useState<string[]>([])
+  const fixo = !!a || !!inicial.amostra || !!inicial.loteId
+  const loteId = a?.loteId ?? inicial.amostra?.loteId ?? inicial.loteId ?? null
   const unidade = (p: Parametro) =>
-    d.valores[p.id]?.unidade ?? p.unidadePreferida ?? p.unidadePadrao;
+    d.valores[p.id]?.unidade ?? p.unidadePreferida ?? p.unidadePadrao
   const salvar = async () => {
-    setErro(null);
+    setErro(null)
     const resultados = (params.data ?? [])
       .filter((p) => d.valores[p.id]?.valor)
-      .map((p) => ({ parametroId: p.id, valor: d.valores[p.id]!.valor, unidade: unidade(p) }));
+      .map((p) => ({ parametroId: p.id, valor: d.valores[p.id]!.valor, unidade: unidade(p) }))
     const corpo = {
       tipo: d.tipo,
       amostraEm: doCampo(d.amostraEm),
@@ -209,23 +209,23 @@ export function DialogoAnalise({
       observacao: d.observacao || null,
       resultados,
       versao: a?.versao,
-    };
+    }
     try {
       const r = a
         ? await api.put<{ avisos: string[] }>(`/api/analises/${a.id}`, corpo)
-        : await api.post<{ id: string; avisos: string[] }>('/api/analises', corpo);
-      await qc.invalidateQueries({ queryKey: ['analises'] });
-      await qc.invalidateQueries({ queryKey: ['amostras'] });
-      if (a) await qc.invalidateQueries({ queryKey: ['analise', a.id] });
+        : await api.post<{ id: string; avisos: string[] }>('/api/analises', corpo)
+      await qc.invalidateQueries({ queryKey: ['analises'] })
+      await qc.invalidateQueries({ queryKey: ['amostras'] })
+      if (a) await qc.invalidateQueries({ queryKey: ['analise', a.id] })
       if (r.avisos.length) {
-        setAvisos(r.avisos);
-        return;
+        setAvisos(r.avisos)
+        return
       }
-      aoFechar('id' in r ? (r.id as string) : undefined);
+      aoFechar('id' in r ? (r.id as string) : undefined)
     } catch (e) {
-      setErro(mensagem(e));
+      setErro(mensagem(e))
     }
-  };
+  }
   return (
     <Dialogo
       aberto
@@ -399,23 +399,23 @@ export function DialogoAnalise({
         </div>
       )}
     </Dialogo>
-  );
+  )
 }
 
 // Pedido de análise externa ----------------------------------------------------------------------
 
 function DialogoAmostra({ aoFechar }: { aoFechar: () => void }) {
-  const qc = useQueryClient();
-  const labs = useLaboratorios();
-  const recipientes = useRecipientes();
+  const qc = useQueryClient()
+  const labs = useLaboratorios()
+  const recipientes = useRecipientes()
   const [d, setD] = useState({
     coletadaEm: agora(),
     recipienteId: '',
     laboratorioId: '',
     prazo: '',
-  });
-  const [erro, setErro] = useState<string | null>(null);
-  const [feito, setFeito] = useState<{ codigo: string; avisos: string[] } | null>(null);
+  })
+  const [erro, setErro] = useState<string | null>(null)
+  const [feito, setFeito] = useState<{ codigo: string; avisos: string[] } | null>(null)
   return (
     <Dialogo
       aberto
@@ -432,18 +432,18 @@ function DialogoAmostra({ aoFechar }: { aoFechar: () => void }) {
             </Botao>
             <Botao
               onClick={async () => {
-                setErro(null);
+                setErro(null)
                 try {
                   const r = await api.post<{ codigo: string; avisos: string[] }>('/api/amostras', {
                     coletadaEm: doCampo(d.coletadaEm),
                     recipienteId: d.recipienteId || null,
                     laboratorioId: d.laboratorioId || null,
                     prazo: d.prazo || null,
-                  });
-                  await qc.invalidateQueries({ queryKey: ['amostras'] });
-                  setFeito(r);
+                  })
+                  await qc.invalidateQueries({ queryKey: ['amostras'] })
+                  setFeito(r)
                 } catch (e) {
-                  setErro(mensagem(e));
+                  setErro(mensagem(e))
                 }
               }}
             >
@@ -526,14 +526,14 @@ function DialogoAmostra({ aoFechar }: { aoFechar: () => void }) {
         </div>
       )}
     </Dialogo>
-  );
+  )
 }
 
 // Listas -----------------------------------------------------------------------------------------
 
 function TabelaAnalises({ analises, comLote }: { analises: Analise[]; comLote: boolean }) {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -581,21 +581,21 @@ function TabelaAnalises({ analises, comLote }: { analises: Analise[]; comLote: b
         </tbody>
       </table>
     </div>
-  );
+  )
 }
 
 function TabelaAmostras({ aoLaudo }: { aoLaudo: (a: Amostra) => void }) {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const [situacao, setSituacao] = useState<'abertas' | 'todas'>('abertas');
-  const [cancelar, setCancelar] = useState<Amostra | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const [situacao, setSituacao] = useState<'abertas' | 'todas'>('abertas')
+  const [cancelar, setCancelar] = useState<Amostra | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
   const q = useQuery({
     queryKey: ['amostras', situacao],
     queryFn: () => api.get<Amostra[]>(`/api/amostras?situacao=${situacao}`),
-  });
-  const podeEditar = pode(s, F, 'editar');
+  })
+  const podeEditar = pode(s, F, 'editar')
   return (
     <div className="flex flex-col gap-3">
       <Selecao
@@ -657,14 +657,14 @@ function TabelaAmostras({ aoLaudo }: { aoLaudo: (a: Amostra) => void }) {
                           variante="secundario"
                           tamanho="pequeno"
                           onClick={async () => {
-                            setErro(null);
+                            setErro(null)
                             try {
                               await api.post(`/api/amostras/${a.id}/enviar`, {
                                 enviadaEm: new Date().toISOString(),
-                              });
-                              await qc.invalidateQueries({ queryKey: ['amostras'] });
+                              })
+                              await qc.invalidateQueries({ queryKey: ['amostras'] })
                             } catch (e) {
-                              setErro(mensagem(e));
+                              setErro(mensagem(e))
                             }
                           }}
                         >
@@ -718,27 +718,27 @@ function TabelaAmostras({ aoLaudo }: { aoLaudo: (a: Amostra) => void }) {
         titulo={`Cancelar a amostra ${cancelar?.codigo ?? ''}`}
         rotuloBotao="Cancelar amostra"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/amostras/${cancelar!.id}/cancelar`, { motivo });
-          await qc.invalidateQueries({ queryKey: ['amostras'] });
-          setCancelar(null);
+          await api.post(`/api/amostras/${cancelar!.id}/cancelar`, { motivo })
+          await qc.invalidateQueries({ queryKey: ['amostras'] })
+          setCancelar(null)
         }}
       />
     </div>
-  );
+  )
 }
 
 export function PaginaLaboratorio() {
-  const { aba = 'analises' } = useParams();
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const [tipo, setTipo] = useState('');
-  const [dialogo, setDialogo] = useState<Inicial | null>(null);
-  const [pedido, setPedido] = useState(false);
+  const { aba = 'analises' } = useParams()
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const [tipo, setTipo] = useState('')
+  const [dialogo, setDialogo] = useState<Inicial | null>(null)
+  const [pedido, setPedido] = useState(false)
   const q = useQuery({
     queryKey: ['analises', tipo],
     queryFn: () => api.get<Analise[]>(`/api/analises${tipo ? `?tipo=${tipo}` : ''}`),
-  });
-  const podeCriar = pode(s, F, 'criar');
+  })
+  const podeCriar = pode(s, F, 'criar')
   return (
     <Pagina
       titulo="Laboratório"
@@ -782,37 +782,37 @@ export function PaginaLaboratorio() {
         <DialogoAnalise
           inicial={dialogo}
           aoFechar={(id) => {
-            setDialogo(null);
-            if (id) navegar(`/enotrace/laboratorio/analises/${id}`);
+            setDialogo(null)
+            if (id) navegar(`/enotrace/laboratorio/analises/${id}`)
           }}
         />
       )}
       {pedido && <DialogoAmostra aoFechar={() => setPedido(false)} />}
     </Pagina>
-  );
+  )
 }
 
 // Ficha da análise --------------------------------------------------------------------------------
 
 export function FichaAnalise() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const navegar = useNavigate();
-  const exibir = useValorExibido();
-  const [editar, setEditar] = useState(false);
-  const [excluir, setExcluir] = useState(false);
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const navegar = useNavigate()
+  const exibir = useValorExibido()
+  const [editar, setEditar] = useState(false)
+  const [excluir, setExcluir] = useState(false)
   const q = useQuery({
     queryKey: ['analise', id],
     queryFn: () => api.get<Analise>(`/api/analises/${id}`),
-  });
+  })
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const a = q.data;
+    )
+  const a = q.data
   return (
     <Pagina
       titulo={`${a.tipo === 'laudo' ? 'Laudo' : 'Análise interna'} de ${formatarDataHora(a.amostraEm, fuso)}`}
@@ -902,49 +902,49 @@ export function FichaAnalise() {
         descricao="Para análise lançada por engano. Fica registrado na auditoria."
         rotuloBotao="Excluir"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/analises/${a.id}/excluir`, { motivo });
-          navegar('/enotrace/laboratorio');
+          await api.post(`/api/analises/${a.id}/excluir`, { motivo })
+          navegar('/enotrace/laboratorio')
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 // Análises do lote ----------------------------------------------------------------------------------
 
 /** Na ficha do lote: as análises e a curva de cada parâmetro com duas leituras ou mais. */
 export function AnalisesDoLote({ loteId }: { loteId: string }) {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const params = useParametrosLab();
-  const [nova, setNova] = useState(false);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const params = useParametrosLab()
+  const [nova, setNova] = useState(false)
   const q = useQuery({
     queryKey: ['analises', 'lote', loteId],
     queryFn: () => api.get<Analise[]>(`/api/analises?lote=${loteId}`),
-  });
-  if (!q.data) return <p className="text-sm text-muted-foreground">Carregando…</p>;
+  })
+  if (!q.data) return <p className="text-sm text-muted-foreground">Carregando…</p>
   const series = new Map<
     string,
     { nome: string; unidade: string; casas: number; pontos: Array<{ em: string; valor: number }> }
-  >();
+  >()
   for (const a of [...q.data].reverse())
     for (const r of a.resultados) {
-      const p = params.data?.find((x) => x.id === r.parametroId);
-      const unidade = p?.unidadePreferida ?? r.unidadePadrao;
+      const p = params.data?.find((x) => x.id === r.parametroId)
+      const unidade = p?.unidadePreferida ?? r.unidadePadrao
       const v =
         daUnidadePadrao(
           { codigo: r.codigo, unidadePadrao: r.unidadePadrao },
           Number(r.valor),
           unidade,
-        ) ?? Number(r.valor);
+        ) ?? Number(r.valor)
       const serie = series.get(r.parametroId) ?? {
         nome: r.nome,
         unidade,
         casas: unidade === r.unidadePadrao ? r.casas : 2,
         pontos: [],
-      };
-      serie.pontos.push({ em: a.amostraEm, valor: v });
-      series.set(r.parametroId, serie);
+      }
+      serie.pontos.push({ em: a.amostraEm, valor: v })
+      series.set(r.parametroId, serie)
     }
   return (
     <div className="flex flex-col gap-4">
@@ -974,5 +974,5 @@ export function AnalisesDoLote({ loteId }: { loteId: string }) {
       </div>
       {nova && <DialogoAnalise inicial={{ loteId }} aoFechar={() => setNova(false)} />}
     </div>
-  );
+  )
 }

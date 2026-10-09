@@ -2,24 +2,24 @@
 // manutenção. O painel mostra a ocupação de cada recipiente: lote, volume, % da capacidade, etapa,
 // dias no recipiente, situação, composição, fermentações em andamento e a higienização vencida
 // pela periodicidade do tipo (Parâmetros técnicos). Tudo é consulta sobre o livro (seção 4).
-import { higienizacao as esquemaHigienizacao } from '@vinicycle/shared';
-import { and, eq, inArray, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import * as s from '../../db/schema';
-import { ErroRegra } from '../../nucleo/erros';
-import { type ContextoEmpresa, naEmpresa } from '../../nucleo/requisicao';
-import { conferirPessoas, dataExecucao, type Montada, saldosNaData, saldosPorLote } from './apoio';
-import { partesAtuais } from './motor';
+import { higienizacao as esquemaHigienizacao } from '@vinicycle/shared'
+import { and, eq, inArray, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import * as s from '../../db/schema'
+import { ErroRegra } from '../../nucleo/erros'
+import { type ContextoEmpresa, naEmpresa } from '../../nucleo/requisicao'
+import { conferirPessoas, dataExecucao, type Montada, saldosNaData, saldosPorLote } from './apoio'
+import { partesAtuais } from './motor'
 
 /**
  * Higienização ou manutenção de um ou mais recipientes: operação sem volume que os devolve a
  * "ativo" (motor.ts, higienizar). Higienizar um recipiente com vinho é impossível: bloqueia.
  */
 export async function planoHigienizacao(ctx: ContextoEmpresa, corpo: unknown): Promise<Montada> {
-  const estab = ctx.exigirEstabelecimento();
-  const d = esquemaHigienizacao.parse(corpo);
-  const executadoEm = dataExecucao(d.executadoEm);
-  await conferirPessoas(ctx, [d.responsavelId, d.executadoPorId]);
+  const estab = ctx.exigirEstabelecimento()
+  const d = esquemaHigienizacao.parse(corpo)
+  const executadoEm = dataExecucao(d.executadoEm)
+  await conferirPessoas(ctx, [d.responsavelId, d.executadoPorId])
   const recipientes = await ctx.tx
     .select({
       id: s.recipiente.id,
@@ -27,22 +27,22 @@ export async function planoHigienizacao(ctx: ContextoEmpresa, corpo: unknown): P
       estab: s.recipiente.estabelecimentoId,
     })
     .from(s.recipiente)
-    .where(and(inArray(s.recipiente.id, d.recipientes), eq(s.recipiente.empresaId, ctx.empresaId)));
+    .where(and(inArray(s.recipiente.id, d.recipientes), eq(s.recipiente.empresaId, ctx.empresaId)))
   if (recipientes.length !== d.recipientes.length || recipientes.some((r) => r.estab !== estab))
-    throw new ErroRegra('Recipiente inválido.', 'recipiente');
+    throw new ErroRegra('Recipiente inválido.', 'recipiente')
   if (d.tipoHigienizacao === 'higienizacao') {
     const cheios = [
       ...(await saldosPorLote(ctx, d.recipientes)),
       ...(await saldosNaData(ctx, d.recipientes, executadoEm)),
-    ];
-    const comVinho = recipientes.filter((r) => cheios.some((x) => x.recipienteId === r.id));
+    ]
+    const comVinho = recipientes.filter((r) => cheios.some((x) => x.recipienteId === r.id))
     if (comVinho.length)
       throw new ErroRegra(
         `${comVinho.map((r) => r.codigo).join(', ')} com vinho: a higienização é feita com o recipiente vazio.`,
         'com_vinho',
-      );
+      )
   }
-  const ordem = new Map(d.recipientes.map((id, n) => [id, n + 1]));
+  const ordem = new Map(d.recipientes.map((id, n) => [id, n + 1]))
   return {
     cientes: d.cientes,
     rascunhoId: d.rascunhoId ?? null,
@@ -72,35 +72,35 @@ export async function planoHigienizacao(ctx: ContextoEmpresa, corpo: unknown): P
         dose: d.dose ?? null,
       },
     },
-  };
+  }
 }
 
 type LinhaPainel = {
-  id: string;
-  codigo: string;
-  tipo: string;
-  tipoRecipienteId: string;
-  eBarrica: boolean;
-  local: string;
-  localId: string;
-  capacidade: string;
-  possuiFrio: boolean;
-  situacao: string;
-  situacaoDesde: string;
-  motivoSituacao: string | null;
-  volume: string;
-  loteId: string | null;
-  desde: string | null;
-  ultimaHigienizacao: string | null;
-  intervaloDias: number | null;
-};
+  id: string
+  codigo: string
+  tipo: string
+  tipoRecipienteId: string
+  eBarrica: boolean
+  local: string
+  localId: string
+  capacidade: string
+  possuiFrio: boolean
+  situacao: string
+  situacaoDesde: string
+  motivoSituacao: string | null
+  volume: string
+  loteId: string | null
+  desde: string | null
+  ultimaHigienizacao: string | null
+  intervaloDias: number | null
+}
 
 export async function rotasPainel(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
 
   app.get('/api/painel/recipientes', async (req) =>
     naEmpresa(db, req, ['enotrace.painel', 'visualizar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
+      const estab = ctx.exigirEstabelecimento()
       // "Desde": a última vez que o recipiente passou de vazio a cheio, pela ordem da execução.
       const r = await ctx.tx.execute<LinhaPainel>(sql`
         with corrente as (
@@ -136,10 +136,10 @@ export async function rotasPainel(app: FastifyInstance): Promise<void> {
           left join periodicidade_higienizacao p on p.empresa_id = r.empresa_id and p.tipo_recipiente_id = r.tipo_recipiente_id
         where r.empresa_id = ${ctx.empresaId} and r.estabelecimento_id = ${estab}
           and (r.situacao <> 'inativo' or exists (select 1 from saldo x where x.recipiente_id = r.id))
-        order by l.nome, regexp_replace(lower(r.codigo), '\\d+', lpad(substring(r.codigo from '\\d+'), 10, '0'))`);
-      const linhas = r.rows;
-      const cheios = linhas.filter((x) => x.loteId);
-      const loteIds = [...new Set(cheios.map((x) => x.loteId!))];
+        order by l.nome, regexp_replace(lower(r.codigo), '\\d+', lpad(substring(r.codigo from '\\d+'), 10, '0'))`)
+      const linhas = r.rows
+      const cheios = linhas.filter((x) => x.loteId)
+      const loteIds = [...new Set(cheios.map((x) => x.loteId!))]
       const lotes = loteIds.length
         ? await ctx.tx
             .select({
@@ -151,18 +151,18 @@ export async function rotasPainel(app: FastifyInstance): Promise<void> {
             })
             .from(s.lote)
             .where(inArray(s.lote.id, loteIds))
-        : [];
+        : []
       const partes = await partesAtuais(
         ctx,
         cheios.map((x) => x.id),
-      );
+      )
       const fermentacoes = loteIds.length
         ? (
             await ctx.tx.execute<{
-              id: string;
-              loteId: string;
-              tipo: string;
-              inicioEm: string;
+              id: string
+              loteId: string
+              tipo: string
+              inicioEm: string
             }>(sql`
               select f.id, f.lote_id as "loteId", f.tipo, oi.executado_em as "inicioEm"
               from fermentacao f
@@ -173,17 +173,17 @@ export async function rotasPainel(app: FastifyInstance): Promise<void> {
                 sql`, `,
               )}) and ofim.id is null`)
           ).rows
-        : [];
-      const agora = Date.now();
+        : []
+      const agora = Date.now()
       return linhas.map((x) => {
-        const lote = lotes.find((l) => l.id === x.loteId) ?? null;
-        const parte = partes.get(x.id);
+        const lote = lotes.find((l) => l.id === x.loteId) ?? null
+        const parte = partes.get(x.id)
         // Vencida: recipiente vazio cuja última higienização passou do intervalo do tipo.
         const vencida =
           !!x.intervaloDias &&
           !x.loteId &&
           !!x.ultimaHigienizacao &&
-          agora - new Date(x.ultimaHigienizacao).getTime() > x.intervaloDias * 86400_000;
+          agora - new Date(x.ultimaHigienizacao).getTime() > x.intervaloDias * 86400_000
         return {
           id: x.id,
           codigo: x.codigo,
@@ -207,8 +207,8 @@ export async function rotasPainel(app: FastifyInstance): Promise<void> {
           ultimaHigienizacao: x.ultimaHigienizacao,
           intervaloDias: x.intervaloDias,
           higienizacaoVencida: vencida,
-        };
-      });
+        }
+      })
     }),
-  );
+  )
 }

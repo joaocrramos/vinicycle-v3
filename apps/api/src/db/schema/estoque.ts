@@ -1,8 +1,8 @@
 // Estoque comum (03-modelo-de-dados.md, 2.4; ambiente-cliente.md, Estoque): lotes de item, livro
 // de movimentos por local e pendências de estoque negativo. O livro é só de inclusão (P13): ver
 // a migração de segurança do estoque.
-import { CHAVES_TIPO_MOVIMENTO_ESTOQUE, ORIGENS_LOTE_ITEM } from '@vinicycle/shared';
-import { sql } from 'drizzle-orm';
+import { CHAVES_TIPO_MOVIMENTO_ESTOQUE, ORIGENS_LOTE_ITEM } from '@vinicycle/shared'
+import { sql } from 'drizzle-orm'
 import {
   type AnyPgColumn,
   check,
@@ -15,29 +15,29 @@ import {
   unique,
   uniqueIndex,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, local } from './acesso';
-import { itemEstoque } from './cantina';
-import { criacao, dataHora, emLista, id } from './comum';
-import { pessoa } from './gestao';
-import { nfe } from './notas';
-import { operacao } from './producao';
-import { empresa } from './plataforma';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento, local } from './acesso'
+import { itemEstoque } from './cantina'
+import { criacao, dataHora, emLista, id } from './comum'
+import { pessoa } from './gestao'
+import { nfe } from './notas'
+import { operacao } from './producao'
+import { empresa } from './plataforma'
 
 function daEmpresa(
   coluna: AnyPgColumn,
   empresaId: AnyPgColumn,
   alvo: { id: AnyPgColumn; empresaId: AnyPgColumn },
 ) {
-  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] });
+  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] })
 }
 
 const empresaId = () =>
   uuid('empresa_id')
     .notNull()
-    .references(() => empresa.id);
+    .references(() => empresa.id)
 
-const SITUACOES_PENDENCIA = ['aberta', 'resolvida'] as const;
+const SITUACOES_PENDENCIA = ['aberta', 'resolvida'] as const
 
 /** Lote do fabricante (2.4, Lote de item): código único por item e estabelecimento. */
 export const loteItem = pgTable(
@@ -71,7 +71,7 @@ export const loteItem = pgTable(
     check('lote_item_origem', emLista('origem', ORIGENS_LOTE_ITEM)),
     check('lote_item_datas', sql`fabricacao is null or validade is null or fabricacao <= validade`),
   ],
-);
+)
 
 /** Livro do estoque (2.4, Movimento de estoque): quantidade com sinal, na unidade base do item. */
 export const movimentoEstoque = pgTable(
@@ -116,7 +116,7 @@ export const movimentoEstoque = pgTable(
     index('movimento_estoque_operacao').on(t.operacaoId),
     index('movimento_estoque_nfe').on(t.nfeId),
   ],
-);
+)
 
 /**
  * Pendência de estoque negativo (2.4): abre quando um movimento deixa o saldo do item no local
@@ -156,4 +156,4 @@ export const pendenciaEstoque = pgTable(
       .on(t.itemId, t.localId)
       .where(sql`situacao = 'aberta'`),
   ],
-);
+)

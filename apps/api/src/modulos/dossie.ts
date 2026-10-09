@@ -9,44 +9,44 @@ import {
   formatarDecimal,
   formatarDocumento,
   MOTIVOS_TITULARIDADE,
-} from '@vinicycle/shared';
-import { and, desc, eq, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import * as s from '../db/schema';
-import { enfileirarEmail } from '../nucleo/email';
-import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros';
-import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao';
-import { textoDoContrato } from './contratos';
-import { historia } from './producao/historia';
-import { transferenciaValida } from './titularidade';
+} from '@vinicycle/shared'
+import { and, desc, eq, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import * as s from '../db/schema'
+import { enfileirarEmail } from '../nucleo/email'
+import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros'
+import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao'
+import { textoDoContrato } from './contratos'
+import { historia } from './producao/historia'
+import { transferenciaValida } from './titularidade'
 
 export interface SecaoDossie {
-  titulo: string;
-  cabecalho: string[];
-  linhas: string[][];
-  vazio: string;
+  titulo: string
+  cabecalho: string[]
+  linhas: string[][]
+  vazio: string
 }
 
 export interface ConteudoDossie {
-  titulo: string;
-  geradoEm: string;
-  geradoPor: string | null;
-  identificacao: Array<[string, string]>;
-  secoes: SecaoDossie[];
+  titulo: string
+  geradoEm: string
+  geradoPor: string | null
+  identificacao: Array<[string, string]>
+  secoes: SecaoDossie[]
 }
 
-const lista = (ids: string[]) => sql.raw(`(${ids.map((x) => `'${x}'`).join(',')})`);
-const t = (v: unknown) => (v === null || v === undefined || v === '' ? '—' : String(v));
+const lista = (ids: string[]) => sql.raw(`(${ids.map((x) => `'${x}'`).join(',')})`)
+const t = (v: unknown) => (v === null || v === undefined || v === '' ? '—' : String(v))
 const num = (v: unknown, casas: number) =>
-  v === null || v === undefined ? '—' : formatarDecimal(String(v), casas);
+  v === null || v === undefined ? '—' : formatarDecimal(String(v), casas)
 
 function parte(f: { nome: string; tipo: string | null; documento: string | null } | undefined) {
-  if (!f) return '—';
-  if (!f.documento) return f.nome;
+  if (!f) return '—'
+  if (!f.documento) return f.nome
   const doc =
-    f.tipo === 'cpf' || f.tipo === 'cnpj' ? formatarDocumento(f.tipo, f.documento) : f.documento;
-  return `${f.nome} (${f.tipo === 'cpf' ? 'CPF' : f.tipo === 'cnpj' ? 'CNPJ' : 'doc.'} ${doc})`;
+    f.tipo === 'cpf' || f.tipo === 'cnpj' ? formatarDocumento(f.tipo, f.documento) : f.documento
+  return `${f.nome} (${f.tipo === 'cpf' ? 'CPF' : f.tipo === 'cnpj' ? 'CNPJ' : 'doc.'} ${doc})`
 }
 
 /** Monta o dossiê de um lote de produção ou de um lote comercial de cliente. */
@@ -54,7 +54,7 @@ export async function montarDossie(
   ctx: ContextoEmpresa,
   partida: { loteId?: string | null; loteComercialId?: string | null },
 ): Promise<{ titularId: string; estabelecimentoId: string; conteudo: ConteudoDossie }> {
-  const e = ctx.empresaId;
+  const e = ctx.empresaId
   // Titular e estabelecimento do ponto de partida.
   const [p] = partida.loteId
     ? (
@@ -66,24 +66,24 @@ export async function montarDossie(
         await ctx.tx.execute<{ titular: string | null; estab: string; codigo: string }>(sql`
           select titular_id as titular, estabelecimento_id as estab, codigo from lote_comercial
           where id = ${partida.loteComercialId} and empresa_id = ${e}`)
-      ).rows;
-  if (!p) throw new ErroNaoEncontrado('Lote não encontrado.');
+      ).rows
+  if (!p) throw new ErroNaoEncontrado('Lote não encontrado.')
   if (!(await ctx.estabelecimentosPermitidos()).includes(p.estab))
-    throw new ErroNaoEncontrado('Lote não encontrado.');
+    throw new ErroNaoEncontrado('Lote não encontrado.')
   if (!p.titular)
     throw new ErroRegra(
       'O dossiê é do vinho de um cliente de vinificação: este lote é da própria empresa.',
       'titular',
-    );
+    )
   const h = await historia(
     ctx,
     partida.loteId ? { lote: partida.loteId } : { loteComercial: partida.loteComercialId! },
-  );
+  )
   const [estab] = (
     await ctx.tx.execute<{ fuso: string; registro: string | null }>(sql`
       select fuso, registro_mapa as registro from estabelecimento where id = ${p.estab}`)
-  ).rows;
-  const fuso = estab!.fuso;
+  ).rows
+  const fuso = estab!.fuso
   const dh = (v: unknown) =>
     v
       ? new Intl.DateTimeFormat('pt-BR', {
@@ -91,25 +91,25 @@ export async function montarDossie(
           dateStyle: 'short',
           timeStyle: 'short',
         }).format(new Date(String(v)))
-      : '—';
-  const dia = (v: unknown) => (v ? String(v).slice(0, 10).split('-').reverse().join('/') : '—');
+      : '—'
+  const dia = (v: unknown) => (v ? String(v).slice(0, 10).split('-').reverse().join('/') : '—')
   const fichas = await ctx.tx.execute<{
-    quem: string;
-    nome: string;
-    tipo: string | null;
-    documento: string | null;
+    quem: string
+    nome: string
+    tipo: string | null
+    documento: string | null
   }>(sql`
     select 'cliente' as quem, f.nome, f.tipo_documento as tipo, f.documento
       from pessoa pe join ficha f on f.id = pe.ficha_id where pe.id = ${p.titular}
     union all
     select 'cantina', f.nome, f.tipo_documento, f.documento
-      from estabelecimento es join ficha f on f.id = es.ficha_id where es.id = ${p.estab}`);
-  const ficha = (q: string) => fichas.rows.find((x) => x.quem === q);
-  const lotes = h.lotes.map((l) => String(l.id));
+      from estabelecimento es join ficha f on f.id = es.ficha_id where es.id = ${p.estab}`)
+  const ficha = (q: string) => fichas.rows.find((x) => x.quem === q)
+  const lotes = h.lotes.map((l) => String(l.id))
   const [autor] = (
     await ctx.tx.execute<{ nome: string }>(sql`
       select f.nome from usuario u join ficha f on f.id = u.ficha_id where u.id = ${ctx.usuarioId}`)
-  ).rows;
+  ).rows
 
   // Contrato vigente com o cliente e o texto do rótulo.
   const [contrato] = await ctx.tx
@@ -124,9 +124,9 @@ export async function montarDossie(
       ),
     )
     .orderBy(desc(s.contratoTerceirizacao.vigenciaInicio))
-    .limit(1);
+    .limit(1)
 
-  const vazio = { rows: [] as Array<Record<string, unknown>> };
+  const vazio = { rows: [] as Array<Record<string, unknown>> }
   const recepcao = lotes.length
     ? await ctx.tx.execute<Record<string, unknown>>(sql`
         select distinct r.codigo, r.chegada_em as chegada, v.nome as variedade, ri.safra,
@@ -137,7 +137,7 @@ export async function montarDossie(
           join variedade v on v.id = ri.variedade_id join operacao o on o.id = mu.operacao_id
         where mu.lote_id in ${lista(lotes)} and o.situacao = 'confirmada' and o.tipo <> 'estorno'
         order by r.chegada_em`)
-    : vazio;
+    : vazio
   const granel = lotes.length
     ? await ctx.tx.execute<Record<string, unknown>>(sql`
         select o.codigo, o.executado_em as data, o.tipo as operacao, g.tipo, g.nota_numero as nota, g.glt,
@@ -146,7 +146,7 @@ export async function montarDossie(
         where m.lote_id in ${lista(lotes)} and o.situacao = 'confirmada'
         group by o.id, o.codigo, o.executado_em, o.tipo, g.tipo, g.nota_numero, g.glt
         order by o.executado_em`)
-    : vazio;
+    : vazio
   const insumos = lotes.length
     ? await ctx.tx.execute<Record<string, unknown>>(sql`
         select o.executado_em as data, o.codigo as operacao, coalesce(i.nome, x.descricao) as insumo,
@@ -158,7 +158,7 @@ export async function montarDossie(
           left join item_estoque i on i.id = x.item_id left join lote_item li on li.id = x.lote_item_id
           join recipiente rc on rc.id = x.recipiente_id join lote l on l.id = x.lote_id
         where x.lote_id in ${lista(lotes)} order by o.executado_em`)
-    : vazio;
+    : vazio
   const recipientes = lotes.length
     ? await ctx.tx.execute<Record<string, unknown>>(sql`
         select rc.codigo, tr.nome as tipo, rc.capacidade_litros::text as capacidade,
@@ -168,11 +168,11 @@ export async function montarDossie(
           join operacao o on o.id = m.operacao_id
         where m.lote_id in ${lista(lotes)} and o.situacao = 'confirmada' and o.tipo <> 'estorno'
         group by rc.codigo, tr.nome, rc.capacidade_litros order by min(m.executado_em)`)
-    : vazio;
+    : vazio
   const rendimentos = lotes.length
     ? await ctx.tx.execute<Record<string, unknown>>(sql`
         select codigo, rendimento_real::text as rendimento from lote where id in ${lista(lotes)}`)
-    : vazio;
+    : vazio
   const devolucoesGarrafas = await ctx.tx.execute<Record<string, unknown>>(sql`
     select sa.executado_em as data, sa.tipo, sa.documento, i.nome as item, li.codigo as lote, b.quantidade::text as quantidade,
       coalesce(sa.destinatario_nome, (select f.nome from pessoa pe join ficha f on f.id = pe.ficha_id where pe.id = sa.pessoa_id)) as destinatario
@@ -181,7 +181,7 @@ export async function montarDossie(
     where sa.empresa_id = ${e} and sa.situacao = 'lancada' and sa.titular_id = ${p.titular}
       and sa.tipo in ('devolucao_titular', 'entrega_ordem_titular')
       ${h.envases.length ? sql`and li.codigo in ${sql.raw(`(${h.envases.map((x) => `'${String(x.codigo).replace(/'/g, "''")}'`).join(',')})`)}` : sql`and false`}
-    order by sa.executado_em`);
+    order by sa.executado_em`)
   const transferencias = await ctx.tx.execute<Record<string, unknown>>(sql`
     select executado_em as data, forma, motivo, litros::text as litros, garrafas,
       (select f.nome from pessoa pe join ficha f on f.id = pe.ficha_id where pe.id = para_titular_id) as para
@@ -189,7 +189,7 @@ export async function montarDossie(
     where empresa_id = ${e} and de_titular_id = ${p.titular} and ${transferenciaValida}
       and (operacao_id in (select distinct m.operacao_id from movimento_volume m where m.lote_id in ${lotes.length ? lista(lotes) : sql.raw("('00000000-0000-0000-0000-000000000000')")})
         or forma = 'estoque')
-    order by executado_em`);
+    order by executado_em`)
 
   const ORIGENS_LOTE: Record<string, string> = {
     recepcao: 'Recepção da uva',
@@ -199,8 +199,8 @@ export async function montarDossie(
     retorno_terceiro: 'Retorno de terceiro',
     titularidade: 'Transferência de titularidade',
     carga_inicial: 'Carga inicial',
-  };
-  const tipoOp = (v: unknown) => TIPOS_OPERACAO[v as keyof typeof TIPOS_OPERACAO] ?? t(v);
+  }
+  const tipoOp = (v: unknown) => TIPOS_OPERACAO[v as keyof typeof TIPOS_OPERACAO] ?? t(v)
   const identificacao: Array<[string, string]> = [
     ['Cliente', parte(ficha('cliente'))],
     [
@@ -214,7 +214,7 @@ export async function montarDossie(
         : 'sem contrato de terceirização ativo',
     ],
     ['Texto do rótulo', contrato ? await textoDoContrato(ctx, contrato) : '—'],
-  ];
+  ]
   const secoes: SecaoDossie[] = [
     {
       titulo: 'Lotes de produção',
@@ -377,7 +377,7 @@ export async function montarDossie(
       ]),
       vazio: 'Nenhuma transferência.',
     },
-  ];
+  ]
   return {
     titularId: p.titular,
     estabelecimentoId: p.estab,
@@ -388,24 +388,24 @@ export async function montarDossie(
       identificacao,
       secoes,
     },
-  };
+  }
 }
 
-const esc = (v: string) => v.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+const esc = (v: string) => v.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
 /** O dossiê em HTML, para o corpo do e-mail. */
 export function dossieHtml(c: ConteudoDossie, geradoEm: string): string {
   const tabela = (sec: SecaoDossie) =>
     sec.linhas.length
       ? `<table style="border-collapse:collapse;width:100%;font-size:12px"><thead><tr>${sec.cabecalho.map((h) => `<th style="text-align:left;border-bottom:1px solid #ccc;padding:4px">${esc(h)}</th>`).join('')}</tr></thead><tbody>${sec.linhas.map((l) => `<tr>${l.map((x) => `<td style="border-bottom:1px solid #eee;padding:4px;vertical-align:top">${esc(x)}</td>`).join('')}</tr>`).join('')}</tbody></table>`
-      : `<p style="color:#666;font-size:12px">${esc(sec.vazio)}</p>`;
+      : `<p style="color:#666;font-size:12px">${esc(sec.vazio)}</p>`
   return `<!doctype html><html lang="pt-BR"><body style="font-family:Arial,sans-serif;color:#222;max-width:900px;margin:auto;padding:24px">
 <p style="font-size:20px;font-weight:bold;color:#6b1f3a">ViniCycle</p>
 <h1 style="font-size:18px">${esc(c.titulo)}</h1>
 <p style="font-size:12px;color:#666">Gerado em ${esc(geradoEm)}${c.geradoPor ? ` por ${esc(c.geradoPor)}` : ''}.</p>
 <table style="font-size:13px;margin-bottom:16px">${c.identificacao.map(([k, v]) => `<tr><td style="padding:2px 12px 2px 0;color:#666">${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table>
 ${c.secoes.map((sec) => `<h2 style="font-size:15px;margin-top:20px">${esc(sec.titulo)}</h2>${tabela(sec)}`).join('\n')}
-</body></html>`;
+</body></html>`
 }
 
 /** O dossiê em texto simples, para o e-mail sem HTML. */
@@ -419,48 +419,48 @@ function dossieTexto(c: ConteudoDossie, geradoEm: string): string {
         `\n${sec.titulo}\n${sec.linhas.length ? [sec.cabecalho.join(' | '), ...sec.linhas.map((l) => l.join(' | '))].join('\n') : sec.vazio}`,
     ),
     '\nViniCycle',
-  ].join('\n');
+  ].join('\n')
 }
 
-const F = 'enotrace.relatorios';
+const F = 'enotrace.relatorios'
 
 export async function rotasDossie(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
 
   // Lotes de produção e lotes comerciais de um cliente, para escolher o ponto de partida.
   app.get('/api/terceiros/lotes-do-cliente', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const { titularId } = z.object({ titularId: z.uuid() }).parse(req.query);
-      const estabs = await ctx.estabelecimentosPermitidos();
-      if (!estabs.length) return { lotes: [], comerciais: [] };
+      const { titularId } = z.object({ titularId: z.uuid() }).parse(req.query)
+      const estabs = await ctx.estabelecimentosPermitidos()
+      if (!estabs.length) return { lotes: [], comerciais: [] }
       const lotes = await ctx.tx.execute<{
-        id: string;
-        codigo: string;
-        projeto: string;
-        saldo: string;
+        id: string
+        codigo: string
+        projeto: string
+        saldo: string
       }>(sql`
         select l.id, l.codigo, p.codigo || ' · ' || p.nome as projeto,
           coalesce((select sum(m.litros) from movimento_volume m where m.lote_id = l.id), 0)::text as saldo
         from lote l join projeto p on p.id = l.projeto_id
         where l.empresa_id = ${ctx.empresaId} and l.titular_id = ${titularId} and l.estabelecimento_id in ${lista(estabs)}
-        order by l.codigo desc`);
+        order by l.codigo desc`)
       const comerciais = await ctx.tx.execute<{
-        id: string;
-        codigo: string;
-        produto: string | null;
+        id: string
+        codigo: string
+        produto: string | null
       }>(sql`
         select lc.id, lc.codigo, pr.nome as produto from lote_comercial lc left join produto pr on pr.id = lc.produto_id
         where lc.empresa_id = ${ctx.empresaId} and lc.titular_id = ${titularId} and lc.estabelecimento_id in ${lista(estabs)}
-        order by lc.codigo desc`);
-      return { lotes: lotes.rows, comerciais: comerciais.rows };
+        order by lc.codigo desc`)
+      return { lotes: lotes.rows, comerciais: comerciais.rows }
     }),
-  );
+  )
 
   app.get('/api/terceiros/dossies', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const q = z.object({ titularId: z.uuid().optional() }).parse(req.query);
-      const estabs = await ctx.estabelecimentosPermitidos();
-      if (!estabs.length) return [];
+      const q = z.object({ titularId: z.uuid().optional() }).parse(req.query)
+      const estabs = await ctx.estabelecimentosPermitidos()
+      if (!estabs.length) return []
       const r = await ctx.tx.execute<Record<string, unknown>>(sql`
         select d.id, d.titulo, d.criado_em as "geradoEm", d.titular_id as "titularId",
           (select f.nome from pessoa pe join ficha f on f.id = pe.ficha_id where pe.id = d.titular_id) as titular,
@@ -468,10 +468,10 @@ export async function rotasDossie(app: FastifyInstance): Promise<void> {
         from dossie d
         where d.empresa_id = ${ctx.empresaId} and d.estabelecimento_id in ${lista(estabs)}
           ${q.titularId ? sql`and d.titular_id = ${q.titularId}` : sql``}
-        order by d.criado_em desc`);
-      return r.rows;
+        order by d.criado_em desc`)
+      return r.rows
     }),
-  );
+  )
 
   app.post('/api/terceiros/dossies', async (req) =>
     naEmpresa(db, req, [F, 'exportar'], async (ctx) => {
@@ -481,8 +481,8 @@ export async function rotasDossie(app: FastifyInstance): Promise<void> {
           (x) => !!x.loteId !== !!x.loteComercialId,
           'Escolha o lote de produção ou o lote comercial',
         )
-        .parse(req.body);
-      const m = await montarDossie(ctx, d);
+        .parse(req.body)
+      const m = await montarDossie(ctx, d)
       const [r] = await ctx.tx
         .insert(s.dossie)
         .values({
@@ -495,40 +495,40 @@ export async function rotasDossie(app: FastifyInstance): Promise<void> {
           conteudo: m.conteudo,
           criadoPor: ctx.usuarioId,
         })
-        .returning({ id: s.dossie.id });
+        .returning({ id: s.dossie.id })
       await ctx.auditar({
         acao: 'criar',
         entidade: 'dossie',
         registroId: r!.id,
         dados: { titulo: m.conteudo.titulo },
-      });
-      return { id: r!.id };
+      })
+      return { id: r!.id }
     }),
-  );
+  )
 
   const carregar = async (ctx: ContextoEmpresa, id: string) => {
     const [d] = await ctx.tx
       .select()
       .from(s.dossie)
-      .where(and(eq(s.dossie.id, id), eq(s.dossie.empresaId, ctx.empresaId)));
+      .where(and(eq(s.dossie.id, id), eq(s.dossie.empresaId, ctx.empresaId)))
     if (!d || !(await ctx.estabelecimentosPermitidos()).includes(d.estabelecimentoId))
-      throw new ErroNaoEncontrado('Dossiê não encontrado.');
-    return d;
-  };
+      throw new ErroNaoEncontrado('Dossiê não encontrado.')
+    return d
+  }
 
   app.get<{ Params: { id: string } }>('/api/terceiros/dossies/:id', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const d = await carregar(ctx, z.uuid().parse(req.params.id));
+      const d = await carregar(ctx, z.uuid().parse(req.params.id))
       const envios = await ctx.tx.execute<Record<string, unknown>>(sql`
         select x.para, x.criado_em as "enviadoEm",
           (select f.nome from usuario u join ficha f on f.id = u.ficha_id where u.id = x.criado_por) as por
-        from dossie_envio x where x.dossie_id = ${d.id} order by x.criado_em desc`);
+        from dossie_envio x where x.dossie_id = ${d.id} order by x.criado_em desc`)
       // E-mail principal do cliente, para o envio.
       const [email] = (
         await ctx.tx.execute<{ valor: string }>(sql`
           select c.valor from pessoa pe join ficha_contato c on c.ficha_id = pe.ficha_id
           where pe.id = ${d.titularId} and c.tipo = 'email' order by c.principal desc limit 1`)
-      ).rows;
+      ).rows
       return {
         id: d.id,
         titulo: d.titulo,
@@ -537,26 +537,26 @@ export async function rotasDossie(app: FastifyInstance): Promise<void> {
         conteudo: d.conteudo,
         envios: envios.rows,
         emailCliente: email?.valor ?? null,
-      };
+      }
     }),
-  );
+  )
 
   app.post<{ Params: { id: string } }>('/api/terceiros/dossies/:id/enviar', async (req) =>
     naEmpresa(db, req, [F, 'exportar'], async (ctx) => {
-      const d = await carregar(ctx, z.uuid().parse(req.params.id));
+      const d = await carregar(ctx, z.uuid().parse(req.params.id))
       const { para } = z
         .object({ para: z.string().trim().toLowerCase().pipe(z.email('E-mail inválido')) })
-        .parse(req.body);
-      const c = d.conteudo as ConteudoDossie;
+        .parse(req.body)
+      const c = d.conteudo as ConteudoDossie
       const [estab] = (
         await ctx.tx.execute<{ fuso: string; nome: string }>(sql`
           select es.fuso, f.nome from estabelecimento es join ficha f on f.id = es.ficha_id where es.id = ${d.estabelecimentoId}`)
-      ).rows;
+      ).rows
       const geradoEm = new Intl.DateTimeFormat('pt-BR', {
         timeZone: estab!.fuso,
         dateStyle: 'short',
         timeStyle: 'short',
-      }).format(d.criadoEm);
+      }).format(d.criadoEm)
       await enfileirarEmail(ctx.tx, {
         para,
         assunto: `${c.titulo} — ${estab!.nome}`,
@@ -566,17 +566,17 @@ export async function rotasDossie(app: FastifyInstance): Promise<void> {
         origem: 'dossie',
         origemId: d.id,
         empresaId: ctx.empresaId,
-      });
+      })
       await ctx.tx
         .insert(s.dossieEnvio)
-        .values({ empresaId: ctx.empresaId, dossieId: d.id, para, criadoPor: ctx.usuarioId });
+        .values({ empresaId: ctx.empresaId, dossieId: d.id, para, criadoPor: ctx.usuarioId })
       await ctx.auditar({
         acao: 'criar',
         entidade: 'dossie_envio',
         registroId: d.id,
         dados: { para },
-      });
-      return { ok: true };
+      })
+      return { ok: true }
     }),
-  );
+  )
 }

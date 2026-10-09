@@ -1,22 +1,22 @@
 // EnoTrace › Engarrafamento (cantina.md, Engarrafamento e Lote comercial): ordens com a previsão de
 // garrafas e materiais (e o que falta no estoque), a produção de cada dia no mesmo lote comercial,
 // o encerramento e os lotes comerciais com a composição do que foi engarrafado.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { type Composicao, formatarDecimal } from '@vinicycle/shared';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { DialogoSelosProducao } from './Selos';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarData, formatarDataHora } from '@/lib/utils';
-import { useLocais } from './Estoque';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { type Composicao, formatarDecimal } from '@vinicycle/shared'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { DialogoSelosProducao } from './Selos'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarData, formatarDataHora } from '@/lib/utils'
+import { useLocais } from './Estoque'
 import {
   agora,
   doCampo,
@@ -24,48 +24,48 @@ import {
   type Previa,
   ResumoComposicao,
   useProjetos,
-} from './operacoes/comum';
-import { litros } from './Projetos';
+} from './operacoes/comum'
+import { litros } from './Projetos'
 
-const F = 'enotrace.engarrafamento';
+const F = 'enotrace.engarrafamento'
 
 const SITUACOES = {
   planejada: { nome: 'Planejada', tom: 'primario' },
   em_execucao: { nome: 'Em execução', tom: 'alerta' },
   encerrada: { nome: 'Encerrada', tom: 'sucesso' },
   cancelada: { nome: 'Cancelada', tom: 'neutro' },
-} as const;
-type Situacao = keyof typeof SITUACOES;
+} as const
+type Situacao = keyof typeof SITUACOES
 
 const mensagem = (e: unknown) =>
   e instanceof ErroApi && e.campos.length
     ? `${e.message} ${e.campos.map((c) => c.mensagem).join(' ')}`
-    : (e as Error).message;
+    : (e as Error).message
 const qtd = (v: string, unidade: string) =>
-  `${formatarDecimal(v, unidade === 'un' ? 0 : 3)} ${unidade}`;
+  `${formatarDecimal(v, unidade === 'un' ? 0 : 3)} ${unidade}`
 
 // Lista ------------------------------------------------------------------------------------------
 
 interface LinhaOrdem {
-  id: string;
-  situacao: Situacao;
-  dataPrevista: string;
-  projeto: string;
-  projetoNome: string;
-  produto: string;
-  loteComercial: string | null;
-  previstas: number;
-  produzidas: number;
+  id: string
+  situacao: Situacao
+  dataPrevista: string
+  projeto: string
+  projetoNome: string
+  produto: string
+  loteComercial: string | null
+  previstas: number
+  produzidas: number
 }
 
 export function ListaOrdens() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const [situacao, setSituacao] = useState('abertas');
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const [situacao, setSituacao] = useState('abertas')
   const q = useQuery({
     queryKey: ['ordens-engarrafamento', situacao],
     queryFn: () => api.get<LinhaOrdem[]>(`/api/engarrafamento/ordens?situacao=${situacao}`),
-  });
+  })
   return (
     <Pagina
       titulo="Engarrafamento"
@@ -148,37 +148,37 @@ export function ListaOrdens() {
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }
 
 // Nova ordem e edição -----------------------------------------------------------------------------
 
 interface Produto {
-  id: string;
-  nome: string;
-  rotulos: Array<{ id: string; versao: string; teorAlcoolico: string; vigenteDesde: string }>;
-  formatos: Array<{ id: string; volumeMl: number; ativo: boolean; ficha: unknown[] }>;
+  id: string
+  nome: string
+  rotulos: Array<{ id: string; versao: string; teorAlcoolico: string; vigenteDesde: string }>
+  formatos: Array<{ id: string; volumeMl: number; ativo: boolean; ficha: unknown[] }>
 }
 
 interface Previsao {
-  perdaPercentual: number;
-  litrosDisponiveis: string;
-  litrosNecessarios: string;
-  recipientes: Array<{ recipienteId: string; codigo: string; lote: string; litros: string }>;
-  formatos: Array<{ formatoId: string; nome: string; volumeMl: number; garrafas: number }>;
+  perdaPercentual: number
+  litrosDisponiveis: string
+  litrosNecessarios: string
+  recipientes: Array<{ recipienteId: string; codigo: string; lote: string; litros: string }>
+  formatos: Array<{ formatoId: string; nome: string; volumeMl: number; garrafas: number }>
   materiais: Array<{
-    itemId: string;
-    nome: string;
-    unidade: string;
-    previsto: string;
-    saldo: string;
-    falta: string;
-  }>;
-  avisos: string[];
+    itemId: string
+    nome: string
+    unidade: string
+    previsto: string
+    saldo: string
+    falta: string
+  }>
+  avisos: string[]
 }
 
 const nomeVolume = (ml: number) =>
-  ml >= 1000 ? `${formatarDecimal(String(ml / 1000), ml % 1000 ? 3 : 1)} L` : `${ml} mL`;
+  ml >= 1000 ? `${formatarDecimal(String(ml / 1000), ml % 1000 ? 3 : 1)} L` : `${ml} mL`
 
 function TabelaMateriais({ materiais }: { materiais: Previsao['materiais'] }) {
   if (!materiais.length)
@@ -186,7 +186,7 @@ function TabelaMateriais({ materiais }: { materiais: Previsao['materiais'] }) {
       <p className="text-sm text-muted-foreground">
         O formato não tem ficha de embalagem (Produtos › formato › ficha).
       </p>
-    );
+    )
   return (
     <table className="w-full text-sm">
       <thead className="text-left text-muted-foreground">
@@ -212,35 +212,35 @@ function TabelaMateriais({ materiais }: { materiais: Previsao['materiais'] }) {
         ))}
       </tbody>
     </table>
-  );
+  )
 }
 
 interface FormOrdem {
-  projetoId: string;
-  produtoId: string;
-  rotuloId: string;
-  dataPrevista: string;
-  engarrafadoPorId: string;
-  localProdutoId: string;
-  localMateriaisId: string;
-  formatos: Record<string, string>; // formatoId → garrafas ('' = sugerir)
-  recipientes: string[];
-  observacao: string;
+  projetoId: string
+  produtoId: string
+  rotuloId: string
+  dataPrevista: string
+  engarrafadoPorId: string
+  localProdutoId: string
+  localMateriaisId: string
+  formatos: Record<string, string> // formatoId → garrafas ('' = sugerir)
+  recipientes: string[]
+  observacao: string
 }
 
 export function NovaOrdem() {
-  const projeto = new URLSearchParams(window.location.search).get('projeto') ?? '';
-  return <FormularioOrdem inicial={{ projetoId: projeto }} />;
+  const projeto = new URLSearchParams(window.location.search).get('projeto') ?? ''
+  return <FormularioOrdem inicial={{ projetoId: projeto }} />
 }
 
 export function EditarOrdem() {
-  const { id = '' } = useParams();
+  const { id = '' } = useParams()
   const q = useQuery({
     queryKey: ['ordem-engarrafamento', id],
     queryFn: () => api.get<FichaOrdem>(`/api/engarrafamento/ordens/${id}`),
-  });
-  if (!q.data) return <p className="text-sm text-muted-foreground">Carregando…</p>;
-  const o = q.data;
+  })
+  if (!q.data) return <p className="text-sm text-muted-foreground">Carregando…</p>
+  const o = q.data
   return (
     <FormularioOrdem
       id={id}
@@ -258,7 +258,7 @@ export function EditarOrdem() {
         observacao: o.observacao ?? '',
       }}
     />
-  );
+  )
 }
 
 function FormularioOrdem({
@@ -266,14 +266,14 @@ function FormularioOrdem({
   versao,
   inicial,
 }: {
-  id?: string;
-  versao?: number;
-  inicial: Partial<FormOrdem>;
+  id?: string
+  versao?: number
+  inicial: Partial<FormOrdem>
 }) {
-  const navegar = useNavigate();
-  const qc = useQueryClient();
-  const projetos = useProjetos();
-  const locais = useLocais();
+  const navegar = useNavigate()
+  const qc = useQueryClient()
+  const projetos = useProjetos()
+  const locais = useLocais()
   const [d, setD] = useState<FormOrdem>(() => ({
     projetoId: '',
     produtoId: '',
@@ -286,9 +286,9 @@ function FormularioOrdem({
     recipientes: [],
     observacao: '',
     ...inicial,
-  }));
-  const [erro, setErro] = useState<string | null>(null);
-  const set = (p: Partial<FormOrdem>) => setD({ ...d, ...p });
+  }))
+  const [erro, setErro] = useState<string | null>(null)
+  const set = (p: Partial<FormOrdem>) => setD({ ...d, ...p })
   const produtos = useQuery({
     queryKey: ['produtos-ativos'],
     queryFn: async () =>
@@ -297,18 +297,18 @@ function FormularioOrdem({
           '/api/produtos?tamanho=0',
         )
       ).itens,
-  });
+  })
   const produto = useQuery({
     queryKey: ['produto', d.produtoId],
     queryFn: () => api.get<Produto>(`/api/produtos/${d.produtoId}`),
     enabled: !!d.produtoId,
-  });
+  })
   const engarrafadoras = useQuery({
     queryKey: ['pessoas-opcoes', 'engarrafadora'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=engarrafadora'),
-  });
-  const escolhidos = Object.keys(d.formatos);
+  })
+  const escolhidos = Object.keys(d.formatos)
   const corpoPrevisao = {
     projetoId: d.projetoId,
     produtoId: d.produtoId,
@@ -318,15 +318,15 @@ function FormularioOrdem({
       garrafas: d.formatos[f] ? Number(d.formatos[f]) : null,
     })),
     localMateriaisId: d.localMateriaisId || null,
-  };
+  }
   const previsao = useQuery({
     queryKey: ['previsao-envase', corpoPrevisao],
     queryFn: () => api.post<Previsao>('/api/engarrafamento/previsao', corpoPrevisao),
     enabled: !!d.projetoId && !!d.produtoId && escolhidos.length > 0,
-  });
-  const p = previsao.data;
+  })
+  const p = previsao.data
   async function salvar() {
-    setErro(null);
+    setErro(null)
     const corpo = {
       ...d,
       rotuloId: d.rotuloId || null,
@@ -341,16 +341,16 @@ function FormularioOrdem({
         ? d.recipientes
         : (p?.recipientes.map((r) => r.recipienteId) ?? []),
       versao,
-    };
+    }
     try {
       const r = id
         ? (await api.put(`/api/engarrafamento/ordens/${id}`, corpo), { id })
-        : await api.post<{ id: string }>('/api/engarrafamento/ordens', corpo);
-      await qc.invalidateQueries({ queryKey: ['ordens-engarrafamento'] });
-      await qc.invalidateQueries({ queryKey: ['ordem-engarrafamento', r.id] });
-      navegar(`/enotrace/engarrafamento/${r.id}`);
+        : await api.post<{ id: string }>('/api/engarrafamento/ordens', corpo)
+      await qc.invalidateQueries({ queryKey: ['ordens-engarrafamento'] })
+      await qc.invalidateQueries({ queryKey: ['ordem-engarrafamento', r.id] })
+      navegar(`/enotrace/engarrafamento/${r.id}`)
     } catch (e) {
-      setErro(mensagem(e));
+      setErro(mensagem(e))
     }
   }
   return (
@@ -476,18 +476,18 @@ function FormularioOrdem({
             {produto.data.formatos
               .filter((f) => f.ativo)
               .map((f) => {
-                const marcado = f.id in d.formatos;
-                const sugerida = p?.formatos.find((x) => x.formatoId === f.id)?.garrafas;
+                const marcado = f.id in d.formatos
+                const sugerida = p?.formatos.find((x) => x.formatoId === f.id)?.garrafas
                 return (
                   <div key={f.id} className="flex flex-wrap items-end gap-3">
                     <Caixa
                       rotulo={nomeVolume(f.volumeMl)}
                       checked={marcado}
                       onChange={(e) => {
-                        const formatos = { ...d.formatos };
-                        if (e.target.checked) formatos[f.id] = '';
-                        else delete formatos[f.id];
-                        set({ formatos });
+                        const formatos = { ...d.formatos }
+                        if (e.target.checked) formatos[f.id] = ''
+                        else delete formatos[f.id]
+                        set({ formatos })
                       }}
                     />
                     {marcado && (
@@ -513,7 +513,7 @@ function FormularioOrdem({
                       <span className="text-xs text-muted-foreground">sem ficha de embalagem</span>
                     )}
                   </div>
-                );
+                )
               })}
             {!produto.data.formatos.some((f) => f.ativo) && (
               <p className="text-sm text-muted-foreground">
@@ -539,12 +539,12 @@ function FormularioOrdem({
                   onChange={(e) => {
                     const atuais = d.recipientes.length
                       ? d.recipientes
-                      : p.recipientes.map((x) => x.recipienteId);
+                      : p.recipientes.map((x) => x.recipienteId)
                     set({
                       recipientes: e.target.checked
                         ? [...atuais, r.recipienteId]
                         : atuais.filter((x) => x !== r.recipienteId),
-                    });
+                    })
                   }}
                 />
               ))}
@@ -577,91 +577,91 @@ function FormularioOrdem({
         </Botao>
       </div>
     </Pagina>
-  );
+  )
 }
 
 // Ficha da ordem ---------------------------------------------------------------------------------
 
 interface FichaOrdem {
-  id: string;
-  versao: number;
-  situacao: Situacao;
-  projetoId: string;
-  produtoId: string;
-  rotuloId: string | null;
-  dataPrevista: string;
-  engarrafadoPorId: string | null;
-  localProdutoId: string;
-  localMateriaisId: string;
-  observacao: string | null;
-  motivoCancelamento: string | null;
-  projeto: string;
-  projetoNome: string;
-  produto: string;
-  rotulo: string | null;
-  teorDeclarado: string | null;
-  engarrafadoPor: string | null;
-  localProduto: string;
-  localMateriais: string;
+  id: string
+  versao: number
+  situacao: Situacao
+  projetoId: string
+  produtoId: string
+  rotuloId: string | null
+  dataPrevista: string
+  engarrafadoPorId: string | null
+  localProdutoId: string
+  localMateriaisId: string
+  observacao: string | null
+  motivoCancelamento: string | null
+  projeto: string
+  projetoNome: string
+  produto: string
+  rotulo: string | null
+  teorDeclarado: string | null
+  engarrafadoPor: string | null
+  localProduto: string
+  localMateriais: string
   formatos: Array<{
-    formatoId: string;
-    volumeMl: number;
-    nome: string;
-    previstas: number;
-    produzidas: number;
-  }>;
-  origens: Array<{ recipienteId: string; codigo: string; litros: string; lote: string | null }>;
+    formatoId: string
+    volumeMl: number
+    nome: string
+    previstas: number
+    produzidas: number
+  }>
+  origens: Array<{ recipienteId: string; codigo: string; litros: string; lote: string | null }>
   producoes: Array<{
-    id: string;
-    operacaoId: string;
-    codigo: string;
-    situacao: string;
-    executadoEm: string;
-    litrosTirados: string;
-    litrosEngarrafados: string;
-    perdaLitros: string;
-    formatos: Array<{ formatoId: string; garrafas: number }>;
-    materiais: Array<{ item: string; unidade: string; previsto: string; real: string }> | null;
-  }>;
+    id: string
+    operacaoId: string
+    codigo: string
+    situacao: string
+    executadoEm: string
+    litrosTirados: string
+    litrosEngarrafados: string
+    perdaLitros: string
+    formatos: Array<{ formatoId: string; garrafas: number }>
+    materiais: Array<{ item: string; unidade: string; previsto: string; real: string }> | null
+  }>
   loteComercial: {
-    codigo: string;
-    litros: string;
-    primeiroEnvase: string | null;
-    ultimoEnvase: string | null;
-    composicao: Composicao | null;
-    origens: Array<{ loteId: string; codigo: string; litros: string }>;
-  } | null;
-  materiais: Previsao['materiais'];
+    codigo: string
+    litros: string
+    primeiroEnvase: string | null
+    ultimoEnvase: string | null
+    composicao: Composicao | null
+    origens: Array<{ loteId: string; codigo: string; litros: string }>
+  } | null
+  materiais: Previsao['materiais']
 }
 
 export function FichaOrdemEngarrafamento() {
-  const { id = '' } = useParams();
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const [produzindo, setProduzindo] = useState(false);
-  const [cancelando, setCancelando] = useState(false);
-  const [selosDe, setSelosDe] = useState<string | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
+  const { id = '' } = useParams()
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const [produzindo, setProduzindo] = useState(false)
+  const [cancelando, setCancelando] = useState(false)
+  const [selosDe, setSelosDe] = useState<string | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
   const q = useQuery({
     queryKey: ['ordem-engarrafamento', id],
     queryFn: () => api.get<FichaOrdem>(`/api/engarrafamento/ordens/${id}`),
-  });
+  })
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const o = q.data;
-  const aberta = o.situacao === 'planejada' || o.situacao === 'em_execucao';
+    )
+  const o = q.data
+  const aberta = o.situacao === 'planejada' || o.situacao === 'em_execucao'
   const atualizar = () =>
     Promise.all([
       qc.invalidateQueries({ queryKey: ['ordem-engarrafamento', id] }),
       qc.invalidateQueries({ queryKey: ['ordens-engarrafamento'] }),
-    ]);
-  const nomeFormato = (f: string) => o.formatos.find((x) => x.formatoId === f)?.nome ?? '';
+    ])
+  const nomeFormato = (f: string) => o.formatos.find((x) => x.formatoId === f)?.nome ?? ''
   return (
     <Pagina
       titulo={`${o.produto}${o.loteComercial ? ` · ${o.loteComercial.codigo}` : ''}`}
@@ -680,12 +680,12 @@ export function FichaOrdemEngarrafamento() {
             <Botao
               variante="secundario"
               onClick={async () => {
-                setErro(null);
+                setErro(null)
                 try {
-                  await api.post(`/api/engarrafamento/ordens/${id}/encerrar`, {});
-                  await atualizar();
+                  await api.post(`/api/engarrafamento/ordens/${id}/encerrar`, {})
+                  await atualizar()
                 } catch (e) {
-                  setErro(mensagem(e));
+                  setErro(mensagem(e))
                 }
               }}
             >
@@ -725,8 +725,8 @@ export function FichaOrdemEngarrafamento() {
           ordem={o}
           aoFechar={() => setProduzindo(false)}
           aoConfirmar={async () => {
-            setProduzindo(false);
-            await atualizar();
+            setProduzindo(false)
+            await atualizar()
           }}
         />
       )}
@@ -863,27 +863,27 @@ export function FichaOrdemEngarrafamento() {
         descricao="Só a ordem sem produção se cancela; com produção, estorne as produções ou encerre."
         rotuloBotao="Cancelar ordem"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/engarrafamento/ordens/${id}/cancelar`, { motivo });
-          setCancelando(false);
-          await atualizar();
+          await api.post(`/api/engarrafamento/ordens/${id}/cancelar`, { motivo })
+          setCancelando(false)
+          await atualizar()
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 interface PreviaProducao extends Previa {
-  litrosTirados: string;
-  litrosEngarrafados: string;
-  perdaLitros: string;
+  litrosTirados: string
+  litrosEngarrafados: string
+  perdaLitros: string
   materiais: Array<{
-    itemId: string;
-    nome: string;
-    unidade: string;
-    previsto: string;
-    real: string;
-    loteItemId: string | null;
-  }>;
+    itemId: string
+    nome: string
+    unidade: string
+    previsto: string
+    real: string
+    loteItemId: string | null
+  }>
 }
 
 function ProducaoDoDia({
@@ -891,18 +891,18 @@ function ProducaoDoDia({
   aoFechar,
   aoConfirmar,
 }: {
-  ordem: FichaOrdem;
-  aoFechar: () => void;
-  aoConfirmar: () => Promise<unknown>;
+  ordem: FichaOrdem
+  aoFechar: () => void
+  aoConfirmar: () => Promise<unknown>
 }) {
-  const [executadoEm, setExecutadoEm] = useState(agora());
-  const [tirados, setTirados] = useState<Record<string, string | null>>({});
-  const [garrafas, setGarrafas] = useState<Record<string, string>>({});
-  const [reais, setReais] = useState<Record<string, string>>({});
-  const [previa, setPrevia] = useState<PreviaProducao | null>(null);
-  const [cientes, setCientes] = useState<string[]>([]);
-  const [erro, setErro] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
+  const [executadoEm, setExecutadoEm] = useState(agora())
+  const [tirados, setTirados] = useState<Record<string, string | null>>({})
+  const [garrafas, setGarrafas] = useState<Record<string, string>>({})
+  const [reais, setReais] = useState<Record<string, string>>({})
+  const [previa, setPrevia] = useState<PreviaProducao | null>(null)
+  const [cientes, setCientes] = useState<string[]>([])
+  const [erro, setErro] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
   const corpo = () => ({
     executadoEm: doCampo(executadoEm),
     recipientes: ordem.origens
@@ -915,24 +915,24 @@ function ProducaoDoDia({
       .filter(([, v]) => v !== '')
       .map(([itemId, real]) => ({ itemId, real: real.replace(',', '.') })),
     cientes,
-  });
+  })
   const limpar = () => {
-    setPrevia(null);
-    setCientes([]);
-  };
+    setPrevia(null)
+    setCientes([])
+  }
   async function executar(acao: () => Promise<void>) {
-    setErro(null);
-    setEnviando(true);
+    setErro(null)
+    setEnviando(true)
     try {
-      await acao();
+      await acao()
     } catch (e) {
-      setErro(mensagem(e));
+      setErro(mensagem(e))
     } finally {
-      setEnviando(false);
+      setEnviando(false)
     }
   }
   const podeConfirmar =
-    !!previa && !previa.bloqueios.length && previa.avisos.every((a) => cientes.includes(a.codigo));
+    !!previa && !previa.bloqueios.length && previa.avisos.every((a) => cientes.includes(a.codigo))
   return (
     <Cartao>
       <CabecalhoCartao
@@ -947,8 +947,8 @@ function ProducaoDoDia({
             className="w-60"
             value={executadoEm}
             onChange={(e) => {
-              limpar();
-              setExecutadoEm(e.target.value);
+              limpar()
+              setExecutadoEm(e.target.value)
             }}
           />
         </Campo>
@@ -965,8 +965,8 @@ function ProducaoDoDia({
                 unidade="L"
                 valor={tirados[r.recipienteId]}
                 aoMudar={(v) => {
-                  limpar();
-                  setTirados({ ...tirados, [r.recipienteId]: v });
+                  limpar()
+                  setTirados({ ...tirados, [r.recipienteId]: v })
                 }}
               />
             </Campo>
@@ -981,8 +981,8 @@ function ProducaoDoDia({
                 className="text-right"
                 value={garrafas[f.formatoId] ?? ''}
                 onChange={(e) => {
-                  limpar();
-                  setGarrafas({ ...garrafas, [f.formatoId]: e.target.value.replace(/\D/g, '') });
+                  limpar()
+                  setGarrafas({ ...garrafas, [f.formatoId]: e.target.value.replace(/\D/g, '') })
                 }}
               />
             </Campo>
@@ -992,7 +992,7 @@ function ProducaoDoDia({
           <div className="flex flex-col gap-2">
             <p className="text-sm font-medium">Materiais: previsto pela ficha × real</p>
             {previa.materiais.map((m) => {
-              const info = m;
+              const info = m
               return (
                 <div key={m.itemId} className="flex flex-wrap items-end gap-3 text-sm">
                   <span className="w-56">{info.nome}</span>
@@ -1007,12 +1007,12 @@ function ProducaoDoDia({
                       reais[m.itemId] ?? formatarDecimal(m.real, info.unidade === 'un' ? 0 : 3)
                     }
                     onChange={(e) => {
-                      limpar();
-                      setReais({ ...reais, [m.itemId]: e.target.value.replace(/[^\d,]/g, '') });
+                      limpar()
+                      setReais({ ...reais, [m.itemId]: e.target.value.replace(/[^\d,]/g, '') })
                     }}
                   />
                 </div>
-              );
+              )
             })}
           </div>
         )}
@@ -1037,8 +1037,8 @@ function ProducaoDoDia({
                     `/api/engarrafamento/ordens/${ordem.id}/producoes/previa`,
                     corpo(),
                   ),
-                );
-                setCientes([]);
+                )
+                setCientes([])
               })
             }
           >
@@ -1048,8 +1048,8 @@ function ProducaoDoDia({
             disabled={!podeConfirmar || enviando}
             onClick={() =>
               executar(async () => {
-                await api.post(`/api/engarrafamento/ordens/${ordem.id}/producoes`, corpo());
-                await aoConfirmar();
+                await api.post(`/api/engarrafamento/ordens/${ordem.id}/producoes`, corpo())
+                await aoConfirmar()
               })
             }
           >
@@ -1061,30 +1061,30 @@ function ProducaoDoDia({
         </div>
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 // Lotes comerciais -------------------------------------------------------------------------------
 
 export function ListaLotesComerciais() {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
   const q = useQuery({
     queryKey: ['lotes-comerciais'],
     queryFn: () =>
       api.get<
         Array<{
-          id: string;
-          codigo: string;
-          litros: string;
-          primeiroEnvase: string | null;
-          produto: string | null;
-          projeto: string | null;
-          ordemId: string | null;
-          composicao: Composicao | null;
+          id: string
+          codigo: string
+          litros: string
+          primeiroEnvase: string | null
+          produto: string | null
+          projeto: string | null
+          ordemId: string | null
+          composicao: Composicao | null
         }>
       >('/api/lotes-comerciais'),
-  });
+  })
   return (
     <Pagina titulo="Lotes comerciais" trilha={['EnoTrace', 'Engarrafamento']}>
       <p className="text-sm text-muted-foreground">
@@ -1129,5 +1129,5 @@ export function ListaLotesComerciais() {
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }

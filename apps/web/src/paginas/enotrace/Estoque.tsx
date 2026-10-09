@@ -1,64 +1,64 @@
 // EnoTrace › Estoque (ambiente-cliente.md, Estoque; 03-modelo-de-dados.md, 2.4): saldos por item,
 // ficha com saldo por local e por lote, movimentos e pendências; entrada manual (com o número da
 // nota), transferência entre locais, ajuste e descarte, e estorno de cada lançamento.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   formatarDecimal,
   MOTIVOS_TITULARIDADE,
   NOMES_TIPO_ITEM,
   SITUACOES_VALIDADE,
-} from '@vinicycle/shared';
-import { Plus, Trash2, Undo2 } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { BotaoIcone } from '@/componentes/AcoesLinha';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarData, formatarDataHora } from '@/lib/utils';
-import { agora, doCampo } from './operacoes/comum';
+} from '@vinicycle/shared'
+import { Plus, Trash2, Undo2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { BotaoIcone } from '@/componentes/AcoesLinha'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarData, formatarDataHora } from '@/lib/utils'
+import { agora, doCampo } from './operacoes/comum'
 
-const F = 'enotrace.estoque';
+const F = 'enotrace.estoque'
 
-type TipoItem = keyof typeof NOMES_TIPO_ITEM;
-type SituacaoValidade = keyof typeof SITUACOES_VALIDADE;
+type TipoItem = keyof typeof NOMES_TIPO_ITEM
+type SituacaoValidade = keyof typeof SITUACOES_VALIDADE
 
 const TOM_VALIDADE: Record<SituacaoValidade, 'neutro' | 'sucesso' | 'alerta' | 'erro'> = {
   sem_validade: 'neutro',
   valido: 'sucesso',
   vencendo: 'alerta',
   vencido: 'erro',
-};
+}
 
-const qtd = (v: string | number, unidade: string) => `${formatarDecimal(String(v), 3)} ${unidade}`;
+const qtd = (v: string | number, unidade: string) => `${formatarDecimal(String(v), 3)} ${unidade}`
 
 const mensagem = (e: unknown) =>
   e instanceof ErroApi && e.campos.length
     ? `${e.message} ${e.campos.map((c) => c.mensagem).join(' ')}`
-    : (e as Error).message;
+    : (e as Error).message
 
 export function useLocais() {
   return useQuery({
     queryKey: ['estoque-locais'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string; externo: boolean }>>('/api/estoque/locais'),
-  });
+  })
 }
 
 export interface ItemOpcao {
-  id: string;
-  nome: string;
-  tipo: TipoItem;
-  unidadeBase: string;
-  controlaLote: boolean;
-  controlaValidade: boolean;
+  id: string
+  nome: string
+  tipo: TipoItem
+  unidadeBase: string
+  controlaLote: boolean
+  controlaValidade: boolean
 }
 
 export function useItens() {
@@ -66,17 +66,17 @@ export function useItens() {
     queryKey: ['itens-estoque-ativos'],
     queryFn: async () =>
       (await api.get<{ itens: ItemOpcao[] }>('/api/itens-estoque?tamanho=0')).itens,
-  });
+  })
 }
 
 interface LoteOpcao {
-  id: string;
-  codigo: string;
-  validade: string | null;
-  situacao: SituacaoValidade;
-  saldo: string;
-  titularId: string | null;
-  titular: string | null;
+  id: string
+  codigo: string
+  validade: string | null
+  situacao: SituacaoValidade
+  saldo: string
+  titularId: string | null
+  titular: string | null
 }
 
 export function useLotes(itemId: string, localId?: string) {
@@ -87,7 +87,7 @@ export function useLotes(itemId: string, localId?: string) {
         `/api/estoque/lotes?item=${itemId}${localId ? `&local=${localId}` : ''}`,
       ),
     enabled: !!itemId,
-  });
+  })
 }
 
 /** Avisos de saldo negativo depois de um lançamento: a pendência fica aberta. */
@@ -96,30 +96,30 @@ function AvisosSaldo({ avisos }: { avisos: Array<{ codigo: string; mensagem: str
     <Aviso key={a.codigo} tom="alerta">
       {a.mensagem}
     </Aviso>
-  ));
+  ))
 }
 
 // Lista -----------------------------------------------------------------------------------------
 
 interface LinhaEstoque {
-  id: string;
-  tipo: TipoItem;
-  nome: string;
-  unidade: string;
-  estoqueMinimo: string | null;
-  saldo: string;
-  saldoTerceiros: string;
-  lotesVencendo: number;
-  pendencia: boolean;
+  id: string
+  tipo: TipoItem
+  nome: string
+  unidade: string
+  estoqueMinimo: string | null
+  saldo: string
+  saldoTerceiros: string
+  lotesVencendo: number
+  pendencia: boolean
 }
 
 export function ListaEstoque() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
   const pendencias = useQuery({
     queryKey: ['estoque-pendencias'],
     queryFn: () => api.get<unknown[]>('/api/estoque/pendencias'),
-  });
+  })
   return (
     <Pagina
       titulo="Estoque"
@@ -235,81 +235,81 @@ export function ListaEstoque() {
         ]}
       />
     </Pagina>
-  );
+  )
 }
 
 // Ficha -----------------------------------------------------------------------------------------
 
 interface FichaItem {
-  id: string;
-  nome: string;
-  tipo: TipoItem;
-  unidade: string;
-  estoqueMinimo: string | null;
-  controlaLote: boolean;
-  saldo: string;
-  porLocal: Array<{ localId: string; local: string; saldo: string }>;
+  id: string
+  nome: string
+  tipo: TipoItem
+  unidade: string
+  estoqueMinimo: string | null
+  controlaLote: boolean
+  saldo: string
+  porLocal: Array<{ localId: string; local: string; saldo: string }>
   lotes: Array<{
-    id: string;
-    codigo: string;
-    fabricacao: string | null;
-    validade: string | null;
-    situacao: SituacaoValidade;
-    saldo: string;
-    titular: string | null;
-    locais: Array<{ localId: string; local: string; saldo: string }>;
-  }>;
+    id: string
+    codigo: string
+    fabricacao: string | null
+    validade: string | null
+    situacao: SituacaoValidade
+    saldo: string
+    titular: string | null
+    locais: Array<{ localId: string; local: string; saldo: string }>
+  }>
   movimentos: Array<{
-    id: string;
-    grupoId: string;
-    executadoEm: string;
-    tipo: string;
-    nomeTipo: string;
-    quantidade: string;
-    local: string;
-    lote: string | null;
-    motivo: string | null;
-    documento: string | null;
-    operacaoId: string | null;
-    operacao: string | null;
-    estornado: boolean;
-  }>;
+    id: string
+    grupoId: string
+    executadoEm: string
+    tipo: string
+    nomeTipo: string
+    quantidade: string
+    local: string
+    lote: string | null
+    motivo: string | null
+    documento: string | null
+    operacaoId: string | null
+    operacao: string | null
+    estornado: boolean
+  }>
   pendencias: Array<{
-    id: string;
-    local: string;
-    executadoEm: string;
-    saldoApurado: string;
-    situacao: 'aberta' | 'resolvida';
-    resolvidaEm: string | null;
-  }>;
+    id: string
+    local: string
+    executadoEm: string
+    saldoApurado: string
+    situacao: 'aberta' | 'resolvida'
+    resolvidaEm: string | null
+  }>
 }
 
 export function FichaEstoque() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const [ajuste, setAjuste] = useState(false);
-  const [estorno, setEstorno] = useState<string | null>(null);
-  const [avisos, setAvisos] = useState<Array<{ codigo: string; mensagem: string }>>([]);
-  const [usos, setUsos] = useState<{ id: string; codigo: string } | null>(null);
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const [ajuste, setAjuste] = useState(false)
+  const [estorno, setEstorno] = useState<string | null>(null)
+  const [avisos, setAvisos] = useState<Array<{ codigo: string; mensagem: string }>>([])
+  const [usos, setUsos] = useState<{ id: string; codigo: string } | null>(null)
   const q = useQuery({
     queryKey: ['estoque-item', id],
     queryFn: () => api.get<FichaItem>(`/api/estoque/itens/${id}`),
-  });
+  })
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const i = q.data;
+    )
+  const i = q.data
   const atualizar = () =>
     Promise.all(
       [['estoque-item', id], ['lista'], ['estoque-pendencias'], ['estoque-lotes']].map((queryKey) =>
         qc.invalidateQueries({ queryKey }),
       ),
-    );
+    )
   return (
     <Pagina
       titulo={i.nome}
@@ -465,9 +465,9 @@ export function FichaEstoque() {
           item={i}
           aoFechar={() => setAjuste(false)}
           aoLancar={async (r) => {
-            setAvisos(r);
-            setAjuste(false);
-            await atualizar();
+            setAvisos(r)
+            setAjuste(false)
+            await atualizar()
           }}
         />
       )}
@@ -481,13 +481,13 @@ export function FichaEstoque() {
           const r = await api.post<{ avisos: Array<{ codigo: string; mensagem: string }> }>(
             `/api/estoque/grupos/${estorno}/estorno`,
             { motivo },
-          );
-          setAvisos(r.avisos);
-          await atualizar();
+          )
+          setAvisos(r.avisos)
+          await atualizar()
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 /**
@@ -498,26 +498,26 @@ function DialogoUsos({
   lote,
   aoFechar,
 }: {
-  lote: { id: string; codigo: string };
-  aoFechar: () => void;
+  lote: { id: string; codigo: string }
+  aoFechar: () => void
 }) {
-  const { data: s } = useSessao();
+  const { data: s } = useSessao()
   const q = useQuery({
     queryKey: ['estoque-usos', lote.id],
     queryFn: () =>
       api.get<
         Array<{
-          operacaoId: string;
-          operacao: string;
-          executadoEm: string;
-          recipiente: string;
-          loteId: string;
-          lote: string;
-          dose: string;
-          unidade: string;
+          operacaoId: string
+          operacao: string
+          executadoEm: string
+          recipiente: string
+          loteId: string
+          lote: string
+          dose: string
+          unidade: string
         }>
       >(`/api/estoque/lotes/${lote.id}/usos`),
-  });
+  })
   return (
     <Dialogo
       aberto
@@ -549,7 +549,7 @@ function DialogoUsos({
         )}
       </ul>
     </Dialogo>
-  );
+  )
 }
 
 function DialogoAjuste({
@@ -557,11 +557,11 @@ function DialogoAjuste({
   aoFechar,
   aoLancar,
 }: {
-  item: FichaItem;
-  aoFechar: () => void;
-  aoLancar: (avisos: Array<{ codigo: string; mensagem: string }>) => Promise<void>;
+  item: FichaItem
+  aoFechar: () => void
+  aoLancar: (avisos: Array<{ codigo: string; mensagem: string }>) => Promise<void>
 }) {
-  const locais = useLocais();
+  const locais = useLocais()
   const [d, setD] = useState({
     tipo: 'ajuste_inventario' as 'ajuste_inventario' | 'descarte',
     executadoEm: agora(),
@@ -569,10 +569,10 @@ function DialogoAjuste({
     loteItemId: '',
     quantidade: null as string | null,
     motivo: '',
-  });
-  const lotes = useLotes(item.controlaLote ? item.id : '', d.localId);
-  const [erro, setErro] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
+  })
+  const lotes = useLotes(item.controlaLote ? item.id : '', d.localId)
+  const [erro, setErro] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
   return (
     <Dialogo
       aberto
@@ -587,8 +587,8 @@ function DialogoAjuste({
           <Botao
             disabled={enviando}
             onClick={async () => {
-              setEnviando(true);
-              setErro(null);
+              setEnviando(true)
+              setErro(null)
               try {
                 const r = await api.post<{ avisos: Array<{ codigo: string; mensagem: string }> }>(
                   '/api/estoque/ajustes',
@@ -599,12 +599,12 @@ function DialogoAjuste({
                     loteItemId: d.loteItemId || null,
                     quantidade: d.quantidade ?? '0',
                   },
-                );
-                await aoLancar(r.avisos);
+                )
+                await aoLancar(r.avisos)
               } catch (e) {
-                setErro(mensagem(e));
+                setErro(mensagem(e))
               } finally {
-                setEnviando(false);
+                setEnviando(false)
               }
             }}
           >
@@ -690,17 +690,17 @@ function DialogoAjuste({
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 // Entrada ---------------------------------------------------------------------------------------
 
 interface LinhaEntrada {
-  itemId: string;
-  quantidade: string | null;
-  lote: string;
-  fabricacao: string;
-  validade: string;
+  itemId: string
+  quantidade: string | null
+  lote: string
+  fabricacao: string
+  validade: string
 }
 
 const linhaVazia = (): LinhaEntrada => ({
@@ -709,13 +709,13 @@ const linhaVazia = (): LinhaEntrada => ({
   lote: '',
   fabricacao: '',
   validade: '',
-});
+})
 
 export function EntradaEstoque() {
-  const navegar = useNavigate();
-  const qc = useQueryClient();
-  const locais = useLocais();
-  const itens = useItens();
+  const navegar = useNavigate()
+  const qc = useQueryClient()
+  const locais = useLocais()
+  const itens = useItens()
   const [d, setD] = useState({
     executadoEm: agora(),
     localId: '',
@@ -723,18 +723,18 @@ export function EntradaEstoque() {
     observacao: '',
     titularId: '',
     itens: [linhaVazia()],
-  });
+  })
   const clientes = useQuery({
     queryKey: ['pessoas-opcoes', 'cliente_vinificacao'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=cliente_vinificacao'),
-  });
-  const [erro, setErro] = useState<string | null>(null);
-  const [avisos, setAvisos] = useState<Array<{ codigo: string; mensagem: string }>>([]);
-  const [enviando, setEnviando] = useState(false);
-  const localId = d.localId || (locais.data?.length === 1 ? locais.data[0]!.id : '');
+  })
+  const [erro, setErro] = useState<string | null>(null)
+  const [avisos, setAvisos] = useState<Array<{ codigo: string; mensagem: string }>>([])
+  const [enviando, setEnviando] = useState(false)
+  const localId = d.localId || (locais.data?.length === 1 ? locais.data[0]!.id : '')
   const setLinha = (n: number, p: Partial<LinhaEntrada>) =>
-    setD({ ...d, itens: d.itens.map((x, j) => (j === n ? { ...x, ...p } : x)) });
+    setD({ ...d, itens: d.itens.map((x, j) => (j === n ? { ...x, ...p } : x)) })
   return (
     <Pagina titulo="Entrada no estoque" trilha={['EnoTrace', 'Estoque']}>
       <p className="text-sm text-muted-foreground">
@@ -808,7 +808,7 @@ export function EntradaEstoque() {
         <CabecalhoCartao titulo="Itens" />
         <CorpoCartao className="flex flex-col gap-4">
           {d.itens.map((l, n) => {
-            const item = itens.data?.find((x) => x.id === l.itemId);
+            const item = itens.data?.find((x) => x.id === l.itemId)
             return (
               <div key={n} className="flex flex-col gap-2 border-b pb-4 last:border-0 last:pb-0">
                 <div className="grid items-end gap-2 sm:grid-cols-[1fr_12rem_auto]">
@@ -877,7 +877,7 @@ export function EntradaEstoque() {
                   </div>
                 )}
               </div>
-            );
+            )
           })}
           <div>
             <Botao
@@ -896,8 +896,8 @@ export function EntradaEstoque() {
         <Botao
           disabled={enviando}
           onClick={async () => {
-            setEnviando(true);
-            setErro(null);
+            setEnviando(true)
+            setErro(null)
             try {
               const r = await api.post<{ avisos: Array<{ codigo: string; mensagem: string }> }>(
                 '/api/estoque/entradas',
@@ -915,15 +915,15 @@ export function EntradaEstoque() {
                       : null,
                   })),
                 },
-              );
-              await qc.invalidateQueries({ queryKey: ['lista'] });
-              await qc.invalidateQueries({ queryKey: ['estoque-pendencias'] });
-              if (r.avisos.length) setAvisos(r.avisos);
-              else navegar('/enotrace/estoque');
+              )
+              await qc.invalidateQueries({ queryKey: ['lista'] })
+              await qc.invalidateQueries({ queryKey: ['estoque-pendencias'] })
+              if (r.avisos.length) setAvisos(r.avisos)
+              else navegar('/enotrace/estoque')
             } catch (e) {
-              setErro(mensagem(e));
+              setErro(mensagem(e))
             } finally {
-              setEnviando(false);
+              setEnviando(false)
             }
           }}
         >
@@ -934,15 +934,15 @@ export function EntradaEstoque() {
         </Botao>
       </div>
     </Pagina>
-  );
+  )
 }
 
 // Transferência ---------------------------------------------------------------------------------
 
 interface LinhaTransferencia {
-  itemId: string;
-  loteItemId: string;
-  quantidade: string | null;
+  itemId: string
+  loteItemId: string
+  quantidade: string | null
 }
 
 function LinhaDeTransferencia({
@@ -953,15 +953,15 @@ function LinhaDeTransferencia({
   set,
   remover,
 }: {
-  l: LinhaTransferencia;
-  n: number;
-  origem: string;
-  itens: ItemOpcao[];
-  set: (p: Partial<LinhaTransferencia>) => void;
-  remover?: () => void;
+  l: LinhaTransferencia
+  n: number
+  origem: string
+  itens: ItemOpcao[]
+  set: (p: Partial<LinhaTransferencia>) => void
+  remover?: () => void
 }) {
-  const item = itens.find((x) => x.id === l.itemId);
-  const lotes = useLotes(item?.controlaLote ? l.itemId : '', origem);
+  const item = itens.find((x) => x.id === l.itemId)
+  const lotes = useLotes(item?.controlaLote ? l.itemId : '', origem)
   return (
     <div className="grid items-end gap-2 sm:grid-cols-[1fr_1fr_12rem_auto]">
       <Campo rotulo="Item" id={`tr-item-${n}`}>
@@ -1017,22 +1017,22 @@ function LinhaDeTransferencia({
         <Trash2 />
       </Botao>
     </div>
-  );
+  )
 }
 
 export function TransferenciaEstoque() {
-  const navegar = useNavigate();
-  const qc = useQueryClient();
-  const locais = useLocais();
-  const itens = useItens();
+  const navegar = useNavigate()
+  const qc = useQueryClient()
+  const locais = useLocais()
+  const itens = useItens()
   const [d, setD] = useState({
     executadoEm: agora(),
     origemLocalId: '',
     destinoLocalId: '',
     itens: [{ itemId: '', loteItemId: '', quantidade: null }] as LinhaTransferencia[],
-  });
-  const [erro, setErro] = useState<string | null>(null);
-  const [avisos, setAvisos] = useState<Array<{ codigo: string; mensagem: string }>>([]);
+  })
+  const [erro, setErro] = useState<string | null>(null)
+  const [avisos, setAvisos] = useState<Array<{ codigo: string; mensagem: string }>>([])
   return (
     <Pagina titulo="Transferência entre locais" trilha={['EnoTrace', 'Estoque']}>
       <Cartao>
@@ -1109,7 +1109,7 @@ export function TransferenciaEstoque() {
       <div className="flex gap-2 border-t pt-4">
         <Botao
           onClick={async () => {
-            setErro(null);
+            setErro(null)
             try {
               const r = await api.post<{ avisos: Array<{ codigo: string; mensagem: string }> }>(
                 '/api/estoque/transferencias',
@@ -1122,12 +1122,12 @@ export function TransferenciaEstoque() {
                     quantidade: l.quantidade ?? '0',
                   })),
                 },
-              );
-              await qc.invalidateQueries({ queryKey: ['lista'] });
-              if (r.avisos.length) setAvisos(r.avisos);
-              else navegar('/enotrace/estoque');
+              )
+              await qc.invalidateQueries({ queryKey: ['lista'] })
+              if (r.avisos.length) setAvisos(r.avisos)
+              else navegar('/enotrace/estoque')
             } catch (e) {
-              setErro(mensagem(e));
+              setErro(mensagem(e))
             }
           }}
         >
@@ -1138,15 +1138,15 @@ export function TransferenciaEstoque() {
         </Botao>
       </div>
     </Pagina>
-  );
+  )
 }
 
 // Transferência de titularidade -----------------------------------------------------------------
 
 interface LinhaTitularidade {
-  itemId: string;
-  loteItemId: string;
-  quantidade: string | null;
+  itemId: string
+  loteItemId: string
+  quantidade: string | null
 }
 
 /**
@@ -1154,29 +1154,29 @@ interface LinhaTitularidade {
  * 10, bloco 2): o lote passa a outro titular com o mesmo código, o impresso na garrafa.
  */
 export function TitularidadeEstoque() {
-  const navegar = useNavigate();
-  const qc = useQueryClient();
-  const locais = useLocais();
-  const itens = useItens();
+  const navegar = useNavigate()
+  const qc = useQueryClient()
+  const locais = useLocais()
+  const itens = useItens()
   const clientes = useQuery({
     queryKey: ['pessoas-opcoes', 'cliente_vinificacao'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=cliente_vinificacao'),
-  });
+  })
   const contratos = useQuery({
     queryKey: ['contratos-opcoes'],
     queryFn: async () =>
       (
         await api.get<{
           itens: Array<{
-            id: string;
-            numero: string | null;
-            contraparteId: string;
-            contraparte: string;
-          }>;
+            id: string
+            numero: string | null
+            contraparteId: string
+            contraparte: string
+          }>
         }>('/api/contratos-terceirizacao?tamanho=0')
       ).itens,
-  });
+  })
   const [d, setD] = useState({
     executadoEm: agora(),
     localId: '',
@@ -1185,9 +1185,9 @@ export function TitularidadeEstoque() {
     contratoId: '',
     observacao: '',
     itens: [{ itemId: '', loteItemId: '', quantidade: null }] as LinhaTitularidade[],
-  });
-  const [erro, setErro] = useState<string | null>(null);
-  const comLote = (itens.data ?? []).filter((x) => x.controlaLote);
+  })
+  const [erro, setErro] = useState<string | null>(null)
+  const comLote = (itens.data ?? []).filter((x) => x.controlaLote)
   return (
     <Pagina titulo="Transferência de titularidade" trilha={['EnoTrace', 'Estoque']}>
       <p className="text-sm text-muted-foreground">
@@ -1310,7 +1310,7 @@ export function TitularidadeEstoque() {
       <div className="flex gap-2 border-t pt-4">
         <Botao
           onClick={async () => {
-            setErro(null);
+            setErro(null)
             try {
               await api.post('/api/estoque/titularidade', {
                 ...d,
@@ -1318,12 +1318,12 @@ export function TitularidadeEstoque() {
                 paraTitularId: d.paraTitularId || null,
                 contratoId: d.contratoId || null,
                 itens: d.itens.map((l) => ({ ...l, quantidade: l.quantidade ?? '0' })),
-              });
-              await qc.invalidateQueries({ queryKey: ['lista'] });
-              await qc.invalidateQueries({ queryKey: ['estoque-lotes'] });
-              navegar('/enotrace/estoque');
+              })
+              await qc.invalidateQueries({ queryKey: ['lista'] })
+              await qc.invalidateQueries({ queryKey: ['estoque-lotes'] })
+              navegar('/enotrace/estoque')
             } catch (e) {
-              setErro(mensagem(e));
+              setErro(mensagem(e))
             }
           }}
         >
@@ -1334,7 +1334,7 @@ export function TitularidadeEstoque() {
         </Botao>
       </div>
     </Pagina>
-  );
+  )
 }
 
 function LinhaDeTitularidade({
@@ -1346,16 +1346,16 @@ function LinhaDeTitularidade({
   set,
   remover,
 }: {
-  l: LinhaTitularidade;
-  n: number;
-  local: string;
-  para: string | null;
-  itens: ItemOpcao[];
-  set: (p: Partial<LinhaTitularidade>) => void;
-  remover?: () => void;
+  l: LinhaTitularidade
+  n: number
+  local: string
+  para: string | null
+  itens: ItemOpcao[]
+  set: (p: Partial<LinhaTitularidade>) => void
+  remover?: () => void
 }) {
-  const item = itens.find((x) => x.id === l.itemId);
-  const lotes = useLotes(l.itemId, local || undefined);
+  const item = itens.find((x) => x.id === l.itemId)
+  const lotes = useLotes(l.itemId, local || undefined)
   return (
     <div className="grid items-end gap-2 sm:grid-cols-[1fr_1fr_12rem_auto]">
       <Campo rotulo="Item" id={`tt-item-${n}`}>
@@ -1408,5 +1408,5 @@ function LinhaDeTitularidade({
         <Trash2 />
       </Botao>
     </div>
-  );
+  )
 }

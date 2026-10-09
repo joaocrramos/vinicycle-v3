@@ -33,7 +33,7 @@ const SINONIMOS: Record<string, string> = {
   PCS: 'un',
   PECA: 'un',
   PÇ: 'un',
-};
+}
 
 /** Quanto vale cada unidade na menor da sua grandeza (g, mL, un). */
 const FATORES: Record<string, { grandeza: string; fator: number }> = {
@@ -45,12 +45,12 @@ const FATORES: Record<string, { grandeza: string; fator: number }> = {
   L: { grandeza: 'volume', fator: 1000 },
   hL: { grandeza: 'volume', fator: 100_000 },
   un: { grandeza: 'contagem', fator: 1 },
-};
+}
 
 /** A unidade da nota no catálogo (KG → kg), ou nada se não for conhecida. */
 export function unidadeDaNota(unidade: string): string | null {
-  const u = unidade.trim().toUpperCase().replace(/[.\s]/g, '');
-  return SINONIMOS[u] ?? null;
+  const u = unidade.trim().toUpperCase().replace(/[.\s]/g, '')
+  return SINONIMOS[u] ?? null
 }
 
 /**
@@ -58,9 +58,9 @@ export function unidadeDaNota(unidade: string): string | null {
  * sugestão quando a unidade da nota é desconhecida ou de outra grandeza.
  */
 export function conversaoSugerida(unidadeNota: string, unidadeBase: string): string | null {
-  const nota = unidadeDaNota(unidadeNota);
-  const a = nota ? FATORES[nota] : undefined;
-  const b = FATORES[unidadeBase];
-  if (!a || !b || a.grandeza !== b.grandeza) return null;
-  return String(Number((a.fator / b.fator).toFixed(6)));
+  const nota = unidadeDaNota(unidadeNota)
+  const a = nota ? FATORES[nota] : undefined
+  const b = FATORES[unidadeBase]
+  if (!a || !b || a.grandeza !== b.grandeza) return null
+  return String(Number((a.fator / b.fator).toFixed(6)))
 }

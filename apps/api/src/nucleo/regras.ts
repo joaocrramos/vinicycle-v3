@@ -1,27 +1,27 @@
 // Regras versionadas (P16) e "ciente" (P29). A regra vale pela data do fato (a data de execução
 // da operação, a chegada da uva), não pela data do lançamento. O sistema informa; não impede.
-import { and, desc, eq, gte, isNull, lte, or, sql } from 'drizzle-orm';
-import type { Tx } from '../db/cliente';
-import * as s from '../db/schema';
-import { ErroRegra } from './erros';
-import type { ContextoEmpresa } from './requisicao';
+import { and, desc, eq, gte, isNull, lte, or, sql } from 'drizzle-orm'
+import type { Tx } from '../db/cliente'
+import * as s from '../db/schema'
+import { ErroRegra } from './erros'
+import type { ContextoEmpresa } from './requisicao'
 
-export type Regra = typeof s.regraRegulatoria.$inferSelect;
+export type Regra = typeof s.regraRegulatoria.$inferSelect
 
 /** Aviso que pede "ciente" para confirmar (P29). */
 export interface Aviso {
-  codigo: string;
-  mensagem: string;
-  regraId?: string | null;
-  valorApurado?: string | null;
-  limite?: string | null;
+  codigo: string
+  mensagem: string
+  regraId?: string | null
+  valorApurado?: string | null
+  limite?: string | null
   /** Norma citada, para a tela. */
-  fonte?: string | null;
+  fonte?: string | null
 }
 
 /** Fonte legal no formato da tela: "Decreto 12.709/2025, art. 93". */
 export function fonteDaRegra(r: Regra): string {
-  return [r.fonteNorma, r.fonteArtigo].filter(Boolean).join(', ');
+  return [r.fonteNorma, r.fonteArtigo].filter(Boolean).join(', ')
 }
 
 /**
@@ -33,7 +33,7 @@ export async function regrasVigentes(
   chave: string,
   local: { data: string; uf?: string | null; igs?: string[] },
 ): Promise<Regra[]> {
-  const igs = local.igs ?? [];
+  const igs = local.igs ?? []
   const linhas = await tx
     .select()
     .from(s.regraRegulatoria)
@@ -62,18 +62,18 @@ export async function regrasVigentes(
         ),
       ),
     )
-    .orderBy(desc(s.regraRegulatoria.vigenteDesde));
-  const peso = { ig: 0, uf: 1, nacional: 2 } as const;
+    .orderBy(desc(s.regraRegulatoria.vigenteDesde))
+  const peso = { ig: 0, uf: 1, nacional: 2 } as const
   // Por abrangência, só a versão mais recente vale.
-  const vistas = new Set<string>();
+  const vistas = new Set<string>()
   return linhas
     .filter((r) => {
-      const k = `${r.abrangencia}|${r.abrangenciaCodigo ?? ''}`;
-      if (vistas.has(k)) return false;
-      vistas.add(k);
-      return true;
+      const k = `${r.abrangencia}|${r.abrangenciaCodigo ?? ''}`
+      if (vistas.has(k)) return false
+      vistas.add(k)
+      return true
     })
-    .sort((a, b) => peso[a.abrangencia] - peso[b.abrangencia]);
+    .sort((a, b) => peso[a.abrangencia] - peso[b.abrangencia])
 }
 
 export async function regraVigente(
@@ -81,13 +81,13 @@ export async function regraVigente(
   chave: string,
   local: { data: string; uf?: string | null; igs?: string[] },
 ): Promise<Regra | null> {
-  return (await regrasVigentes(tx, chave, local))[0] ?? null;
+  return (await regrasVigentes(tx, chave, local))[0] ?? null
 }
 
 /** Sem o "ciente" de todos os avisos, não confirma: devolve a lista para a tela. */
 export function exigirCientes(avisos: Aviso[], cientes: string[]): void {
   if (avisos.some((a) => !cientes.includes(a.codigo))) {
-    throw new ErroRegra('Confirme que está ciente dos avisos.', 'ciente_pendente', { avisos });
+    throw new ErroRegra('Confirme que está ciente dos avisos.', 'ciente_pendente', { avisos })
   }
 }
 
@@ -97,8 +97,8 @@ export async function gravarOcorrencias(
   registro: { entidade: string; registroId: string; estabelecimentoId: string | null },
   avisos: Aviso[],
 ): Promise<void> {
-  if (!avisos.length) return;
-  const agora = new Date();
+  if (!avisos.length) return
+  const agora = new Date()
   await ctx.tx.insert(s.ocorrenciaRegra).values(
     avisos.map((a) => ({
       empresaId: ctx.empresaId,
@@ -114,5 +114,5 @@ export async function gravarOcorrencias(
       cientePor: ctx.usuarioId,
       criadoPor: ctx.usuarioId,
     })),
-  );
+  )
 }

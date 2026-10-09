@@ -12,13 +12,13 @@ export const CONVERSOES_ANALISE: Record<string, Record<string, number>> = {
   acidez_total: { 'g/L': 1 / 0.075 },
   acidez_volatil: { 'g/L': 1 / 0.06 },
   pressao: { bar: 1 / 1.01325 },
-};
+}
 
 export const FONTES_CONVERSAO: Record<string, string> = {
   acidez_total: 'g/L em ácido tartárico (1 mEq/L = 0,075 g/L)',
   acidez_volatil: 'g/L em ácido acético (1 mEq/L = 0,060 g/L)',
   pressao: '1 atm = 1,01325 bar',
-};
+}
 
 /** Valor na unidade padrão; nulo se a unidade não converte. */
 export function paraUnidadePadrao(
@@ -26,9 +26,9 @@ export function paraUnidadePadrao(
   valor: number,
   unidade: string,
 ): number | null {
-  if (unidade === parametro.unidadePadrao) return valor;
-  const fator = parametro.codigo ? CONVERSOES_ANALISE[parametro.codigo]?.[unidade] : undefined;
-  return fator === undefined ? null : valor * fator;
+  if (unidade === parametro.unidadePadrao) return valor
+  const fator = parametro.codigo ? CONVERSOES_ANALISE[parametro.codigo]?.[unidade] : undefined
+  return fator === undefined ? null : valor * fator
 }
 
 /** Da unidade padrão para outra (a preferida pela empresa), para exibir. */
@@ -37,9 +37,9 @@ export function daUnidadePadrao(
   valor: number,
   unidade: string,
 ): number | null {
-  if (unidade === parametro.unidadePadrao) return valor;
-  const fator = parametro.codigo ? CONVERSOES_ANALISE[parametro.codigo]?.[unidade] : undefined;
-  return fator === undefined ? null : valor / fator;
+  if (unidade === parametro.unidadePadrao) return valor
+  const fator = parametro.codigo ? CONVERSOES_ANALISE[parametro.codigo]?.[unidade] : undefined
+  return fator === undefined ? null : valor / fator
 }
 
 export const SITUACOES_AMOSTRA = {
@@ -47,9 +47,9 @@ export const SITUACOES_AMOSTRA = {
   enviada: 'Enviada',
   laudo_recebido: 'Laudo recebido',
   cancelada: 'Cancelada',
-} as const;
-export type SituacaoAmostra = keyof typeof SITUACOES_AMOSTRA;
+} as const
+export type SituacaoAmostra = keyof typeof SITUACOES_AMOSTRA
 export const CHAVES_SITUACAO_AMOSTRA = Object.keys(SITUACOES_AMOSTRA) as [
   SituacaoAmostra,
   ...SituacaoAmostra[],
-];
+]

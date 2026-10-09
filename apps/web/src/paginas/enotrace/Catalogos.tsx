@@ -1,11 +1,11 @@
 // EnoTrace › Cadastros › Catálogos: variedades, tipos e listas configuráveis (P8, P29).
-import { CORES_UVA, LISTAS, NOMES_COR_UVA, NOMES_TIPO_UVA, TIPOS_UVA } from '@vinicycle/shared';
-import { useNavigate, useParams } from 'react-router';
-import { Catalogo, type ConfigCatalogo } from '@/componentes/Catalogo';
-import { Caixa, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { pode, useSessao } from '@/lib/sessao';
+import { CORES_UVA, LISTAS, NOMES_COR_UVA, NOMES_TIPO_UVA, TIPOS_UVA } from '@vinicycle/shared'
+import { useNavigate, useParams } from 'react-router'
+import { Catalogo, type ConfigCatalogo } from '@/componentes/Catalogo'
+import { Caixa, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { pode, useSessao } from '@/lib/sessao'
 
 const LISTAS_CANTINA = [
   'motivo_perda',
@@ -20,7 +20,7 @@ const LISTAS_CANTINA = [
   'apresentacao_insumo',
   'cor_vinho',
   'teor_acucar',
-] as const;
+] as const
 
 export const CONFIGS: Record<string, ConfigCatalogo & { titulo: string }> = {
   variedades: {
@@ -139,26 +139,26 @@ export const CONFIGS: Record<string, ConfigCatalogo & { titulo: string }> = {
       },
     ]),
   ),
-};
+}
 
 export function PaginaCatalogos() {
-  const { aba = 'variedades' } = useParams();
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const config = CONFIGS[aba] ?? CONFIGS.variedades!;
+  const { aba = 'variedades' } = useParams()
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const config = CONFIGS[aba] ?? CONFIGS.variedades!
   const usoVariedade: ConfigCatalogo['acoesLinha'] = (i, recarregar) =>
     pode(s, 'enotrace.cadastros', 'editar') && i.ativo ? (
       <Caixa
         rotulo="Em uso"
         checked={i.emUso}
         onChange={async (e) => {
-          await api.post(`/api/variedades/${i.id}/uso`, { emUso: e.target.checked });
-          recarregar();
+          await api.post(`/api/variedades/${i.id}/uso`, { emUso: e.target.checked })
+          recarregar()
         }}
       />
     ) : i.emUso ? (
       'Em uso'
-    ) : null;
+    ) : null
   return (
     <Pagina titulo="Catálogos" trilha={['EnoTrace', 'Cadastros']}>
       <div className="flex flex-wrap items-center gap-2">
@@ -183,5 +183,5 @@ export function PaginaCatalogos() {
         config={aba === 'variedades' ? { ...config, acoesLinha: usoVariedade } : config}
       />
     </Pagina>
-  );
+  )
 }

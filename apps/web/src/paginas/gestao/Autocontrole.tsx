@@ -1,7 +1,7 @@
 // Gestão › Documentos › Autocontrole (gestao.md, Autocontrole; Decreto 12.709/2025, arts. 117 a 120):
 // o programa de controles do estabelecimento, totalmente configurável (P29), e as evidências de cada
 // controle. A higienização e as leituras de temperatura da cantina contam sozinhas.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CHAVES_UNIDADE_PERIODICIDADE,
   EVIDENCIAS_AUTOMATICAS,
@@ -9,48 +9,48 @@ import {
   textoPeriodicidade,
   UNIDADES_PERIODICIDADE,
   type UnidadePeriodicidade,
-} from '@vinicycle/shared';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { AcoesLinha } from '@/componentes/AcoesLinha';
-import { Anexos } from '@/componentes/Anexos';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarData } from '@/lib/utils';
+} from '@vinicycle/shared'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { AcoesLinha } from '@/componentes/AcoesLinha'
+import { Anexos } from '@/componentes/Anexos'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarData } from '@/lib/utils'
 
-type Situacao = 'sob_demanda' | 'em_dia' | 'vence_logo' | 'atrasado' | 'inativo';
+type Situacao = 'sob_demanda' | 'em_dia' | 'vence_logo' | 'atrasado' | 'inativo'
 interface Controle {
-  id: string;
-  nome: string;
-  descricao: string | null;
-  codigoModelo: string | null;
-  periodicidadeQuantidade: number | null;
-  periodicidadeUnidade: UnidadePeriodicidade | null;
-  evidenciaAutomatica: EvidenciaAutomatica | null;
-  responsavelId: string | null;
-  responsavel: string | null;
-  ativo: boolean;
-  ultima: string | null;
-  proxima: string | null;
-  situacao: Situacao;
+  id: string
+  nome: string
+  descricao: string | null
+  codigoModelo: string | null
+  periodicidadeQuantidade: number | null
+  periodicidadeUnidade: UnidadePeriodicidade | null
+  evidenciaAutomatica: EvidenciaAutomatica | null
+  responsavelId: string | null
+  responsavel: string | null
+  ativo: boolean
+  ultima: string | null
+  proxima: string | null
+  situacao: Situacao
 }
 interface FichaControle extends Controle {
   evidencias: Array<{
-    id: string;
-    realizadaEm: string;
-    descricao: string;
-    por: string | null;
-    anuladaEm: string | null;
-    motivoAnulacao: string | null;
-  }>;
-  automaticas: Array<{ data: string; descricao: string; link: string }>;
+    id: string
+    realizadaEm: string
+    descricao: string
+    por: string | null
+    anuladaEm: string | null
+    motivoAnulacao: string | null
+  }>
+  automaticas: Array<{ data: string; descricao: string; link: string }>
 }
 
 const SITUACAO: Record<Situacao, { texto: string; tom: 'sucesso' | 'alerta' | 'erro' | 'neutro' }> =
@@ -60,30 +60,30 @@ const SITUACAO: Record<Situacao, { texto: string; tom: 'sucesso' | 'alerta' | 'e
     atrasado: { texto: 'Atrasado', tom: 'erro' },
     sob_demanda: { texto: 'Sob demanda', tom: 'neutro' },
     inativo: { texto: 'Inativo', tom: 'neutro' },
-  };
+  }
 
-const msg = (e: unknown) => (e instanceof ErroApi ? e.message : (e as Error).message);
+const msg = (e: unknown) => (e instanceof ErroApi ? e.message : (e as Error).message)
 
 export function ListaAutocontrole() {
-  const { data: s } = useSessao();
-  const navegar = useNavigate();
-  const qc = useQueryClient();
-  const [novo, setNovo] = useState(false);
-  const [editando, setEditando] = useState<Controle | null>(null);
-  const [inativar, setInativar] = useState<Controle | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
+  const { data: s } = useSessao()
+  const navegar = useNavigate()
+  const qc = useQueryClient()
+  const [novo, setNovo] = useState(false)
+  const [editando, setEditando] = useState<Controle | null>(null)
+  const [inativar, setInativar] = useState<Controle | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
   const q = useQuery({
     queryKey: ['autocontrole'],
     queryFn: () =>
       api.get<{ controles: Controle[]; modelo: Array<{ codigo: string; nome: string }> }>(
         '/api/autocontrole',
       ),
-  });
-  const podePrograma = pode(s, 'gestao.autocontrole_programa', 'criar');
-  const podeEditar = pode(s, 'gestao.autocontrole_programa', 'editar');
-  const podeInativar = pode(s, 'gestao.autocontrole_programa', 'inativar');
-  const atualizar = () => qc.invalidateQueries({ queryKey: ['autocontrole'] });
-  const d = q.data;
+  })
+  const podePrograma = pode(s, 'gestao.autocontrole_programa', 'criar')
+  const podeEditar = pode(s, 'gestao.autocontrole_programa', 'editar')
+  const podeInativar = pode(s, 'gestao.autocontrole_programa', 'inativar')
+  const atualizar = () => qc.invalidateQueries({ queryKey: ['autocontrole'] })
+  const d = q.data
   return (
     <Pagina
       titulo="Autocontrole"
@@ -115,12 +115,12 @@ export function ListaAutocontrole() {
             <Botao
               variante="secundario"
               onClick={async () => {
-                setErro(null);
+                setErro(null)
                 try {
-                  await api.post('/api/autocontrole/modelo', {});
-                  await qc.invalidateQueries({ queryKey: ['autocontrole'] });
+                  await api.post('/api/autocontrole/modelo', {})
+                  await qc.invalidateQueries({ queryKey: ['autocontrole'] })
                 } catch (e) {
-                  setErro(msg(e));
+                  setErro(msg(e))
                 }
               }}
             >
@@ -177,12 +177,12 @@ export function ListaAutocontrole() {
                       aoReativar={
                         podeInativar
                           ? async () => {
-                              setErro(null);
+                              setErro(null)
                               try {
-                                await api.post(`/api/autocontrole/${c.id}/reativar`, {});
-                                await atualizar();
+                                await api.post(`/api/autocontrole/${c.id}/reativar`, {})
+                                await atualizar()
                               } catch (e) {
-                                setErro(msg(e));
+                                setErro(msg(e))
                               }
                             }
                           : undefined
@@ -206,9 +206,9 @@ export function ListaAutocontrole() {
         aberto={novo}
         aoMudar={setNovo}
         aoSalvar={async (dados) => {
-          const r = await api.post<{ id: string }>('/api/autocontrole', dados);
-          await qc.invalidateQueries({ queryKey: ['autocontrole'] });
-          navegar(`/gestao/autocontrole/${r.id}`);
+          const r = await api.post<{ id: string }>('/api/autocontrole', dados)
+          await qc.invalidateQueries({ queryKey: ['autocontrole'] })
+          navegar(`/gestao/autocontrole/${r.id}`)
         }}
       />
       {editando && (
@@ -225,8 +225,8 @@ export function ListaAutocontrole() {
             evidenciaAutomatica: editando.evidenciaAutomatica,
           }}
           aoSalvar={async (dados) => {
-            await api.put(`/api/autocontrole/${editando.id}`, dados);
-            await atualizar();
+            await api.put(`/api/autocontrole/${editando.id}`, dados)
+            await atualizar()
           }}
         />
       )}
@@ -237,21 +237,21 @@ export function ListaAutocontrole() {
         descricao="Inativo, o controle sai da conta dos prazos e dos alertas. As evidências ficam guardadas."
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/autocontrole/${inativar!.id}/inativar`, { motivo });
-          await atualizar();
+          await api.post(`/api/autocontrole/${inativar!.id}/inativar`, { motivo })
+          await atualizar()
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 interface DadosControle {
-  nome: string;
-  descricao: string | null;
-  periodicidadeQuantidade: number | null;
-  periodicidadeUnidade: UnidadePeriodicidade | null;
-  responsavelId: string | null;
-  evidenciaAutomatica: EvidenciaAutomatica | null;
+  nome: string
+  descricao: string | null
+  periodicidadeQuantidade: number | null
+  periodicidadeUnidade: UnidadePeriodicidade | null
+  responsavelId: string | null
+  evidenciaAutomatica: EvidenciaAutomatica | null
 }
 
 /** Incluir ou alterar um controle: nome, descrição, periodicidade, responsável e evidência automática. */
@@ -261,10 +261,10 @@ function DialogoControle({
   inicial,
   aoSalvar,
 }: {
-  aberto: boolean;
-  aoMudar: (v: boolean) => void;
-  inicial?: DadosControle;
-  aoSalvar: (d: DadosControle) => Promise<unknown>;
+  aberto: boolean
+  aoMudar: (v: boolean) => void
+  inicial?: DadosControle
+  aoSalvar: (d: DadosControle) => Promise<unknown>
 }) {
   const vazio: DadosControle = {
     nome: '',
@@ -273,23 +273,23 @@ function DialogoControle({
     periodicidadeUnidade: 'mes',
     responsavelId: null,
     evidenciaAutomatica: null,
-  };
-  const [d, setD] = useState<DadosControle>(inicial ?? vazio);
-  const [erro, setErro] = useState<string | null>(null);
+  }
+  const [d, setD] = useState<DadosControle>(inicial ?? vazio)
+  const [erro, setErro] = useState<string | null>(null)
   const responsaveis = useQuery({
     queryKey: ['autocontrole', 'responsaveis'],
     queryFn: () => api.get<Array<{ id: string; nome: string }>>('/api/autocontrole/responsaveis'),
     enabled: aberto,
-  });
-  const sobDemanda = d.periodicidadeQuantidade === null;
+  })
+  const sobDemanda = d.periodicidadeQuantidade === null
   return (
     <Dialogo
       aberto={aberto}
       aoMudar={(v) => {
-        aoMudar(v);
+        aoMudar(v)
         if (!v) {
-          setD(inicial ?? vazio);
-          setErro(null);
+          setD(inicial ?? vazio)
+          setErro(null)
         }
       }}
       titulo={inicial ? 'Alterar o controle' : 'Novo controle'}
@@ -301,12 +301,12 @@ function DialogoControle({
           <Botao
             disabled={d.nome.trim().length < 2}
             onClick={async () => {
-              setErro(null);
+              setErro(null)
               try {
-                await aoSalvar(d);
-                aoMudar(false);
+                await aoSalvar(d)
+                aoMudar(false)
               } catch (e) {
-                setErro(msg(e));
+                setErro(msg(e))
               }
             }}
           >
@@ -419,29 +419,29 @@ function DialogoControle({
         {erro && <Aviso tom="erro">{erro}</Aviso>}
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function FichaAutocontrole() {
-  const { id } = useParams();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const [editando, setEditando] = useState(false);
-  const [inativando, setInativando] = useState(false);
-  const [anulando, setAnulando] = useState<string | null>(null);
-  const [anexosDe, setAnexosDe] = useState<string | null>(null);
-  const [nova, setNova] = useState({ realizadaEm: hoje(fuso), descricao: '' });
-  const [erro, setErro] = useState<string | null>(null);
+  const { id } = useParams()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const [editando, setEditando] = useState(false)
+  const [inativando, setInativando] = useState(false)
+  const [anulando, setAnulando] = useState<string | null>(null)
+  const [anexosDe, setAnexosDe] = useState<string | null>(null)
+  const [nova, setNova] = useState({ realizadaEm: hoje(fuso), descricao: '' })
+  const [erro, setErro] = useState<string | null>(null)
   const q = useQuery({
     queryKey: ['autocontrole', id],
     queryFn: () => api.get<FichaControle>(`/api/autocontrole/${id}`),
-  });
-  const atualizar = () => qc.invalidateQueries({ queryKey: ['autocontrole'] });
-  const c = q.data;
-  if (q.error) return <Aviso tom="erro">{msg(q.error)}</Aviso>;
-  if (!c) return null;
-  const podeEvidencia = c.ativo && pode(s, 'gestao.autocontrole', 'criar');
+  })
+  const atualizar = () => qc.invalidateQueries({ queryKey: ['autocontrole'] })
+  const c = q.data
+  if (q.error) return <Aviso tom="erro">{msg(q.error)}</Aviso>
+  if (!c) return null
+  const podeEvidencia = c.ativo && pode(s, 'gestao.autocontrole', 'criar')
   return (
     <Pagina
       titulo={c.nome}
@@ -459,8 +459,8 @@ export function FichaAutocontrole() {
               ativo={c.ativo}
               aoInativar={() => setInativando(true)}
               aoReativar={async () => {
-                await api.post(`/api/autocontrole/${c.id}/reativar`, {});
-                await atualizar();
+                await api.post(`/api/autocontrole/${c.id}/reativar`, {})
+                await atualizar()
               }}
             />
           )}
@@ -506,17 +506,17 @@ export function FichaAutocontrole() {
               <Botao
                 disabled={nova.descricao.trim().length < 2 || !nova.realizadaEm}
                 onClick={async () => {
-                  setErro(null);
+                  setErro(null)
                   try {
                     const r = await api.post<{ id: string }>(
                       `/api/autocontrole/${c.id}/evidencias`,
                       nova,
-                    );
-                    setNova({ realizadaEm: hoje(fuso), descricao: '' });
-                    setAnexosDe(r.id);
-                    await atualizar();
+                    )
+                    setNova({ realizadaEm: hoje(fuso), descricao: '' })
+                    setAnexosDe(r.id)
+                    await atualizar()
                   } catch (e) {
-                    setErro(msg(e));
+                    setErro(msg(e))
                   }
                 }}
               >
@@ -609,8 +609,8 @@ export function FichaAutocontrole() {
           evidenciaAutomatica: c.evidenciaAutomatica,
         }}
         aoSalvar={async (d) => {
-          await api.put(`/api/autocontrole/${c.id}`, d);
-          await atualizar();
+          await api.put(`/api/autocontrole/${c.id}`, d)
+          await atualizar()
         }}
       />
       <PedirMotivo
@@ -620,9 +620,9 @@ export function FichaAutocontrole() {
         descricao="Inativo, o controle sai da conta dos prazos e dos alertas. As evidências ficam guardadas."
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/autocontrole/${c.id}/inativar`, { motivo });
-          setInativando(false);
-          await atualizar();
+          await api.post(`/api/autocontrole/${c.id}/inativar`, { motivo })
+          setInativando(false)
+          await atualizar()
         }}
       />
       <PedirMotivo
@@ -632,15 +632,15 @@ export function FichaAutocontrole() {
         descricao="A evidência anulada fica na lista, riscada, com o motivo; não conta mais para o prazo."
         rotuloBotao="Anular"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/autocontrole/${c.id}/evidencias/${anulando}/anular`, { motivo });
-          setAnulando(null);
-          await atualizar();
+          await api.post(`/api/autocontrole/${c.id}/evidencias/${anulando}/anular`, { motivo })
+          setAnulando(null)
+          await atualizar()
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 function hoje(fuso: string) {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: fuso }).format(new Date());
+  return new Intl.DateTimeFormat('en-CA', { timeZone: fuso }).format(new Date())
 }

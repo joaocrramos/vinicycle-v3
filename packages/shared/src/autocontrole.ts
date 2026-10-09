@@ -1,41 +1,41 @@
 // Autocontrole (gestao.md, Autocontrole; Decreto 12.709/2025, arts. 117 a 120): o modelo inicial
 // com os controles da norma é só o ponto de partida. O cliente inclui, altera, inativa e muda a
 // periodicidade de qualquer controle (P29; decidido pelo João Carlos em 04/10/2026).
-import { z } from 'zod';
+import { z } from 'zod'
 
 export const UNIDADES_PERIODICIDADE = {
   dia: 'dia(s)',
   semana: 'semana(s)',
   mes: 'mês(es)',
   ano: 'ano(s)',
-} as const;
-export type UnidadePeriodicidade = keyof typeof UNIDADES_PERIODICIDADE;
+} as const
+export type UnidadePeriodicidade = keyof typeof UNIDADES_PERIODICIDADE
 export const CHAVES_UNIDADE_PERIODICIDADE = Object.keys(UNIDADES_PERIODICIDADE) as [
   UnidadePeriodicidade,
   ...UnidadePeriodicidade[],
-];
+]
 
 /** Evidência que o próprio sistema registra: a higienização de recipientes e as leituras de temperatura. */
 export const EVIDENCIAS_AUTOMATICAS = {
   higienizacao: 'Higienização de recipientes (operações da cantina)',
   temperatura: 'Leituras de temperatura (análises e fermentações)',
-} as const;
-export type EvidenciaAutomatica = keyof typeof EVIDENCIAS_AUTOMATICAS;
+} as const
+export type EvidenciaAutomatica = keyof typeof EVIDENCIAS_AUTOMATICAS
 export const CHAVES_EVIDENCIA_AUTOMATICA = Object.keys(EVIDENCIAS_AUTOMATICAS) as [
   EvidenciaAutomatica,
   ...EvidenciaAutomatica[],
-];
+]
 
 export interface ModeloControle {
-  codigo: string;
-  nome: string;
-  descricao: string;
+  codigo: string
+  nome: string
+  descricao: string
   /** Vazio = sob demanda. */
-  periodicidade: { quantidade: number; unidade: UnidadePeriodicidade } | null;
-  evidenciaAutomatica: EvidenciaAutomatica | null;
+  periodicidade: { quantidade: number; unidade: UnidadePeriodicidade } | null
+  evidenciaAutomatica: EvidenciaAutomatica | null
 }
 
-const FONTE = 'Decreto 12.709/2025, arts. 117 a 120';
+const FONTE = 'Decreto 12.709/2025, arts. 117 a 120'
 
 /** Controles da norma, com as periodicidades sugeridas (04, roteiro do ciclo 8). */
 export const MODELO_AUTOCONTROLE: ModeloControle[] = [
@@ -109,7 +109,7 @@ export const MODELO_AUTOCONTROLE: ModeloControle[] = [
     periodicidade: { quantidade: 1, unidade: 'ano' },
     evidenciaAutomatica: null,
   },
-];
+]
 
 export const esquemaControle = z
   .object({
@@ -124,27 +124,27 @@ export const esquemaControle = z
   .refine((c) => (c.periodicidadeQuantidade === null) === (c.periodicidadeUnidade === null), {
     message: 'Informe a quantidade e a unidade, ou deixe as duas vazias (sob demanda)',
     path: ['periodicidadeQuantidade'],
-  });
+  })
 
 export const esquemaEvidencia = z.object({
   realizadaEm: z.iso.date('Informe a data'),
   descricao: z.string().trim().min(2, 'Descreva o que foi feito').max(2000),
-});
+})
 
 /** "a cada 6 mês(es)" → "a cada 6 meses"; vazio = sob demanda. */
 export function textoPeriodicidade(
   quantidade: number | null,
   unidade: UnidadePeriodicidade | null,
 ): string {
-  if (!quantidade || !unidade) return 'Sob demanda';
+  if (!quantidade || !unidade) return 'Sob demanda'
   const nomes: Record<UnidadePeriodicidade, [string, string]> = {
     dia: ['dia', 'dias'],
     semana: ['semana', 'semanas'],
     mes: ['mês', 'meses'],
     ano: ['ano', 'anos'],
-  };
-  const [um, varios] = nomes[unidade];
+  }
+  const [um, varios] = nomes[unidade]
   return quantidade === 1
     ? `${unidade === 'semana' ? 'Toda' : 'Todo'} ${um}`
-    : `A cada ${quantidade} ${varios}`;
+    : `A cada ${quantidade} ${varios}`
 }

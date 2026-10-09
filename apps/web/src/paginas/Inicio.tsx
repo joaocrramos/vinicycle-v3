@@ -1,41 +1,41 @@
 // Início (ambiente-cliente.md, Primeiro acesso do Master): alertas abertos (P20), os passos da
 // implantação com o que já foi feito, e atalhos da cantina pelo que o perfil pode fazer (P27).
-import { useQuery } from '@tanstack/react-query';
-import { CheckCircle2, Circle } from 'lucide-react';
-import { Link } from 'react-router';
-import { type Alerta, COR_GRAVIDADE } from '@/componentes/SinoAlertas';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { pode, useSessao } from '@/lib/sessao';
-import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query'
+import { CheckCircle2, Circle } from 'lucide-react'
+import { Link } from 'react-router'
+import { type Alerta, COR_GRAVIDADE } from '@/componentes/SinoAlertas'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { pode, useSessao } from '@/lib/sessao'
+import { cn } from '@/lib/utils'
 
 interface Contagens {
-  locais: number;
-  recipientes: number;
-  produtos: number;
-  itens: number;
-  usuarios: number;
-  cargas: number;
-  projetos: number;
-  empresaCompleta: boolean;
+  locais: number
+  recipientes: number
+  produtos: number
+  itens: number
+  usuarios: number
+  cargas: number
+  projetos: number
+  empresaCompleta: boolean
 }
 
 export function PaginaInicio() {
-  const { data: s } = useSessao();
-  const e = s?.empresa;
+  const { data: s } = useSessao()
+  const e = s?.empresa
   const contagens = useQuery({
     queryKey: ['inicio'],
     queryFn: () => api.get<Contagens>('/api/inicio'),
     enabled: !!e,
-  });
+  })
   const alertas = useQuery({
     queryKey: ['alertas', 'aberto'],
     queryFn: () => api.get<Alerta[]>('/api/alertas'),
     enabled: !!e,
-  });
-  if (!s || !e) return null;
-  const c = contagens.data;
+  })
+  if (!s || !e) return null
+  const c = contagens.data
   const passos = [
     {
       feito: !!c?.empresaCompleta,
@@ -91,7 +91,7 @@ export function PaginaInicio() {
       para: '/config/usuarios',
       visivel: pode(s, 'gestao.config.usuarios', 'criar'),
     },
-  ].filter((p) => p.visivel);
+  ].filter((p) => p.visivel)
   const atalhos = [
     {
       texto: 'Painel da cantina',
@@ -125,11 +125,11 @@ export function PaginaInicio() {
       para: '/enotrace/fechamento',
       ok: pode(s, 'enotrace.declaracoes', 'visualizar'),
     },
-  ].filter((a) => a.ok);
-  const nomeEstab = e.estabelecimentos.find((x) => x.id === e.estabelecimentoId)?.nome;
-  const faltam = passos.filter((p) => !p.feito).length;
-  const abertos = alertas.data ?? [];
-  const criticos = abertos.filter((a) => a.gravidade === 'critico').length;
+  ].filter((a) => a.ok)
+  const nomeEstab = e.estabelecimentos.find((x) => x.id === e.estabelecimentoId)?.nome
+  const faltam = passos.filter((p) => !p.feito).length
+  const abertos = alertas.data ?? []
+  const criticos = abertos.filter((a) => a.gravidade === 'critico').length
   return (
     <Pagina titulo={`Olá, ${s.usuario.nome.split(' ')[0]}`}>
       <p className="text-sm text-muted-foreground">
@@ -207,5 +207,5 @@ export function PaginaInicio() {
         </Cartao>
       )}
     </Pagina>
-  );
+  )
 }

@@ -2,19 +2,19 @@
 // Vigência pela data de publicação quando a norma não traz outra; a fonte fica na própria regra.
 
 export interface RegraInicial {
-  tipo: 'limite' | 'cadastro';
-  chave: string;
-  abrangencia: 'nacional' | 'uf' | 'ig';
-  abrangenciaCodigo: string | null;
-  vigenteDesde: string;
-  minimo?: string;
-  maximo?: string;
-  unidade?: string;
-  descricao: string;
-  fonteNorma: string;
-  fonteArtigo?: string;
-  fonteLink?: string;
-  fonteNota?: string;
+  tipo: 'limite' | 'cadastro'
+  chave: string
+  abrangencia: 'nacional' | 'uf' | 'ig'
+  abrangenciaCodigo: string | null
+  vigenteDesde: string
+  minimo?: string
+  maximo?: string
+  unidade?: string
+  descricao: string
+  fonteNorma: string
+  fonteArtigo?: string
+  fonteLink?: string
+  fonteNota?: string
 }
 
 export const REGRAS: RegraInicial[] = [
@@ -174,4 +174,4 @@ export const REGRAS: RegraInicial[] = [
     fonteNota:
       'O sistema soma o SO₂ adicionado (teor do insumo × quantidade ÷ volume); o SO₂ total medido entra com o laboratório. Conferir a data de publicação da IN no DOU.',
   },
-];
+]

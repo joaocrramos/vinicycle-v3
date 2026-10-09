@@ -8,20 +8,20 @@ import {
   novaEmpresa,
   SITUACOES_EMPRESA,
   diaVencimentoPadrao,
-} from '@vinicycle/shared';
-import { and, count, eq, inArray, isNull, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { v7 as uuidv7 } from 'uuid';
-import { z } from 'zod';
-import type { Tx } from '../db/cliente';
-import * as s from '../db/schema';
-import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros';
-import { buscaTexto, listar } from '../nucleo/listagem';
-import { naPlataforma } from '../nucleo/requisicao';
-import { criarConvite, reenviarConvite } from './convites';
-import { criarFicha, lerFicha, resumoFicha } from './fichas';
-import { gerarFaturaDoCiclo } from './cobranca';
-import { hoje, precoDoPlano } from './planos';
+} from '@vinicycle/shared'
+import { and, count, eq, inArray, isNull, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { v7 as uuidv7 } from 'uuid'
+import { z } from 'zod'
+import type { Tx } from '../db/cliente'
+import * as s from '../db/schema'
+import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros'
+import { buscaTexto, listar } from '../nucleo/listagem'
+import { naPlataforma } from '../nucleo/requisicao'
+import { criarConvite, reenviarConvite } from './convites'
+import { criarFicha, lerFicha, resumoFicha } from './fichas'
+import { gerarFaturaDoCiclo } from './cobranca'
+import { hoje, precoDoPlano } from './planos'
 
 /** Cada empresa recebe uma cópia dos perfis-modelo ao ser criada (P27). */
 export async function copiarPerfisModelo(
@@ -32,8 +32,8 @@ export async function copiarPerfisModelo(
   const modelos = await tx
     .select()
     .from(s.perfil)
-    .where(and(eq(s.perfil.escopo, 'modelo'), eq(s.perfil.ativo, true)));
-  const copias = new Map<string, string>();
+    .where(and(eq(s.perfil.escopo, 'modelo'), eq(s.perfil.ativo, true)))
+  const copias = new Map<string, string>()
   for (const m of modelos) {
     const [p] = await tx
       .insert(s.perfil)
@@ -48,47 +48,47 @@ export async function copiarPerfisModelo(
         criadoPor: usuarioId,
         atualizadoPor: usuarioId,
       })
-      .returning({ id: s.perfil.id });
-    copias.set(m.codigo ?? m.id, p!.id);
+      .returning({ id: s.perfil.id })
+    copias.set(m.codigo ?? m.id, p!.id)
     const grade = await tx
       .select({
         funcionalidadeId: s.perfilPermissao.funcionalidadeId,
         acao: s.perfilPermissao.acao,
       })
       .from(s.perfilPermissao)
-      .where(eq(s.perfilPermissao.perfilId, m.id));
+      .where(eq(s.perfilPermissao.perfilId, m.id))
     if (grade.length) {
       await tx
         .insert(s.perfilPermissao)
-        .values(grade.map((g) => ({ ...g, perfilId: p!.id, empresaId })));
+        .values(grade.map((g) => ({ ...g, perfilId: p!.id, empresaId })))
     }
   }
-  return copias;
+  return copias
 }
 
 const situacaoEmpresa = z.object({
   situacao: z.enum(SITUACOES_EMPRESA),
   motivo: z.string().trim().min(3, 'Informe o motivo').max(500),
-});
+})
 
 export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
-  const { db, config } = app.deps;
+  const { db, config } = app.deps
 
   app.get('/api/plataforma/empresas', async (req) =>
     naPlataforma(db, req, ['plataforma.clientes', 'visualizar'], async ({ tx }) => {
       const consulta = consultaListagem
         .extend({ situacao: z.enum(SITUACOES_EMPRESA).optional() })
-        .parse(req.query);
+        .parse(req.query)
       const filtro = and(
         buscaTexto(consulta.busca, [s.ficha.nome, s.ficha.nomeFantasia, s.ficha.documento]),
         consulta.situacao ? eq(s.empresa.situacao, consulta.situacao) : undefined,
-      );
+      )
       const usuarios = tx
         .select({ empresaId: s.vinculo.empresaId, total: count().as('total') })
         .from(s.vinculo)
         .where(eq(s.vinculo.ativo, true))
         .groupBy(s.vinculo.empresaId)
-        .as('usuarios');
+        .as('usuarios')
       return listar({
         consulta,
         ordenaveis: {
@@ -125,9 +125,9 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
             .orderBy(...ordem)
             .limit(limite)
             .offset(deslocamento),
-      });
+      })
     }),
-  );
+  )
 
   app.post('/api/plataforma/empresas', async (req) =>
     naPlataforma(
@@ -135,16 +135,16 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
       req,
       ['plataforma.clientes', 'criar'],
       async ({ tx, usuarioId, origem, auditar }) => {
-        const d = novaEmpresa.parse(req.body);
+        const d = novaEmpresa.parse(req.body)
         const [plano] = await tx
           .select()
           .from(s.plano)
-          .where(and(eq(s.plano.id, d.planoId), eq(s.plano.ativo, true)));
-        if (!plano) throw new ErroRegra('Plano inválido.', 'plano');
-        const [cfg] = await tx.select().from(s.configPlataforma);
-        const empresaId = uuidv7();
-        const fichaId = await criarFicha(tx, d.ficha, 'empresa', empresaId, usuarioId);
-        const situacao = d.emTeste ? 'teste' : 'ativo';
+          .where(and(eq(s.plano.id, d.planoId), eq(s.plano.ativo, true)))
+        if (!plano) throw new ErroRegra('Plano inválido.', 'plano')
+        const [cfg] = await tx.select().from(s.configPlataforma)
+        const empresaId = uuidv7()
+        const fichaId = await criarFicha(tx, d.ficha, 'empresa', empresaId, usuarioId)
+        const situacao = d.emTeste ? 'teste' : 'ativo'
         await tx.insert(s.empresa).values({
           id: empresaId,
           fichaId,
@@ -156,29 +156,29 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
           regimeTributario: d.regimeTributario ?? null,
           criadoPor: usuarioId,
           atualizadoPor: usuarioId,
-        });
+        })
         await tx
           .insert(s.empresaSituacao)
-          .values({ empresaId, situacao, origem: 'criacao', criadoPor: usuarioId });
+          .values({ empresaId, situacao, origem: 'criacao', criadoPor: usuarioId })
         const fimTeste = d.emTeste
           ? new Date(
               new Date(`${d.inicio}T00:00:00Z`).getTime() + (cfg?.testeDias ?? 7) * 86400_000,
             )
               .toISOString()
               .slice(0, 10)
-          : null;
+          : null
         // Preço congelado na contratação (P25); no teste, é o preço do dia, revisto ao contratar.
-        const valor = await precoDoPlano(tx, plano.id, d.periodicidade, d.inicio);
+        const valor = await precoDoPlano(tx, plano.id, d.periodicidade, d.inicio)
         if (valor === null) {
           throw new ErroRegra(
             `O plano ${plano.nome} não tem preço no ciclo ${NOMES_PERIODICIDADE[d.periodicidade].toLowerCase()}.`,
             'periodicidade',
-          );
+          )
         }
         if (d.formaPagamento && !plano.formasPagamento.includes(d.formaPagamento)) {
-          throw new ErroRegra('O plano não aceita essa forma de pagamento.', 'formaPagamento');
+          throw new ErroRegra('O plano não aceita essa forma de pagamento.', 'formaPagamento')
         }
-        const dia = Number(d.inicio.slice(8, 10));
+        const dia = Number(d.inicio.slice(8, 10))
         const [assinatura] = await tx
           .insert(s.assinatura)
           .values({
@@ -198,8 +198,8 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
             criadoPor: usuarioId,
             atualizadoPor: usuarioId,
           })
-          .returning();
-        const perfis = await copiarPerfisModelo(tx, empresaId, usuarioId);
+          .returning()
+        const perfis = await copiarPerfisModelo(tx, empresaId, usuarioId)
         await tx.insert(s.formatoCodigo).values(
           Object.entries(FORMATOS_CODIGO_PADRAO).map(([tipo, mascara]) => ({
             empresaId,
@@ -208,10 +208,10 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
             criadoPor: usuarioId,
             atualizadoPor: usuarioId,
           })),
-        );
+        )
         // Fora do teste, a fatura do primeiro ciclo sai na hora.
         if (!d.emTeste) {
-          await gerarFaturaDoCiclo(tx, assinatura!, d.inicio, hoje(), usuarioId);
+          await gerarFaturaDoCiclo(tx, assinatura!, d.inicio, hoje(), usuarioId)
         }
         await auditar({
           acao: 'criar',
@@ -225,7 +225,7 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
             emTeste: d.emTeste,
             emailMaster: d.emailMaster,
           },
-        });
+        })
         await criarConvite(
           tx,
           { ...origem, empresaId },
@@ -236,17 +236,17 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
             estabelecimentos: [],
             urlAplicacao: config.URL_APLICACAO,
           },
-        );
-        return { id: empresaId };
+        )
+        return { id: empresaId }
       },
     ),
-  );
+  )
 
   app.get<{ Params: { id: string } }>('/api/plataforma/empresas/:id', async (req) =>
     naPlataforma(db, req, ['plataforma.clientes', 'visualizar'], async ({ tx }) => {
-      const id = z.uuid().parse(req.params.id);
-      const [e] = await tx.select().from(s.empresa).where(eq(s.empresa.id, id));
-      if (!e) throw new ErroNaoEncontrado('Cliente não encontrado.');
+      const id = z.uuid().parse(req.params.id)
+      const [e] = await tx.select().from(s.empresa).where(eq(s.empresa.id, id))
+      if (!e) throw new ErroNaoEncontrado('Cliente não encontrado.')
       const [assinatura] = await tx
         .select({
           plano: s.plano.nome,
@@ -257,7 +257,7 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
         })
         .from(s.assinatura)
         .innerJoin(s.plano, eq(s.plano.id, s.assinatura.planoId))
-        .where(and(eq(s.assinatura.empresaId, id), eq(s.assinatura.situacao, 'vigente')));
+        .where(and(eq(s.assinatura.empresaId, id), eq(s.assinatura.situacao, 'vigente')))
       const usuarios = await tx
         .select({
           vinculoId: s.vinculo.id,
@@ -273,7 +273,7 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
         .innerJoin(s.ficha, eq(s.ficha.id, s.usuario.fichaId))
         .innerJoin(s.perfil, eq(s.perfil.id, s.vinculo.perfilId))
         .where(eq(s.vinculo.empresaId, id))
-        .orderBy(s.ficha.nome);
+        .orderBy(s.ficha.nome)
       const convites = await tx
         .select({
           id: s.convite.id,
@@ -289,7 +289,7 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
         .where(
           and(eq(s.convite.empresaId, id), inArray(s.convite.situacao, ['pendente', 'expirado'])),
         )
-        .orderBy(s.convite.enviadoEm);
+        .orderBy(s.convite.enviadoEm)
       const estabelecimentos = await tx
         .select({
           id: s.estabelecimento.id,
@@ -300,12 +300,12 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
         .from(s.estabelecimento)
         .innerJoin(s.ficha, eq(s.ficha.id, s.estabelecimento.fichaId))
         .where(eq(s.estabelecimento.empresaId, id))
-        .orderBy(s.ficha.nome);
+        .orderBy(s.ficha.nome)
       const historico = await tx
         .select()
         .from(s.empresaSituacao)
         .where(eq(s.empresaSituacao.empresaId, id))
-        .orderBy(s.empresaSituacao.desde);
+        .orderBy(s.empresaSituacao.desde)
       return {
         id: e.id,
         situacao: e.situacao,
@@ -322,31 +322,31 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
         })),
         estabelecimentos,
         historico,
-      };
+      }
     }),
-  );
+  )
 
   // Reenvia o convite do Master; sem Master ativo, permite trocar o e-mail convidado.
   app.post<{ Params: { id: string } }>('/api/plataforma/empresas/:id/convite-master', async (req) =>
     naPlataforma(db, req, ['plataforma.clientes', 'editar'], async ({ tx, origem }) => {
-      const id = z.uuid().parse(req.params.id);
-      const { email } = z.object({ email: esquemaEmail.optional() }).parse(req.body ?? {});
+      const id = z.uuid().parse(req.params.id)
+      const { email } = z.object({ email: esquemaEmail.optional() }).parse(req.body ?? {})
       const [master] = await tx
         .select({ id: s.vinculo.id })
         .from(s.vinculo)
         .where(
           and(eq(s.vinculo.empresaId, id), eq(s.vinculo.eMaster, true), eq(s.vinculo.ativo, true)),
-        );
+        )
       if (master) {
         throw new ErroRegra(
           'A empresa já tem um Master. A troca é feita pela passagem de bastão.',
           'master_existente',
-        );
+        )
       }
       const [perfilMaster] = await tx
         .select({ id: s.perfil.id })
         .from(s.perfil)
-        .where(and(eq(s.perfil.empresaId, id), eq(s.perfil.eMaster, true)));
+        .where(and(eq(s.perfil.empresaId, id), eq(s.perfil.eMaster, true)))
       const [pendente] = await tx
         .select({ id: s.convite.id, email: s.convite.email })
         .from(s.convite)
@@ -357,35 +357,35 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
             inArray(s.convite.situacao, ['pendente', 'expirado']),
             isNull(s.convite.aceitoEm),
           ),
-        );
-      const o = { ...origem, empresaId: id };
+        )
+      const o = { ...origem, empresaId: id }
       if (pendente && (!email || email === pendente.email)) {
-        await reenviarConvite(tx, o, pendente.id, config.URL_APLICACAO);
+        await reenviarConvite(tx, o, pendente.id, config.URL_APLICACAO)
       } else {
-        if (!email) throw new ErroRegra('Informe o e-mail do Master.', 'email');
+        if (!email) throw new ErroRegra('Informe o e-mail do Master.', 'email')
         await criarConvite(tx, o, {
           empresaId: id,
           email,
           perfilId: perfilMaster!.id,
           estabelecimentos: [],
           urlAplicacao: config.URL_APLICACAO,
-        });
+        })
       }
-      return { ok: true };
+      return { ok: true }
     }),
-  );
+  )
 
   // Situação do cliente, com motivo (administracao.md, Inadimplência e bloqueio).
   app.post<{ Params: { id: string } }>('/api/plataforma/empresas/:id/situacao', async (req) =>
     naPlataforma(db, req, ['plataforma.clientes', 'editar'], async ({ tx, usuarioId, auditar }) => {
-      const id = z.uuid().parse(req.params.id);
-      const d = situacaoEmpresa.parse(req.body);
+      const id = z.uuid().parse(req.params.id)
+      const d = situacaoEmpresa.parse(req.body)
       const [e] = await tx
         .select({ situacao: s.empresa.situacao })
         .from(s.empresa)
-        .where(eq(s.empresa.id, id));
-      if (!e) throw new ErroNaoEncontrado('Cliente não encontrado.');
-      if (e.situacao === d.situacao) return { ok: true };
+        .where(eq(s.empresa.id, id))
+      if (!e) throw new ErroNaoEncontrado('Cliente não encontrado.')
+      if (e.situacao === d.situacao) return { ok: true }
       await tx
         .update(s.empresa)
         .set({
@@ -394,14 +394,14 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
           atualizadoPor: usuarioId,
           versao: sql`${s.empresa.versao} + 1`,
         })
-        .where(eq(s.empresa.id, id));
+        .where(eq(s.empresa.id, id))
       await tx.insert(s.empresaSituacao).values({
         empresaId: id,
         situacao: d.situacao,
         motivo: d.motivo,
         origem: 'manual',
         criadoPor: usuarioId,
-      });
+      })
       await auditar({
         acao: 'situacao',
         entidade: 'empresa',
@@ -410,8 +410,8 @@ export async function rotasPlataforma(app: FastifyInstance): Promise<void> {
         antes: { situacao: e.situacao },
         depois: { situacao: d.situacao },
         motivo: d.motivo,
-      });
-      return { ok: true };
+      })
+      return { ok: true }
     }),
-  );
+  )
 }

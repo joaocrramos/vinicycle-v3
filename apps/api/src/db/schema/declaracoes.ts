@@ -2,23 +2,14 @@
 // de produção e estoques ao MAPA (Portaria MAPA 615/2023) e a de uvas no SIVIBE (IN MAPA 59/2020),
 // com o instantâneo dos números. A anual entregue trava o ano do estabelecimento; mudanças só por
 // retificação registrada, com motivo e novo protocolo (P13).
-import { sql } from 'drizzle-orm';
-import {
-  check,
-  index,
-  integer,
-  jsonb,
-  pgTable,
-  text,
-  uniqueIndex,
-  uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, usuario } from './acesso';
-import { dataHora, id } from './comum';
-import { empresa } from './plataforma';
+import { sql } from 'drizzle-orm'
+import { check, index, integer, jsonb, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import { estabelecimento, usuario } from './acesso'
+import { dataHora, id } from './comum'
+import { empresa } from './plataforma'
 
-export const TIPOS_DECLARACAO = ['anual_mapa', 'sivibe'] as const;
-export const SITUACOES_DECLARACAO = ['declarada', 'em_retificacao', 'retificada'] as const;
+export const TIPOS_DECLARACAO = ['anual_mapa', 'sivibe'] as const
+export const SITUACOES_DECLARACAO = ['declarada', 'em_retificacao', 'retificada'] as const
 
 export const declaracao = pgTable(
   'declaracao',
@@ -48,7 +39,7 @@ export const declaracao = pgTable(
     check('declaracao_situacao', sql`situacao in ('declarada', 'em_retificacao', 'retificada')`),
     check('declaracao_ano_valido', sql`ano between 2000 and 2200`),
   ],
-);
+)
 
 /** Retificação: aberta com motivo (destrava o ano), concluída com novo protocolo e números. */
 export const declaracaoRetificacao = pgTable(
@@ -77,4 +68,4 @@ export const declaracaoRetificacao = pgTable(
     index('declaracao_retificacao_declaracao').on(t.declaracaoId),
     check('declaracao_retificacao_conclusao', sql`(concluida_em is null) = (protocolo is null)`),
   ],
-);
+)

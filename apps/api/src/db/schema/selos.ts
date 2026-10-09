@@ -2,7 +2,7 @@
 // 9): o selo é item de estoque com numeração. Entra por faixa (do nº X ao Y, com série opcional);
 // cada produção do engarrafamento registra as faixas usadas e os números perdidos. Disponível =
 // faixas recebidas menos as usadas e as perdidas; nenhum número se repete (integridade, P29).
-import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm'
 import {
   type AnyPgColumn,
   bigint,
@@ -12,25 +12,25 @@ import {
   pgTable,
   text,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento } from './acesso';
-import { itemEstoque } from './cantina';
-import { criacao, dataHora, id } from './comum';
-import { producaoParcial } from './envase';
-import { empresa } from './plataforma';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento } from './acesso'
+import { itemEstoque } from './cantina'
+import { criacao, dataHora, id } from './comum'
+import { producaoParcial } from './envase'
+import { empresa } from './plataforma'
 
 function daEmpresa(
   coluna: AnyPgColumn,
   empresaId: AnyPgColumn,
   alvo: { id: AnyPgColumn; empresaId: AnyPgColumn },
 ) {
-  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] });
+  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] })
 }
 
 const empresaId = () =>
   uuid('empresa_id')
     .notNull()
-    .references(() => empresa.id);
+    .references(() => empresa.id)
 
 /** Faixa recebida: a entrada no estoque (grupo do livro) com a numeração. */
 export const seloFaixa = pgTable(
@@ -57,7 +57,7 @@ export const seloFaixa = pgTable(
     check('selo_faixa_ordem', sql`inicio >= 0 and fim >= inicio`),
     index('selo_faixa_item').on(t.itemId, t.serie),
   ],
-);
+)
 
 /** Números usados ou perdidos numa produção do engarrafamento. */
 export const seloUso = pgTable(
@@ -86,4 +86,4 @@ export const seloUso = pgTable(
     index('selo_uso_item').on(t.itemId, t.serie),
     index('selo_uso_producao').on(t.producaoId),
   ],
-);
+)

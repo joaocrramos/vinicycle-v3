@@ -1,42 +1,42 @@
 // Central de alertas (P20): abertos e resolvidos, com filtro por tipo, link para o registro e
 // "marcar como lido". Os alertas se resolvem sozinhos quando a causa some.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Link } from 'react-router';
-import { type Alerta, COR_GRAVIDADE } from '@/componentes/SinoAlertas';
-import { Botao } from '@/componentes/ui/botao';
-import { Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { fusoAtivo, useSessao } from '@/lib/sessao';
-import { cn, formatarDataHora } from '@/lib/utils';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { Link } from 'react-router'
+import { type Alerta, COR_GRAVIDADE } from '@/componentes/SinoAlertas'
+import { Botao } from '@/componentes/ui/botao'
+import { Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { fusoAtivo, useSessao } from '@/lib/sessao'
+import { cn, formatarDataHora } from '@/lib/utils'
 
-const GRAVIDADES = { critico: 'Crítico', atencao: 'Atenção', info: 'Informação' } as const;
+const GRAVIDADES = { critico: 'Crítico', atencao: 'Atenção', info: 'Informação' } as const
 
 export function PaginaAlertas() {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const [situacao, setSituacao] = useState<'aberto' | 'resolvido'>('aberto');
-  const [tipo, setTipo] = useState('');
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const [situacao, setSituacao] = useState<'aberto' | 'resolvido'>('aberto')
+  const [tipo, setTipo] = useState('')
   const q = useQuery({
     queryKey: ['alertas', situacao],
     queryFn: () => api.get<Alerta[]>(`/api/alertas?situacao=${situacao}`),
-  });
-  const tipos = [...new Map((q.data ?? []).map((a) => [a.tipo, a.nomeTipo])).entries()];
-  const lista = (q.data ?? []).filter((a) => !tipo || a.tipo === tipo);
+  })
+  const tipos = [...new Map((q.data ?? []).map((a) => [a.tipo, a.nomeTipo])).entries()]
+  const lista = (q.data ?? []).filter((a) => !tipo || a.tipo === tipo)
   const atualizar = async (forcar: boolean) => {
-    if (forcar) await api.get('/api/alertas?atualizar=sim');
+    if (forcar) await api.get('/api/alertas?atualizar=sim')
     await Promise.all([
       qc.invalidateQueries({ queryKey: ['alertas'] }),
       qc.invalidateQueries({ queryKey: ['alertas-resumo'] }),
-    ]);
-  };
+    ])
+  }
   const marcar = async (ids: string[]) => {
-    await api.post('/api/alertas/lidos', { ids });
-    await atualizar(false);
-  };
+    await api.post('/api/alertas/lidos', { ids })
+    await atualizar(false)
+  }
   return (
     <Pagina
       titulo="Alertas"
@@ -123,5 +123,5 @@ export function PaginaAlertas() {
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }

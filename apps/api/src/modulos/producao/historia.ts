@@ -3,78 +3,78 @@
 // fiscalização e o recolhimento: uvas de origem, operações e recipientes, insumos aplicados,
 // análises e laudos, cortes e genealogia, envases e saídas. Os lotes de produção de origem entram
 // pela genealogia (03-modelo-de-dados.md, seção 5, Raízes e folhas).
-import { sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import { ErroNaoEncontrado } from '../../nucleo/erros';
-import { type ContextoEmpresa, naEmpresa } from '../../nucleo/requisicao';
+import { sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import { ErroNaoEncontrado } from '../../nucleo/erros'
+import { type ContextoEmpresa, naEmpresa } from '../../nucleo/requisicao'
 
-const lista = (ids: string[]) => sql.raw(`(${ids.map((x) => `'${x}'`).join(',')})`);
+const lista = (ids: string[]) => sql.raw(`(${ids.map((x) => `'${x}'`).join(',')})`)
 
 /** Lotes de produção do ponto de partida e todos os de origem, subindo pela genealogia. */
 async function lotesDaHistoria(ctx: ContextoEmpresa, inicio: string[]): Promise<string[]> {
-  if (!inicio.length) return [];
+  if (!inicio.length) return []
   const r = await ctx.tx.execute<{ id: string }>(sql`
     with recursive ancestrais(id) as (
       select l.id from lote l where l.id in ${lista(inicio)}
       union
       select g.origem_lote_id from genealogia g join ancestrais a on a.id = g.destino_lote_id
       where not g.estornada
-    ) select id from ancestrais`);
-  return r.rows.map((x) => x.id);
+    ) select id from ancestrais`)
+  return r.rows.map((x) => x.id)
 }
 
 export async function historia(
   ctx: ContextoEmpresa,
   partida: { lote?: string; loteComercial?: string; projeto?: string },
 ) {
-  const e = ctx.empresaId;
-  let titulo = '';
-  let inicio: string[] = [];
-  let comerciais: string[] = [];
+  const e = ctx.empresaId
+  let titulo = ''
+  let inicio: string[] = []
+  let comerciais: string[] = []
   if (partida.loteComercial) {
     const [lc] = (
       await ctx.tx.execute<{ id: string; codigo: string; produto: string | null }>(sql`
         select lc.id, lc.codigo, p.nome as produto from lote_comercial lc left join produto p on p.id = lc.produto_id
         where lc.id = ${partida.loteComercial} and lc.empresa_id = ${e}`)
-    ).rows;
-    if (!lc) throw new ErroNaoEncontrado('Lote comercial não encontrado.');
-    titulo = `Lote comercial ${lc.codigo}${lc.produto ? ` · ${lc.produto}` : ''}`;
-    comerciais = [lc.id];
+    ).rows
+    if (!lc) throw new ErroNaoEncontrado('Lote comercial não encontrado.')
+    titulo = `Lote comercial ${lc.codigo}${lc.produto ? ` · ${lc.produto}` : ''}`
+    comerciais = [lc.id]
     inicio = (
       await ctx.tx.execute<{ lote_id: string }>(
         sql`select lote_id from lote_comercial_origem where lote_comercial_id = ${lc.id}`,
       )
-    ).rows.map((x) => x.lote_id);
+    ).rows.map((x) => x.lote_id)
   } else if (partida.lote) {
     const [l] = (
       await ctx.tx.execute<{ id: string; codigo: string }>(
         sql`select id, codigo from lote where id = ${partida.lote} and empresa_id = ${e}`,
       )
-    ).rows;
-    if (!l) throw new ErroNaoEncontrado('Lote não encontrado.');
-    titulo = `Lote de produção ${l.codigo}`;
-    inicio = [l.id];
+    ).rows
+    if (!l) throw new ErroNaoEncontrado('Lote não encontrado.')
+    titulo = `Lote de produção ${l.codigo}`
+    inicio = [l.id]
   } else if (partida.projeto) {
     const [p] = (
       await ctx.tx.execute<{ id: string; codigo: string; nome: string }>(
         sql`select id, codigo, nome from projeto where id = ${partida.projeto} and empresa_id = ${e}`,
       )
-    ).rows;
-    if (!p) throw new ErroNaoEncontrado('Projeto não encontrado.');
-    titulo = `Projeto ${p.codigo} · ${p.nome}`;
+    ).rows
+    if (!p) throw new ErroNaoEncontrado('Projeto não encontrado.')
+    titulo = `Projeto ${p.codigo} · ${p.nome}`
     inicio = (
       await ctx.tx.execute<{ id: string }>(sql`select id from lote where projeto_id = ${p.id}`)
-    ).rows.map((x) => x.id);
+    ).rows.map((x) => x.id)
   }
-  const lotes = await lotesDaHistoria(ctx, inicio);
+  const lotes = await lotesDaHistoria(ctx, inicio)
   if (!comerciais.length && lotes.length)
     comerciais = (
       await ctx.tx.execute<{ lote_comercial_id: string }>(
         sql`select distinct lote_comercial_id from lote_comercial_origem where lote_id in ${lista(lotes)}`,
       )
-    ).rows.map((x) => x.lote_comercial_id);
-  const vazio = { rows: [] as Array<Record<string, unknown>> };
+    ).rows.map((x) => x.lote_comercial_id)
+  const vazio = { rows: [] as Array<Record<string, unknown>> }
 
   const lotesInfo = lotes.length
     ? await ctx.tx.execute<Record<string, unknown>>(sql`
@@ -83,7 +83,7 @@ export async function historia(
           coalesce((select sum(m.litros) from movimento_volume m where m.lote_id = l.id), 0)::text as saldo
         from lote l join projeto p on p.id = l.projeto_id
         where l.id in ${lista(lotes)} order by l.codigo`)
-    : vazio;
+    : vazio
   const uvas = lotes.length
     ? await ctx.tx.execute<Record<string, unknown>>(sql`
         select r.id as "romaneioId", r.codigo as romaneio, r.chegada_em as "chegadaEm", v.nome as variedade, ri.safra,
@@ -97,7 +97,7 @@ export async function historia(
         where mu.lote_id in ${lista(lotes)} and o.situacao = 'confirmada' and o.tipo <> 'estorno'
         group by r.id, r.codigo, r.chegada_em, v.nome, ri.safra, ri.data_colheita, ri.brix, ri.organica, r.fornecedor_id, ri.parcela_id, l.codigo
         order by r.chegada_em`)
-    : vazio;
+    : vazio
   const operacoes = lotes.length
     ? await ctx.tx.execute<Record<string, unknown>>(sql`
         select o.id, o.codigo, o.tipo, o.executado_em as "executadoEm", o.situacao,
@@ -110,7 +110,7 @@ export async function historia(
           and (exists (select 1 from movimento_volume m where m.operacao_id = o.id and m.lote_id in ${lista(lotes)})
             or exists (select 1 from operacao_insumo x where x.operacao_id = o.id and x.lote_id in ${lista(lotes)}))
         order by o.executado_em, o.lancado_em`)
-    : vazio;
+    : vazio
   const insumos = lotes.length
     ? await ctx.tx.execute<Record<string, unknown>>(sql`
         select o.codigo as operacao, o.executado_em as "executadoEm", coalesce(i.nome, x.descricao) as insumo,
@@ -120,7 +120,7 @@ export async function historia(
           left join item_estoque i on i.id = x.item_id left join lote_item li on li.id = x.lote_item_id
           join recipiente rc on rc.id = x.recipiente_id join lote l on l.id = x.lote_id
         where x.lote_id in ${lista(lotes)} order by o.executado_em`)
-    : vazio;
+    : vazio
   const analises = lotes.length
     ? await ctx.tx.execute<Record<string, unknown>>(sql`
         select a.id, a.amostra_em as "amostraEm", a.tipo, a.documento, l.codigo as lote,
@@ -129,7 +129,7 @@ export async function historia(
              from analise_resultado r join parametro_analise p on p.id = r.parametro_id where r.analise_id = a.id) as resultados
         from analise a join lote l on l.id = a.lote_id
         where a.lote_id in ${lista(lotes)} order by a.amostra_em`)
-    : vazio;
+    : vazio
   const genealogia = lotes.length
     ? await ctx.tx.execute<Record<string, unknown>>(sql`
         select g.tipo, g.litros::text as litros, lo.codigo as origem, ld.codigo as destino, o.codigo as operacao, o.executado_em as "executadoEm"
@@ -137,7 +137,7 @@ export async function historia(
           join operacao o on o.id = g.operacao_id
         where not g.estornada and (g.origem_lote_id in ${lista(lotes)} or g.destino_lote_id in ${lista(lotes)})
         order by o.executado_em`)
-    : vazio;
+    : vazio
   const envases = comerciais.length
     ? await ctx.tx.execute<Record<string, unknown>>(sql`
         select lc.id, lc.codigo, lc.litros::text as litros, lc.primeiro_envase as "primeiroEnvase", lc.ultimo_envase as "ultimoEnvase",
@@ -146,7 +146,7 @@ export async function historia(
              where li.codigo = lc.codigo and li.estabelecimento_id = lc.estabelecimento_id) as saldo
         from lote_comercial lc left join produto pr on pr.id = lc.produto_id
         where lc.id in ${lista(comerciais)} order by lc.codigo`)
-    : vazio;
+    : vazio
   const saidas = comerciais.length
     ? await ctx.tx.execute<Record<string, unknown>>(sql`
         select sa.id, sa.executado_em as "executadoEm", sa.tipo, sa.documento, lc.codigo as "loteComercial",
@@ -158,7 +158,7 @@ export async function historia(
           join lote_comercial lc on lc.codigo = li.codigo and lc.estabelecimento_id = li.estabelecimento_id
         where lc.id in ${lista(comerciais)} and sa.situacao = 'lancada'
         order by sa.executado_em`)
-    : vazio;
+    : vazio
   return {
     titulo,
     geradoEm: new Date().toISOString(),
@@ -170,11 +170,11 @@ export async function historia(
     genealogia: genealogia.rows,
     envases: envases.rows,
     saidas: saidas.rows,
-  };
+  }
 }
 
 export async function rotasHistoria(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
   app.get('/api/historia', async (req) =>
     naEmpresa(db, req, ['enotrace.projetos', 'visualizar'], async (ctx) => {
       const q = z
@@ -184,8 +184,8 @@ export async function rotasHistoria(app: FastifyInstance): Promise<void> {
           projeto: z.uuid().optional(),
         })
         .refine((x) => !!(x.lote || x.loteComercial || x.projeto), 'Escolha o lote ou o projeto')
-        .parse(req.query);
-      return historia(ctx, q);
+        .parse(req.query)
+      return historia(ctx, q)
     }),
-  );
+  )
 }

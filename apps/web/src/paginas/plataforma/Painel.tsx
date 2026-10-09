@@ -1,63 +1,63 @@
 // Administração › Painel (administracao.md, Visão geral): clientes, usuários, receita recorrente,
 // faturas, previsão de 6 meses, quem está perto dos limites e as oportunidades da vitrine.
 // Indicadores em número e tabela: nada aqui pede gráfico.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   formatarMoeda,
   NOMES_SITUACAO_EMPRESA,
   paraCentavos,
   SITUACOES_EMPRESA,
-} from '@vinicycle/shared';
-import type { ReactNode } from 'react';
-import { Link } from 'react-router';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { pode, useSessao } from '@/lib/sessao';
-import { formatarData, formatarDataHora } from '@/lib/utils';
+} from '@vinicycle/shared'
+import type { ReactNode } from 'react'
+import { Link } from 'react-router'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { pode, useSessao } from '@/lib/sessao'
+import { formatarData, formatarDataHora } from '@/lib/utils'
 
 interface Painel {
-  clientes: { porSituacao: Record<string, number>; novosNoMes: number };
-  usuarios: { ativos: number; ultimos30Dias: number };
-  receitaMensal: string;
-  faturas: Record<string, { quantidade: number; saldo: string }>;
-  previsao: Array<{ mes: string; valor: string }>;
-  maiores: Array<{ empresaId: string; cliente: string; mensal: string }>;
+  clientes: { porSituacao: Record<string, number>; novosNoMes: number }
+  usuarios: { ativos: number; ultimos30Dias: number }
+  receitaMensal: string
+  faturas: Record<string, { quantidade: number; saldo: string }>
+  previsao: Array<{ mes: string; valor: string }>
+  maiores: Array<{ empresaId: string; cliente: string; mensal: string }>
   pertoDosLimites: Array<{
-    empresaId: string;
-    cliente: string;
-    item: string;
-    uso: string;
-    limite: string;
-  }>;
-  emTeste: Array<{ empresaId: string; cliente: string; fimTeste: string | null }>;
-  oportunidades: number;
+    empresaId: string
+    cliente: string
+    item: string
+    uso: string
+    limite: string
+  }>
+  emTeste: Array<{ empresaId: string; cliente: string; fimTeste: string | null }>
+  oportunidades: number
 }
 
 interface Interesse {
-  id: string;
-  empresaId: string;
-  cliente: string;
-  modulo: string;
-  funcao: string;
-  usuario: string;
-  observacao: string | null;
-  criadoEm: string;
+  id: string
+  empresaId: string
+  cliente: string
+  modulo: string
+  funcao: string
+  usuario: string
+  observacao: string | null
+  criadoEm: string
 }
 
-const moeda = (v: string) => formatarMoeda(paraCentavos(v));
-const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-const mesAno = (m: string) => `${MESES[Number(m.slice(5, 7)) - 1]}/${m.slice(0, 4)}`;
+const moeda = (v: string) => formatarMoeda(paraCentavos(v))
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+const mesAno = (m: string) => `${MESES[Number(m.slice(5, 7)) - 1]}/${m.slice(0, 4)}`
 
 function Indicador({
   rotulo,
   valor,
   detalhe,
 }: {
-  rotulo: string;
-  valor: ReactNode;
-  detalhe?: ReactNode;
+  rotulo: string
+  valor: ReactNode
+  detalhe?: ReactNode
 }) {
   return (
     <Cartao>
@@ -67,20 +67,20 @@ function Indicador({
         {detalhe && <span className="text-xs text-muted-foreground">{detalhe}</span>}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 export function PaginaPainel() {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
   const q = useQuery({
     queryKey: ['painel-plataforma'],
     queryFn: () => api.get<Painel>('/api/plataforma/painel'),
-  });
+  })
   const interesses = useQuery({
     queryKey: ['interesses'],
     queryFn: () => api.get<Interesse[]>('/api/plataforma/interesses'),
-  });
+  })
   if (!q.data) {
     return (
       <Pagina titulo="Painel" trilha={['Administração']}>
@@ -88,13 +88,12 @@ export function PaginaPainel() {
           {q.isError ? (q.error as Error).message : 'Carregando…'}
         </p>
       </Pagina>
-    );
+    )
   }
-  const p = q.data;
-  const ativos =
-    (p.clientes.porSituacao.ativo ?? 0) + (p.clientes.porSituacao.somente_leitura ?? 0);
-  const vencidas = p.faturas.vencida;
-  const abertas = [p.faturas.aberta, p.faturas.parcial].filter(Boolean);
+  const p = q.data
+  const ativos = (p.clientes.porSituacao.ativo ?? 0) + (p.clientes.porSituacao.somente_leitura ?? 0)
+  const vencidas = p.faturas.vencida
+  const abertas = [p.faturas.aberta, p.faturas.parcial].filter(Boolean)
   return (
     <Pagina titulo="Painel" trilha={['Administração']}>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -242,9 +241,9 @@ export function PaginaPainel() {
                     variante="secundario"
                     tamanho="pequeno"
                     onClick={async () => {
-                      await api.post(`/api/plataforma/interesses/${i.id}/atender`, {});
-                      await qc.invalidateQueries({ queryKey: ['interesses'] });
-                      await qc.invalidateQueries({ queryKey: ['painel-plataforma'] });
+                      await api.post(`/api/plataforma/interesses/${i.id}/atender`, {})
+                      await qc.invalidateQueries({ queryKey: ['interesses'] })
+                      await qc.invalidateQueries({ queryKey: ['painel-plataforma'] })
                     }}
                   >
                     Atendido
@@ -265,5 +264,5 @@ export function PaginaPainel() {
         </Aviso>
       )}
     </Pagina>
-  );
+  )
 }

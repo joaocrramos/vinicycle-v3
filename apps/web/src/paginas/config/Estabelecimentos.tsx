@@ -1,6 +1,6 @@
 // Configurações › Estabelecimentos (P12) e criação obrigatória no primeiro acesso
 // (administracao.md, Fluxo, passo 4).
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ATIVIDADES_MAPA,
   dadosEstabelecimento,
@@ -13,51 +13,51 @@ import {
   NOMES_FORMA_REGISTRO,
   NOMES_ORIGEM_UVA,
   ORIGENS_UVA,
-} from '@vinicycle/shared';
-import { Plus } from 'lucide-react';
-import { type FormEvent, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
-import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha';
-import { Anexos } from '@/componentes/Anexos';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { FICHA_VAZIA_PJ, FichaCadastral } from '@/componentes/FichaCadastral';
-import { Historico } from '@/componentes/Historico';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { useReferencia } from '@/lib/referencia';
-import { type EstadoSessao, fusoAtivo, pode, useAtualizarSessao, useSessao } from '@/lib/sessao';
-import { formatarData } from '@/lib/utils';
+} from '@vinicycle/shared'
+import { Plus } from 'lucide-react'
+import { type FormEvent, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
+import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha'
+import { Anexos } from '@/componentes/Anexos'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { FICHA_VAZIA_PJ, FichaCadastral } from '@/componentes/FichaCadastral'
+import { Historico } from '@/componentes/Historico'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { useReferencia } from '@/lib/referencia'
+import { type EstadoSessao, fusoAtivo, pode, useAtualizarSessao, useSessao } from '@/lib/sessao'
+import { formatarData } from '@/lib/utils'
 
 interface Linha {
-  id: string;
-  nome: string;
-  nomeFantasia: string | null;
-  tipoPessoa: string;
-  documento: string | null;
-  registroMapa: string | null;
-  registroMapaValidade: string | null;
-  capacidadeLitros: string | null;
-  municipio: string | null;
-  ativo: boolean;
+  id: string
+  nome: string
+  nomeFantasia: string | null
+  tipoPessoa: string
+  documento: string | null
+  registroMapa: string | null
+  registroMapaValidade: string | null
+  capacidadeLitros: string | null
+  municipio: string | null
+  ativo: boolean
 }
 
 export function ListaEstabelecimentos() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [inativar, setInativar] = useState<Linha | null>(null);
-  const podeInativar = pode(s, 'gestao.config.estabelecimentos', 'inativar');
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [inativar, setInativar] = useState<Linha | null>(null)
+  const podeInativar = pode(s, 'gestao.config.estabelecimentos', 'inativar')
   const recarregar = async () => {
-    await qc.invalidateQueries({ queryKey: ['lista', '/api/estabelecimentos'] });
-    await qc.invalidateQueries({ queryKey: ['sessao'] });
-  };
+    await qc.invalidateQueries({ queryKey: ['lista', '/api/estabelecimentos'] })
+    await qc.invalidateQueries({ queryKey: ['sessao'] })
+  }
   return (
     <Pagina
       titulo="Estabelecimentos"
@@ -156,8 +156,8 @@ export function ListaEstabelecimentos() {
               aoReativar={
                 podeInativar
                   ? async () => {
-                      await api.post(`/api/estabelecimentos/${e.id}/reativar`);
-                      await recarregar();
+                      await api.post(`/api/estabelecimentos/${e.id}/reativar`)
+                      await recarregar()
                     }
                   : undefined
               }
@@ -172,12 +172,12 @@ export function ListaEstabelecimentos() {
         descricao="O estabelecimento deixa de aparecer nos registros novos; o que já existe continua guardado."
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/estabelecimentos/${inativar!.id}/inativar`, { motivo });
-          await recarregar();
+          await api.post(`/api/estabelecimentos/${inativar!.id}/inativar`, { motivo })
+          await recarregar()
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 const VAZIO = {
@@ -211,7 +211,7 @@ const VAZIO = {
   igs: [] as string[],
   produtosElaborados: [] as string[],
   versao: undefined as number | undefined,
-};
+}
 
 function FormularioEstabelecimento({
   inicial,
@@ -219,44 +219,44 @@ function FormularioEstabelecimento({
   rotuloBotao,
   somenteLeitura,
 }: {
-  inicial: typeof VAZIO;
-  aoSalvar: (d: unknown) => Promise<void>;
-  rotuloBotao: string;
-  somenteLeitura?: boolean;
+  inicial: typeof VAZIO
+  aoSalvar: (d: unknown) => Promise<void>
+  rotuloBotao: string
+  somenteLeitura?: boolean
 }) {
-  const form = useFormulario(dadosEstabelecimento, inicial);
-  const [enviando, setEnviando] = useState(false);
-  const [salvo, setSalvo] = useState(false);
-  const v = form.valores as typeof VAZIO;
-  const enderecoPrincipal = v.ficha.enderecos.find((e) => e.principal) ?? v.ficha.enderecos[0];
-  const uf = enderecoPrincipal?.uf;
-  const { data: ref } = useReferencia();
+  const form = useFormulario(dadosEstabelecimento, inicial)
+  const [enviando, setEnviando] = useState(false)
+  const [salvo, setSalvo] = useState(false)
+  const v = form.valores as typeof VAZIO
+  const enderecoPrincipal = v.ficha.enderecos.find((e) => e.principal) ?? v.ficha.enderecos[0]
+  const uf = enderecoPrincipal?.uf
+  const { data: ref } = useReferencia()
   const rts = useQuery({
     queryKey: ['pessoas-opcoes', 'responsavel_tecnico'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=responsavel_tecnico'),
-  });
+  })
   // IG cujo território não inclui o município do estabelecimento: alerta, não bloqueia (P29).
   const igsForaDaArea = (ref?.igs ?? []).filter(
     (ig) =>
       v.igs.includes(ig.id) &&
       enderecoPrincipal?.codigoIbge &&
       !ig.municipiosIbge.includes(enderecoPrincipal.codigoIbge),
-  );
+  )
 
   async function enviar(ev: FormEvent) {
-    ev.preventDefault();
-    setSalvo(false);
-    const d = form.validar();
-    if (!d) return;
-    setEnviando(true);
+    ev.preventDefault()
+    setSalvo(false)
+    const d = form.validar()
+    if (!d) return
+    setEnviando(true)
     try {
-      await aoSalvar(d);
-      setSalvo(true);
+      await aoSalvar(d)
+      setSalvo(true)
     } catch (e) {
-      form.erroDaApi(e);
+      form.erroDaApi(e)
     } finally {
-      setEnviando(false);
+      setEnviando(false)
     }
   }
 
@@ -479,13 +479,13 @@ function FormularioEstabelecimento({
         </div>
       )}
     </form>
-  );
+  )
 }
 
 /** Primeiro acesso: sem estabelecimento, esta tela abre antes de qualquer outra. */
 export function CriarPrimeiroEstabelecimento({ sessao }: { sessao: EstadoSessao }) {
-  const atualizar = useAtualizarSessao();
-  const navegar = useNavigate();
+  const atualizar = useAtualizarSessao()
+  const navegar = useNavigate()
   if (!pode(sessao, 'gestao.config.estabelecimentos', 'criar')) {
     return (
       <Pagina titulo="Aguardando a configuração">
@@ -494,7 +494,7 @@ export function CriarPrimeiroEstabelecimento({ sessao }: { sessao: EstadoSessao 
           sistema fica liberado.
         </Aviso>
       </Pagina>
-    );
+    )
   }
   return (
     <Pagina titulo="Cadastre o seu estabelecimento">
@@ -508,22 +508,22 @@ export function CriarPrimeiroEstabelecimento({ sessao }: { sessao: EstadoSessao 
             inicial={VAZIO}
             rotuloBotao="Cadastrar e continuar"
             aoSalvar={async (d) => {
-              const r = await api.post<{ id: string }>('/api/estabelecimentos', d);
+              const r = await api.post<{ id: string }>('/api/estabelecimentos', d)
               atualizar(
                 await api.post<EstadoSessao>('/api/auth/contexto', { estabelecimentoId: r.id }),
-              );
-              navegar('/inicio');
+              )
+              navegar('/inicio')
             }}
           />
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }
 
 export function NovoEstabelecimento() {
-  const navegar = useNavigate();
-  const qc = useQueryClient();
+  const navegar = useNavigate()
+  const qc = useQueryClient()
   return (
     <Pagina titulo="Novo estabelecimento" trilha={['Configurações', 'Estabelecimentos']}>
       <Cartao>
@@ -532,39 +532,39 @@ export function NovoEstabelecimento() {
             inicial={VAZIO}
             rotuloBotao="Cadastrar"
             aoSalvar={async (d) => {
-              const r = await api.post<{ id: string }>('/api/estabelecimentos', d);
-              await qc.invalidateQueries({ queryKey: ['sessao'] });
-              navegar(`/config/estabelecimentos/${r.id}`, { replace: true });
+              const r = await api.post<{ id: string }>('/api/estabelecimentos', d)
+              await qc.invalidateQueries({ queryKey: ['sessao'] })
+              navegar(`/config/estabelecimentos/${r.id}`, { replace: true })
             }}
           />
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }
 
 export function FichaEstabelecimento() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [inativar, setInativar] = useState(false);
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [inativar, setInativar] = useState(false)
   const q = useQuery({
     queryKey: ['estabelecimento', id],
     queryFn: () =>
       api.get<
         typeof VAZIO & { id: string; ativo: boolean; ficha: typeof VAZIO.ficha & { nome: string } }
       >(`/api/estabelecimentos/${id}`),
-  });
-  const podeEditar = pode(s, 'gestao.config.estabelecimentos', 'editar');
-  const podeInativar = pode(s, 'gestao.config.estabelecimentos', 'inativar');
-  if (q.isLoading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
-  if (q.isError) return <Aviso tom="erro">{(q.error as Error).message}</Aviso>;
-  const e = q.data!;
+  })
+  const podeEditar = pode(s, 'gestao.config.estabelecimentos', 'editar')
+  const podeInativar = pode(s, 'gestao.config.estabelecimentos', 'inativar')
+  if (q.isLoading) return <p className="text-sm text-muted-foreground">Carregando…</p>
+  if (q.isError) return <Aviso tom="erro">{(q.error as Error).message}</Aviso>
+  const e = q.data!
   const recarregar = async () => {
-    await qc.invalidateQueries({ queryKey: ['estabelecimento', id] });
-    await qc.invalidateQueries({ queryKey: ['historico', 'estabelecimento', id] });
-    await qc.invalidateQueries({ queryKey: ['sessao'] });
-  };
+    await qc.invalidateQueries({ queryKey: ['estabelecimento', id] })
+    await qc.invalidateQueries({ queryKey: ['historico', 'estabelecimento', id] })
+    await qc.invalidateQueries({ queryKey: ['sessao'] })
+  }
   return (
     <Pagina
       titulo={e.ficha.nome}
@@ -576,8 +576,8 @@ export function FichaEstabelecimento() {
             ativo={e.ativo}
             aoInativar={() => setInativar(true)}
             aoReativar={async () => {
-              await api.post(`/api/estabelecimentos/${id}/reativar`);
-              await recarregar();
+              await api.post(`/api/estabelecimentos/${id}/reativar`)
+              await recarregar()
             }}
           />
         )
@@ -599,8 +599,8 @@ export function FichaEstabelecimento() {
                 rotuloBotao="Salvar"
                 somenteLeitura={!podeEditar}
                 aoSalvar={async (d) => {
-                  await api.put(`/api/estabelecimentos/${id}`, d);
-                  await recarregar();
+                  await api.put(`/api/estabelecimentos/${id}`, d)
+                  await recarregar()
                 }}
               />
             </CorpoCartao>
@@ -625,10 +625,10 @@ export function FichaEstabelecimento() {
         descricao="O estabelecimento deixa de aparecer nos registros novos; o que já existe continua guardado."
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/estabelecimentos/${id}/inativar`, { motivo });
-          await recarregar();
+          await api.post(`/api/estabelecimentos/${id}/inativar`, { motivo })
+          await recarregar()
         }}
       />
     </Pagina>
-  );
+  )
 }

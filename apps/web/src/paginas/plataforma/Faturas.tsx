@@ -5,25 +5,25 @@ import {
   NOMES_SITUACAO_FATURA,
   paraCentavos,
   SITUACOES_FATURA,
-} from '@vinicycle/shared';
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
+} from '@vinicycle/shared'
+import { useState } from 'react'
+import { useNavigate } from 'react-router'
 import {
   DetalheFatura,
   EtiquetaFatura,
   type LinhaFatura,
   periodoFatura,
-} from '@/componentes/Faturas';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { pode, useSessao } from '@/lib/sessao';
-import { formatarData } from '@/lib/utils';
+} from '@/componentes/Faturas'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { pode, useSessao } from '@/lib/sessao'
+import { formatarData } from '@/lib/utils'
 
 export function PaginaFaturas() {
-  const { data: s } = useSessao();
-  const navegar = useNavigate();
-  const [aberta, setAberta] = useState<string | null>(null);
+  const { data: s } = useSessao()
+  const navegar = useNavigate()
+  const [aberta, setAberta] = useState<string | null>(null)
   return (
     <Pagina titulo="Faturas e recebimentos" trilha={['Administração']}>
       <p className="text-sm text-muted-foreground">
@@ -68,8 +68,8 @@ export function PaginaFaturas() {
                 type="button"
                 className="text-left underline-offset-2 hover:underline"
                 onClick={(e) => {
-                  e.stopPropagation();
-                  navegar(`/plataforma/clientes/${f.empresaId}`);
+                  e.stopPropagation()
+                  navegar(`/plataforma/clientes/${f.empresaId}`)
                 }}
               >
                 {f.cliente}
@@ -124,5 +124,5 @@ export function PaginaFaturas() {
         />
       )}
     </Pagina>
-  );
+  )
 }

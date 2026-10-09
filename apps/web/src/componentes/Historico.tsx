@@ -1,17 +1,17 @@
 // Aba Histórico de cada registro: consulta à auditoria filtrada (P14).
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-import { formatarDataHora } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/lib/api'
+import { formatarDataHora } from '@/lib/utils'
 
 export interface RegistroAuditoria {
-  id: string;
-  ocorridoEm: string;
-  usuario: string | null;
-  acao: string;
-  entidade: string | null;
-  diferenca: Record<string, [unknown, unknown]> | null;
-  dados: Record<string, unknown> | null;
-  motivo: string | null;
+  id: string
+  ocorridoEm: string
+  usuario: string | null
+  acao: string
+  entidade: string | null
+  diferenca: Record<string, [unknown, unknown]> | null
+  dados: Record<string, unknown> | null
+  motivo: string | null
 }
 
 export const NOMES_ACAO: Record<string, string> = {
@@ -55,17 +55,17 @@ export const NOMES_ACAO: Record<string, string> = {
   bastao_recusado: 'Recusou ser o Master',
   bastao_cancelado: 'Cancelou a passagem de bastão',
   conceder_equipe: 'Incluiu na equipe da plataforma',
-};
+}
 
 function valor(v: unknown): string {
-  if (v === null || v === undefined || v === '') return '—';
-  if (typeof v === 'boolean') return v ? 'sim' : 'não';
+  if (v === null || v === undefined || v === '') return '—'
+  if (typeof v === 'boolean') return v ? 'sim' : 'não'
   if (Array.isArray(v))
     return v.length
       ? v.map((x) => (typeof x === 'object' ? JSON.stringify(x) : String(x))).join(', ')
-      : '—';
-  if (typeof v === 'object') return JSON.stringify(v);
-  return String(v);
+      : '—'
+  if (typeof v === 'object') return JSON.stringify(v)
+  return String(v)
 }
 
 export function Diferencas({ r }: { r: RegistroAuditoria }) {
@@ -88,7 +88,7 @@ export function Diferencas({ r }: { r: RegistroAuditoria }) {
         <p className="text-xs break-all text-muted-foreground">{valor(r.dados)}</p>
       )}
     </>
-  );
+  )
 }
 
 export function Historico({
@@ -96,17 +96,17 @@ export function Historico({
   registroId,
   fuso,
 }: {
-  entidade: string;
-  registroId: string;
-  fuso?: string;
+  entidade: string
+  registroId: string
+  fuso?: string
 }) {
   const q = useQuery({
     queryKey: ['historico', entidade, registroId],
     queryFn: () => api.get<RegistroAuditoria[]>(`/api/historico/${entidade}/${registroId}`),
-  });
-  if (q.isLoading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
-  if (q.isError) return <p className="text-sm text-destructive">{(q.error as Error).message}</p>;
-  if (!q.data?.length) return <p className="text-sm text-muted-foreground">Sem registros.</p>;
+  })
+  if (q.isLoading) return <p className="text-sm text-muted-foreground">Carregando…</p>
+  if (q.isError) return <p className="text-sm text-destructive">{(q.error as Error).message}</p>
+  if (!q.data?.length) return <p className="text-sm text-muted-foreground">Sem registros.</p>
   return (
     <ol className="flex flex-col gap-3">
       {q.data.map((r) => (
@@ -119,5 +119,5 @@ export function Historico({
         </li>
       ))}
     </ol>
-  );
+  )
 }

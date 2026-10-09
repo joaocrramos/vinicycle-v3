@@ -1,39 +1,39 @@
 // Locais de recipientes e estoques, por estabelecimento (gestao.md; ambiente-cliente.md).
-import { useQueryClient } from '@tanstack/react-query';
-import { dadosLocal, MODULOS, NOMES_USO_LOCAL, USOS_LOCAL } from '@vinicycle/shared';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha';
-import { Historico } from '@/componentes/Historico';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
+import { useQueryClient } from '@tanstack/react-query'
+import { dadosLocal, MODULOS, NOMES_USO_LOCAL, USOS_LOCAL } from '@vinicycle/shared'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha'
+import { Historico } from '@/componentes/Historico'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
 
 interface Local {
-  id: string;
-  nome: string;
-  uso: (typeof USOS_LOCAL)[number];
-  moduloEstoque: string | null;
-  refrigerado: boolean;
-  externo: boolean;
-  observacoes: string | null;
-  ativo: boolean;
-  versao: number;
-  estabelecimento: string;
+  id: string
+  nome: string
+  uso: (typeof USOS_LOCAL)[number]
+  moduloEstoque: string | null
+  refrigerado: boolean
+  externo: boolean
+  observacoes: string | null
+  ativo: boolean
+  versao: number
+  estabelecimento: string
 }
 
-const NOME_MODULO = Object.fromEntries(MODULOS.map((m) => [m.codigo, `${m.nome} · ${m.funcao}`]));
+const NOME_MODULO = Object.fromEntries(MODULOS.map((m) => [m.codigo, `${m.nome} · ${m.funcao}`]))
 
 function FormularioLocal({ local, aoFechar }: { local: Local | null; aoFechar: () => void }) {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
   const form = useFormulario(dadosLocal, {
     nome: local?.nome ?? '',
     uso: local?.uso ?? 'recipientes',
@@ -42,22 +42,22 @@ function FormularioLocal({ local, aoFechar }: { local: Local | null; aoFechar: (
     externo: local?.externo ?? false,
     observacoes: local?.observacoes ?? '',
     versao: local?.versao,
-  });
-  const [aba, setAba] = useState<'dados' | 'historico'>('dados');
-  const v = form.valores;
-  const modulosComEstoque = (s?.empresa?.modulos ?? []).filter((m) => m !== 'GESTAO');
-  const podeAlterar = pode(s, 'gestao.config.locais', local ? 'editar' : 'criar');
+  })
+  const [aba, setAba] = useState<'dados' | 'historico'>('dados')
+  const v = form.valores
+  const modulosComEstoque = (s?.empresa?.modulos ?? []).filter((m) => m !== 'GESTAO')
+  const podeAlterar = pode(s, 'gestao.config.locais', local ? 'editar' : 'criar')
 
   async function salvar() {
-    const d = form.validar();
-    if (!d) return;
+    const d = form.validar()
+    if (!d) return
     try {
-      if (local) await api.put(`/api/locais/${local.id}`, d);
-      else await api.post('/api/locais', d);
-      await qc.invalidateQueries({ queryKey: ['lista', '/api/locais'] });
-      aoFechar();
+      if (local) await api.put(`/api/locais/${local.id}`, d)
+      else await api.post('/api/locais', d)
+      await qc.invalidateQueries({ queryKey: ['lista', '/api/locais'] })
+      aoFechar()
     } catch (e) {
-      form.erroDaApi(e);
+      form.erroDaApi(e)
     }
   }
 
@@ -164,17 +164,17 @@ function FormularioLocal({ local, aoFechar }: { local: Local | null; aoFechar: (
         </fieldset>
       )}
     </Dialogo>
-  );
+  )
 }
 
 export function PaginaLocais() {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [editando, setEditando] = useState<Local | null | 'novo'>(null);
-  const [inativar, setInativar] = useState<Local | null>(null);
-  const podeInativar = pode(s, 'gestao.config.locais', 'inativar');
-  const estabAtivo = s?.empresa?.estabelecimentoId;
-  const nomeEstab = s?.empresa?.estabelecimentos.find((e) => e.id === estabAtivo)?.nome;
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [editando, setEditando] = useState<Local | null | 'novo'>(null)
+  const [inativar, setInativar] = useState<Local | null>(null)
+  const podeInativar = pode(s, 'gestao.config.locais', 'inativar')
+  const estabAtivo = s?.empresa?.estabelecimentoId
+  const nomeEstab = s?.empresa?.estabelecimentos.find((e) => e.id === estabAtivo)?.nome
   return (
     <Pagina
       titulo="Locais"
@@ -288,8 +288,8 @@ export function PaginaLocais() {
               aoReativar={
                 podeInativar
                   ? async () => {
-                      await api.post(`/api/locais/${l.id}/reativar`);
-                      await qc.invalidateQueries({ queryKey: ['lista', '/api/locais'] });
+                      await api.post(`/api/locais/${l.id}/reativar`)
+                      await qc.invalidateQueries({ queryKey: ['lista', '/api/locais'] })
                     }
                   : undefined
               }
@@ -309,10 +309,10 @@ export function PaginaLocais() {
         titulo={`Inativar ${inativar?.nome ?? ''}`}
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/locais/${inativar!.id}/inativar`, { motivo });
-          await qc.invalidateQueries({ queryKey: ['lista', '/api/locais'] });
+          await api.post(`/api/locais/${inativar!.id}/inativar`, { motivo })
+          await qc.invalidateQueries({ queryKey: ['lista', '/api/locais'] })
         }}
       />
     </Pagina>
-  );
+  )
 }

@@ -1,9 +1,9 @@
-import { DropdownMenu } from 'radix-ui';
-import type { ComponentProps, ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { DropdownMenu } from 'radix-ui'
+import type { ComponentProps, ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 
-export const Menu = DropdownMenu.Root;
-export const GatilhoMenu = DropdownMenu.Trigger;
+export const Menu = DropdownMenu.Root
+export const GatilhoMenu = DropdownMenu.Trigger
 
 export function ConteudoMenu({ className, ...props }: ComponentProps<typeof DropdownMenu.Content>) {
   return (
@@ -18,7 +18,7 @@ export function ConteudoMenu({ className, ...props }: ComponentProps<typeof Drop
         {...props}
       />
     </DropdownMenu.Portal>
-  );
+  )
 }
 
 export function ItemMenu({
@@ -37,11 +37,11 @@ export function ItemMenu({
       {icone}
       {props.children}
     </DropdownMenu.Item>
-  );
+  )
 }
 
 export function SeparadorMenu() {
-  return <DropdownMenu.Separator className="my-1 h-px bg-border" />;
+  return <DropdownMenu.Separator className="my-1 h-px bg-border" />
 }
 
 export function RotuloMenu({ className, ...props }: ComponentProps<typeof DropdownMenu.Label>) {
@@ -50,5 +50,5 @@ export function RotuloMenu({ className, ...props }: ComponentProps<typeof Dropdo
       className={cn('px-2 py-1.5 text-xs text-muted-foreground', className)}
       {...props}
     />
-  );
+  )
 }

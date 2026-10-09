@@ -6,8 +6,8 @@ import {
   SITUACOES_CONVITE,
   TIPOS_TOKEN,
   USOS_LOCAL,
-} from '@vinicycle/shared';
-import { sql } from 'drizzle-orm';
+} from '@vinicycle/shared'
+import { sql } from 'drizzle-orm'
 import {
   boolean,
   check,
@@ -25,14 +25,14 @@ import {
   unique,
   uniqueIndex,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum';
-import { indicacaoGeografica } from './catalogos';
-import { ficha } from './ficha';
-import { pessoa } from './gestao';
-import { empresa, perfil } from './plataforma';
+} from 'drizzle-orm/pg-core'
+import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum'
+import { indicacaoGeografica } from './catalogos'
+import { ficha } from './ficha'
+import { pessoa } from './gestao'
+import { empresa, perfil } from './plataforma'
 
-const bytea = customType<{ data: Buffer }>({ dataType: () => 'bytea' });
+const bytea = customType<{ data: Buffer }>({ dataType: () => 'bytea' })
 
 /** Unidade com CNPJ e registro MAPA (P12). */
 export const estabelecimento = pgTable(
@@ -93,7 +93,7 @@ export const estabelecimento = pgTable(
       foreignColumns: [pessoa.id, pessoa.empresaId],
     }),
   ],
-);
+)
 
 /** Onde ficam recipientes e estoques. Um só cadastro de locais (gestao.md). */
 export const local = pgTable(
@@ -124,7 +124,7 @@ export const local = pgTable(
     check('local_uso', emLista('uso', USOS_LOCAL)),
     check('local_modulo_estoque', sql`(uso = 'recipientes') = (modulo_estoque is null)`),
   ],
-);
+)
 
 /** Identidade única (P8). */
 export const usuario = pgTable(
@@ -152,7 +152,7 @@ export const usuario = pgTable(
     uniqueIndex('usuario_email').on(sql`lower(email)`),
     uniqueIndex('usuario_ficha').on(t.fichaId),
   ],
-);
+)
 
 /** Dispositivos conectados (P10). */
 export const sessao = pgTable(
@@ -185,7 +185,7 @@ export const sessao = pgTable(
     index('sessao_usuario').on(t.usuarioId),
     check('sessao_contexto', emLista('contexto', ['empresa', 'plataforma'])),
   ],
-);
+)
 
 /** Códigos e links de uso único (P10). */
 export const tokenVerificacao = pgTable(
@@ -207,7 +207,7 @@ export const tokenVerificacao = pgTable(
     index('token_verificacao_usuario').on(t.usuarioId, t.tipo),
     check('token_verificacao_tipo', emLista('tipo', TIPOS_TOKEN)),
   ],
-);
+)
 
 /** Entrada de usuário na empresa (P8; administracao.md, Fluxo, passo 3). */
 export const convite = pgTable(
@@ -249,7 +249,7 @@ export const convite = pgTable(
       .where(sql`situacao = 'pendente'`),
     check('convite_situacao', emLista('situacao', SITUACOES_CONVITE)),
   ],
-);
+)
 
 /** Usuário numa empresa (P8), com um perfil (P27). */
 export const vinculo = pgTable(
@@ -282,7 +282,7 @@ export const vinculo = pgTable(
       .where(sql`e_master and ativo`),
     index('vinculo_usuario').on(t.usuarioId),
   ],
-);
+)
 
 /** Restrição por estabelecimento. Sem linhas = acesso a todos (P12). */
 export const vinculoEstabelecimento = pgTable(
@@ -303,7 +303,7 @@ export const vinculoEstabelecimento = pgTable(
       foreignColumns: [estabelecimento.id, estabelecimento.empresaId],
     }),
   ],
-);
+)
 
 /** IGs usadas pelo estabelecimento: ligam os controles da IG (00-visao-geral.md, Perfil). */
 export const estabelecimentoIg = pgTable(
@@ -323,7 +323,7 @@ export const estabelecimentoIg = pgTable(
       foreignColumns: [estabelecimento.id, estabelecimento.empresaId],
     }).onDelete('cascade'),
   ],
-);
+)
 
 /** Passagem de bastão do Master (administracao.md, Master e passagem de bastão). */
 export const trocaMaster = pgTable(
@@ -365,4 +365,4 @@ export const trocaMaster = pgTable(
       emLista('situacao', ['pendente', 'aceita', 'recusada', 'cancelada', 'expirada']),
     ),
   ],
-);
+)

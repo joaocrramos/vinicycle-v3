@@ -1,23 +1,23 @@
 // Personificação (P28): um membro da equipe com a permissão assume a visão de um usuário do
 // cliente, sem conhecer nem alterar a senha dele, por no máximo 60 minutos e com motivo (ou o
 // número do chamado). O Master da empresa é avisado por e-mail; a empresa vê na auditoria.
-import { and, desc, eq, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import * as s from '../db/schema';
-import { enfileirarEmail } from '../nucleo/email';
-import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros';
-import { emailAvisoPersonificacao } from '../nucleo/modelos-email';
-import { naEmpresa, naPlataforma } from '../nucleo/requisicao';
+import { and, desc, eq, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import * as s from '../db/schema'
+import { enfileirarEmail } from '../nucleo/email'
+import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros'
+import { emailAvisoPersonificacao } from '../nucleo/modelos-email'
+import { naEmpresa, naPlataforma } from '../nucleo/requisicao'
 
-export const DURACAO_PERSONIFICACAO_MIN = 60;
+export const DURACAO_PERSONIFICACAO_MIN = 60
 
 const iniciar = z.object({
   empresaId: z.uuid(),
   usuarioId: z.uuid(),
   motivo: z.string().trim().min(5, 'Informe o motivo').max(500),
   chamadoId: z.uuid().nullable().optional(),
-});
+})
 
 const colunas = {
   id: s.personificacao.id,
@@ -29,10 +29,10 @@ const colunas = {
   fimPrevisto: s.personificacao.fimPrevisto,
   fim: s.personificacao.fim,
   formaEncerramento: s.personificacao.formaEncerramento,
-};
+}
 
 export async function rotasPersonificacao(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
 
   app.post('/api/plataforma/personificacoes', async (req) =>
     naPlataforma(
@@ -40,9 +40,9 @@ export async function rotasPersonificacao(app: FastifyInstance): Promise<void> {
       req,
       ['plataforma.personificacao', 'criar'],
       async ({ tx, usuarioId, sessao, auditar }) => {
-        const d = iniciar.parse(req.body);
+        const d = iniciar.parse(req.body)
         if (d.usuarioId === usuarioId)
-          throw new ErroRegra('Não é possível personificar a si mesmo.', 'proprio');
+          throw new ErroRegra('Não é possível personificar a si mesmo.', 'proprio')
         const [alvo] = await tx
           .select({ nome: s.ficha.nome, ativo: s.usuario.ativo, eMaster: s.vinculo.eMaster })
           .from(s.vinculo)
@@ -54,20 +54,20 @@ export async function rotasPersonificacao(app: FastifyInstance): Promise<void> {
               eq(s.vinculo.usuarioId, d.usuarioId),
               eq(s.vinculo.ativo, true),
             ),
-          );
-        if (!alvo?.ativo) throw new ErroNaoEncontrado('Usuário sem acesso ativo a esta empresa.');
+          )
+        if (!alvo?.ativo) throw new ErroNaoEncontrado('Usuário sem acesso ativo a esta empresa.')
         if (d.chamadoId) {
           const [c] = await tx
             .select({ id: s.chamado.id })
             .from(s.chamado)
-            .where(and(eq(s.chamado.id, d.chamadoId), eq(s.chamado.empresaId, d.empresaId)));
-          if (!c) throw new ErroRegra('O chamado não é desta empresa.', 'chamado');
+            .where(and(eq(s.chamado.id, d.chamadoId), eq(s.chamado.empresaId, d.empresaId)))
+          if (!c) throw new ErroRegra('O chamado não é desta empresa.', 'chamado')
         }
         const [membro] = await tx
           .select({ nome: s.ficha.nome })
           .from(s.usuario)
           .innerJoin(s.ficha, eq(s.ficha.id, s.usuario.fichaId))
-          .where(eq(s.usuario.id, usuarioId));
+          .where(eq(s.usuario.id, usuarioId))
         const [p] = await tx
           .insert(s.personificacao)
           .values({
@@ -80,7 +80,7 @@ export async function rotasPersonificacao(app: FastifyInstance): Promise<void> {
             chamadoId: d.chamadoId ?? null,
             fimPrevisto: sql`now() + ${`${DURACAO_PERSONIFICACAO_MIN} minutes`}::interval`,
           })
-          .returning({ id: s.personificacao.id });
+          .returning({ id: s.personificacao.id })
         await tx
           .update(s.sessao)
           .set({
@@ -89,7 +89,7 @@ export async function rotasPersonificacao(app: FastifyInstance): Promise<void> {
             empresaId: d.empresaId,
             estabelecimentoId: null,
           })
-          .where(eq(s.sessao.id, sessao.id));
+          .where(eq(s.sessao.id, sessao.id))
         await auditar({
           acao: 'personificar',
           entidade: 'personificacao',
@@ -97,7 +97,7 @@ export async function rotasPersonificacao(app: FastifyInstance): Promise<void> {
           empresaId: d.empresaId,
           dados: { usuarioId: d.usuarioId, usuario: alvo.nome, chamadoId: d.chamadoId ?? null },
           motivo: d.motivo,
-        });
+        })
         // Aviso aos Masters (sem aprovação prévia).
         const masters = await tx
           .select({ email: s.usuario.email })
@@ -109,12 +109,12 @@ export async function rotasPersonificacao(app: FastifyInstance): Promise<void> {
               eq(s.vinculo.eMaster, true),
               eq(s.vinculo.ativo, true),
             ),
-          );
+          )
         const [e] = await tx
           .select({ nome: s.ficha.nome, fantasia: s.ficha.nomeFantasia })
           .from(s.empresa)
           .innerJoin(s.ficha, eq(s.ficha.id, s.empresa.fichaId))
-          .where(eq(s.empresa.id, d.empresaId));
+          .where(eq(s.empresa.id, d.empresaId))
         for (const m of masters) {
           await enfileirarEmail(tx, {
             ...emailAvisoPersonificacao({
@@ -128,12 +128,12 @@ export async function rotasPersonificacao(app: FastifyInstance): Promise<void> {
             origem: 'personificacao',
             origemId: p!.id,
             empresaId: d.empresaId,
-          });
+          })
         }
-        return { id: p!.id };
+        return { id: p!.id }
       },
     ),
-  );
+  )
 
   /** Personificações de um cliente (ficha do cliente). */
   app.get<{ Params: { id: string } }>('/api/plataforma/empresas/:id/personificacoes', async (req) =>
@@ -145,7 +145,7 @@ export async function rotasPersonificacao(app: FastifyInstance): Promise<void> {
         .orderBy(desc(s.personificacao.inicio))
         .limit(50),
     ),
-  );
+  )
 
   /** A empresa vê quando e por quem foi personificada (P28, transparência). */
   app.get('/api/personificacoes', async (req) =>
@@ -157,5 +157,5 @@ export async function rotasPersonificacao(app: FastifyInstance): Promise<void> {
         .orderBy(desc(s.personificacao.inicio))
         .limit(100),
     ),
-  );
+  )
 }

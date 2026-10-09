@@ -1,55 +1,55 @@
 // EnoTrace › Vinhedos: propriedades vitícolas e parcelas, próprias ou do produtor de uva (cantina.md,
 // Recepção, Origem). Cadastro mínimo em 2026; o resto fica para o VitiTrack.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatarDecimal } from '@vinicycle/shared';
-import { Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { pode, useSessao } from '@/lib/sessao';
-import { useVariedadesEmUso } from './Projetos';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { formatarDecimal } from '@vinicycle/shared'
+import { Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { pode, useSessao } from '@/lib/sessao'
+import { useVariedadesEmUso } from './Projetos'
 
-const F = 'enotrace.cadastros';
+const F = 'enotrace.cadastros'
 
 interface Linha {
-  id: string;
-  nome: string;
-  dono: string | null;
-  numeroSivibe: string | null;
-  municipio: string | null;
-  uf: string | null;
-  parcelas: number;
-  areaHa: string | null;
-  ativo: boolean;
+  id: string
+  nome: string
+  dono: string | null
+  numeroSivibe: string | null
+  municipio: string | null
+  uf: string | null
+  parcelas: number
+  areaHa: string | null
+  ativo: boolean
 }
 
 interface Parcela {
-  id?: string;
-  nome: string;
-  variedadeId: string | null;
-  areaHa: string | null;
-  ativo: boolean;
+  id?: string
+  nome: string
+  variedadeId: string | null
+  areaHa: string | null
+  ativo: boolean
 }
 
 interface Propriedade {
-  id: string;
-  nome: string;
-  donoId: string | null;
-  numeroSivibe: string | null;
-  municipio: string | null;
-  uf: string | null;
-  codigoIbge: string | null;
-  observacoes: string | null;
-  versao: number;
-  parcelas: Parcela[];
+  id: string
+  nome: string
+  donoId: string | null
+  numeroSivibe: string | null
+  municipio: string | null
+  uf: string | null
+  codigoIbge: string | null
+  observacoes: string | null
+  versao: number
+  parcelas: Parcela[]
 }
 
 function DialogoPropriedade({ id, aoFechar }: { id: string | null; aoFechar: () => void }) {
@@ -57,20 +57,20 @@ function DialogoPropriedade({ id, aoFechar }: { id: string | null; aoFechar: () 
     queryKey: ['propriedade', id],
     queryFn: () => api.get<Propriedade>(`/api/propriedades/${id}`),
     enabled: !!id,
-  });
-  if (id && !atual.data) return null;
-  return <Corpo p={atual.data ?? null} aoFechar={aoFechar} />;
+  })
+  if (id && !atual.data) return null
+  return <Corpo p={atual.data ?? null} aoFechar={aoFechar} />
 }
 
 function Corpo({ p, aoFechar }: { p: Propriedade | null; aoFechar: () => void }) {
-  const qc = useQueryClient();
-  const { data: s } = useSessao();
-  const variedades = useVariedadesEmUso();
+  const qc = useQueryClient()
+  const { data: s } = useSessao()
+  const variedades = useVariedadesEmUso()
   const produtores = useQuery({
     queryKey: ['pessoas-opcoes', 'produtor_uva'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=produtor_uva'),
-  });
+  })
   const [d, setD] = useState({
     nome: p?.nome ?? '',
     donoId: p?.donoId ?? '',
@@ -79,11 +79,11 @@ function Corpo({ p, aoFechar }: { p: Propriedade | null; aoFechar: () => void })
     uf: p?.uf ?? '',
     observacoes: p?.observacoes ?? '',
     parcelas: p?.parcelas ?? ([] as Parcela[]),
-  });
-  const [erro, setErro] = useState<string | null>(null);
-  const podeEditar = pode(s, F, p ? 'editar' : 'criar');
+  })
+  const [erro, setErro] = useState<string | null>(null)
+  const podeEditar = pode(s, F, p ? 'editar' : 'criar')
   const muda = (n: number, parcial: Partial<Parcela>) =>
-    setD({ ...d, parcelas: d.parcelas.map((x, j) => (j === n ? { ...x, ...parcial } : x)) });
+    setD({ ...d, parcelas: d.parcelas.map((x, j) => (j === n ? { ...x, ...parcial } : x)) })
   return (
     <Dialogo
       aberto
@@ -97,16 +97,16 @@ function Corpo({ p, aoFechar }: { p: Propriedade | null; aoFechar: () => void })
           {podeEditar && (
             <Botao
               onClick={async () => {
-                setErro(null);
-                const corpo = { ...d, versao: p?.versao };
+                setErro(null)
+                const corpo = { ...d, versao: p?.versao }
                 try {
-                  if (p) await api.put(`/api/propriedades/${p.id}`, corpo);
-                  else await api.post('/api/propriedades', corpo);
-                  await qc.invalidateQueries({ queryKey: ['lista', '/api/propriedades'] });
-                  await qc.invalidateQueries({ queryKey: ['propriedade', p?.id] });
-                  aoFechar();
+                  if (p) await api.put(`/api/propriedades/${p.id}`, corpo)
+                  else await api.post('/api/propriedades', corpo)
+                  await qc.invalidateQueries({ queryKey: ['lista', '/api/propriedades'] })
+                  await qc.invalidateQueries({ queryKey: ['propriedade', p?.id] })
+                  aoFechar()
                 } catch (e) {
-                  setErro((e as Error).message);
+                  setErro((e as Error).message)
                 }
               }}
             >
@@ -248,15 +248,15 @@ function Corpo({ p, aoFechar }: { p: Propriedade | null; aoFechar: () => void })
         </Campo>
       </fieldset>
     </Dialogo>
-  );
+  )
 }
 
 export function PaginaVinhedos() {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [aberto, setAberto] = useState<string | 'nova' | null>(null);
-  const [inativar, setInativar] = useState<Linha | null>(null);
-  const podeInativar = pode(s, F, 'inativar');
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [aberto, setAberto] = useState<string | 'nova' | null>(null)
+  const [inativar, setInativar] = useState<Linha | null>(null)
+  const podeInativar = pode(s, F, 'inativar')
   return (
     <Pagina
       titulo="Vinhedos"
@@ -332,8 +332,8 @@ export function PaginaVinhedos() {
               aoReativar={
                 podeInativar
                   ? async () => {
-                      await api.post(`/api/propriedades/${p.id}/reativar`);
-                      await qc.invalidateQueries({ queryKey: ['lista', '/api/propriedades'] });
+                      await api.post(`/api/propriedades/${p.id}/reativar`)
+                      await qc.invalidateQueries({ queryKey: ['lista', '/api/propriedades'] })
                     }
                   : undefined
               }
@@ -353,10 +353,10 @@ export function PaginaVinhedos() {
         titulo={`Inativar ${inativar?.nome ?? ''}`}
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/propriedades/${inativar!.id}/inativar`, { motivo });
-          await qc.invalidateQueries({ queryKey: ['lista', '/api/propriedades'] });
+          await api.post(`/api/propriedades/${inativar!.id}/inativar`, { motivo })
+          await qc.invalidateQueries({ queryKey: ['lista', '/api/propriedades'] })
         }}
       />
     </Pagina>
-  );
+  )
 }

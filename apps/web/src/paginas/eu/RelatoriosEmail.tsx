@@ -1,7 +1,7 @@
 // Preferências › Relatórios por e-mail (03-modelo-de-dados.md, 2.2, Relatório agendado; 04, roteiro
 // do ciclo 8): o usuário escolhe o relatório, o estabelecimento e a frequência. O envio sai às 7h
 // do fuso do estabelecimento, com as permissões que ele tiver no momento (P27).
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   CHAVES_FREQUENCIA_ENVIO,
   FREQUENCIAS_ENVIO,
@@ -11,34 +11,34 @@ import {
   type CanalMensagem,
   NOMES_CANAL,
   type RelatorioAgendavel,
-} from '@vinicycle/shared';
-import { useState } from 'react';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Caixa, Selecao } from '@/componentes/ui/campos';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
+} from '@vinicycle/shared'
+import { useState } from 'react'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Caixa, Selecao } from '@/componentes/ui/campos'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
 
 interface Agendado {
-  id: string;
-  relatorio: RelatorioAgendavel;
-  nome: string;
-  frequencia: FrequenciaEnvio;
-  estabelecimentoId: string;
-  estabelecimento: string;
-  proximoEnvio: string;
-  ultimoEnvio: string | null;
-  ultimoAviso: string | null;
-  ativo: boolean;
-  canal: CanalMensagem;
+  id: string
+  relatorio: RelatorioAgendavel
+  nome: string
+  frequencia: FrequenciaEnvio
+  estabelecimentoId: string
+  estabelecimento: string
+  proximoEnvio: string
+  ultimoEnvio: string | null
+  ultimoAviso: string | null
+  ativo: boolean
+  canal: CanalMensagem
 }
 
 export function RelatoriosEmail() {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const e = s?.empresa;
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const e = s?.empresa
   const q = useQuery({
     queryKey: ['relatorios-agendados'],
     queryFn: () =>
@@ -47,31 +47,31 @@ export function RelatoriosEmail() {
       ),
     enabled: !!e,
     retry: false,
-  });
+  })
   const [novo, setNovo] = useState<{
-    relatorio: RelatorioAgendavel | '';
-    frequencia: FrequenciaEnvio;
-    estabelecimentoId: string;
-    canal: CanalMensagem;
+    relatorio: RelatorioAgendavel | ''
+    frequencia: FrequenciaEnvio
+    estabelecimentoId: string
+    canal: CanalMensagem
   }>({
     relatorio: '',
     frequencia: 'semanal',
     estabelecimentoId: e?.estabelecimentoId ?? '',
     canal: 'email',
-  });
-  const [msg, setMsg] = useState<{ tom: 'erro' | 'sucesso'; texto: string } | null>(null);
-  if (!e || !q.data) return null;
+  })
+  const [msg, setMsg] = useState<{ tom: 'erro' | 'sucesso'; texto: string } | null>(null)
+  if (!e || !q.data) return null
   const executar = async (f: () => Promise<unknown>, ok?: string) => {
-    setMsg(null);
+    setMsg(null)
     try {
-      await f();
-      if (ok) setMsg({ tom: 'sucesso', texto: ok });
-      await qc.invalidateQueries({ queryKey: ['relatorios-agendados'] });
+      await f()
+      if (ok) setMsg({ tom: 'sucesso', texto: ok })
+      await qc.invalidateQueries({ queryKey: ['relatorios-agendados'] })
     } catch (x) {
-      setMsg({ tom: 'erro', texto: x instanceof ErroApi ? x.message : (x as Error).message });
+      setMsg({ tom: 'erro', texto: x instanceof ErroApi ? x.message : (x as Error).message })
     }
-  };
-  const estabelecimento = novo.estabelecimentoId || e.estabelecimentos[0]?.id || '';
+  }
+  const estabelecimento = novo.estabelecimentoId || e.estabelecimentos[0]?.id || ''
   return (
     <Cartao>
       <CabecalhoCartao
@@ -151,11 +151,11 @@ export function RelatoriosEmail() {
                   executar(async () => {
                     const r = await api.post<{ aviso?: string }>(
                       `/api/relatorios-agendados/${a.id}/enviar`,
-                    );
+                    )
                     setMsg({
                       tom: 'sucesso',
                       texto: r.aviso ?? `Enviado agora (${NOMES_CANAL[a.canal]}).`,
-                    });
+                    })
                   })
                 }
               >
@@ -237,8 +237,8 @@ export function RelatoriosEmail() {
                   await api.post('/api/relatorios-agendados', {
                     ...novo,
                     estabelecimentoId: estabelecimento,
-                  });
-                  setNovo({ ...novo, relatorio: '' });
+                  })
+                  setNovo({ ...novo, relatorio: '' })
                 })
               }
             >
@@ -248,5 +248,5 @@ export function RelatoriosEmail() {
         )}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }

@@ -1,20 +1,20 @@
 // EnoTrace › Fechamento do mês (cantina.md, Declarações e fechamento): os meses do ano, a lista de
 // conferência, o relatório do mês (base da declaração mensal, Lei 7.678/1988, art. 31), fechar com
 // "ciente" e reabrir com motivo. O relatório se imprime pelo navegador.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatarDecimal } from '@vinicycle/shared';
-import { Printer } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Caixa, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
-import { litros } from './Projetos';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { formatarDecimal } from '@vinicycle/shared'
+import { Printer } from 'lucide-react'
+import { useState } from 'react'
+import { Link } from 'react-router'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Caixa, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
+import { litros } from './Projetos'
 
 const MESES = [
   'Janeiro',
@@ -29,90 +29,90 @@ const MESES = [
   'Outubro',
   'Novembro',
   'Dezembro',
-];
+]
 const GRUPOS: Record<string, string> = {
   entradas: 'Entradas',
   saidas: 'Saídas',
   internos: 'Movimentos internos (líquido)',
   ajustes: 'Ajustes e estornos',
-};
-
-interface Mes {
-  ano: number;
-  mes: number;
-  situacao: 'aberto' | 'fechado' | 'reaberto';
-  terminou: boolean;
-  fechadoEm: string | null;
-  reabertoEm: string | null;
-  motivoReabertura: string | null;
-  conferencia: Array<{
-    codigo: string;
-    nome: string;
-    n: number;
-    itens: string[];
-    link: string;
-    impede: boolean;
-  }>;
-  relatorio: {
-    granel: {
-      inicial: string;
-      entradas: string;
-      saidas: string;
-      internos: string;
-      ajustes: string;
-      final: string;
-      porTipo: Array<{ tipo: string; nome: string; grupo: string; litros: string }>;
-    };
-    produtos: Array<{
-      itemId: string;
-      item: string;
-      inicial: number;
-      entradas: number;
-      saidas: number;
-      ajustes: number;
-      internos: number;
-      final: number;
-      litrosInicial: string | null;
-      litrosFinal: string | null;
-    }>;
-  };
 }
 
-const gar = (n: number) => n.toLocaleString('pt-BR', { maximumFractionDigits: 3 });
+interface Mes {
+  ano: number
+  mes: number
+  situacao: 'aberto' | 'fechado' | 'reaberto'
+  terminou: boolean
+  fechadoEm: string | null
+  reabertoEm: string | null
+  motivoReabertura: string | null
+  conferencia: Array<{
+    codigo: string
+    nome: string
+    n: number
+    itens: string[]
+    link: string
+    impede: boolean
+  }>
+  relatorio: {
+    granel: {
+      inicial: string
+      entradas: string
+      saidas: string
+      internos: string
+      ajustes: string
+      final: string
+      porTipo: Array<{ tipo: string; nome: string; grupo: string; litros: string }>
+    }
+    produtos: Array<{
+      itemId: string
+      item: string
+      inicial: number
+      entradas: number
+      saidas: number
+      ajustes: number
+      internos: number
+      final: number
+      litrosInicial: string | null
+      litrosFinal: string | null
+    }>
+  }
+}
+
+const gar = (n: number) => n.toLocaleString('pt-BR', { maximumFractionDigits: 3 })
 
 export function PaginaFechamento() {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const hoje = new Date();
-  const [ano, setAno] = useState(hoje.getFullYear());
-  const [mes, setMes] = useState(hoje.getMonth() === 0 ? 12 : hoje.getMonth());
-  const [cientes, setCientes] = useState<string[]>([]);
-  const [erro, setErro] = useState<string | null>(null);
-  const [reabrindo, setReabrindo] = useState(false);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const hoje = new Date()
+  const [ano, setAno] = useState(hoje.getFullYear())
+  const [mes, setMes] = useState(hoje.getMonth() === 0 ? 12 : hoje.getMonth())
+  const [cientes, setCientes] = useState<string[]>([])
+  const [erro, setErro] = useState<string | null>(null)
+  const [reabrindo, setReabrindo] = useState(false)
   const meses = useQuery({
     queryKey: ['fechamentos', ano],
     queryFn: () =>
       api.get<Array<{ mes: number; situacao: Mes['situacao'] }>>(`/api/fechamentos?ano=${ano}`),
-  });
+  })
   const q = useQuery({
     queryKey: ['fechamento', ano, mes],
     queryFn: () => api.get<Mes>(`/api/fechamentos/${ano}/${mes}`),
-  });
+  })
   const atualizar = () =>
     Promise.all([
       qc.invalidateQueries({ queryKey: ['fechamentos', ano] }),
       qc.invalidateQueries({ queryKey: ['fechamento', ano, mes] }),
-    ]);
-  const f = q.data;
-  const pendentes = f?.conferencia.filter((c) => !c.impede && c.n > 0) ?? [];
-  const impede = f?.conferencia.some((c) => c.impede && c.n > 0);
+    ])
+  const f = q.data
+  const pendentes = f?.conferencia.filter((c) => !c.impede && c.n > 0) ?? []
+  const impede = f?.conferencia.some((c) => c.impede && c.n > 0)
   const podeFechar =
     !!f &&
     f.situacao !== 'fechado' &&
     f.terminou &&
     !impede &&
-    pendentes.every((c) => cientes.includes(`fechamento:${c.codigo}`));
+    pendentes.every((c) => cientes.includes(`fechamento:${c.codigo}`))
   return (
     <Pagina
       titulo="Fechamento do mês"
@@ -135,8 +135,8 @@ export function PaginaFechamento() {
           className="w-28"
           value={ano}
           onChange={(e) => {
-            setAno(Number(e.target.value));
-            setCientes([]);
+            setAno(Number(e.target.value))
+            setCientes([])
           }}
         >
           {[hoje.getFullYear() - 1, hoje.getFullYear(), hoje.getFullYear() + 1].map((a) => (
@@ -151,9 +151,9 @@ export function PaginaFechamento() {
               key={m.mes}
               type="button"
               onClick={() => {
-                setMes(m.mes);
-                setCientes([]);
-                setErro(null);
+                setMes(m.mes)
+                setCientes([])
+                setErro(null)
               }}
               className={`cursor-pointer rounded-md border px-2.5 py-1 text-sm ${m.mes === mes ? 'border-primary bg-accent' : 'hover:bg-muted'}`}
               title={
@@ -332,12 +332,12 @@ export function PaginaFechamento() {
               <Botao
                 disabled={!podeFechar}
                 onClick={async () => {
-                  setErro(null);
+                  setErro(null)
                   try {
-                    await api.post(`/api/fechamentos/${ano}/${mes}/fechar`, { cientes });
-                    await atualizar();
+                    await api.post(`/api/fechamentos/${ano}/${mes}/fechar`, { cientes })
+                    await atualizar()
                   } catch (e) {
-                    setErro(e instanceof ErroApi ? e.message : (e as Error).message);
+                    setErro(e instanceof ErroApi ? e.message : (e as Error).message)
                   }
                 }}
               >
@@ -362,11 +362,11 @@ export function PaginaFechamento() {
         descricao="Reaberto, o mês volta a receber lançamentos. Feche de novo depois das correções."
         rotuloBotao="Reabrir"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/fechamentos/${ano}/${mes}/reabrir`, { motivo });
-          setReabrindo(false);
-          await atualizar();
+          await api.post(`/api/fechamentos/${ano}/${mes}/reabrir`, { motivo })
+          setReabrindo(false)
+          await atualizar()
         }}
       />
     </Pagina>
-  );
+  )
 }

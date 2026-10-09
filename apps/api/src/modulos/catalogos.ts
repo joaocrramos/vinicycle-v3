@@ -9,56 +9,56 @@ import {
   funcionalidadeDoCatalogo,
   listaOficial,
   motivo,
-} from '@vinicycle/shared';
-import { and, asc, count, eq, isNull, or, type SQL, sql } from 'drizzle-orm';
-import type { AnyPgColumn, PgTable } from 'drizzle-orm/pg-core';
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import * as s from '../db/schema';
-import { conferirVersao } from '../nucleo/entidades';
-import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros';
-import { buscaTexto, listar } from '../nucleo/listagem';
+} from '@vinicycle/shared'
+import { and, asc, count, eq, isNull, or, type SQL, sql } from 'drizzle-orm'
+import type { AnyPgColumn, PgTable } from 'drizzle-orm/pg-core'
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import * as s from '../db/schema'
+import { conferirVersao } from '../nucleo/entidades'
+import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros'
+import { buscaTexto, listar } from '../nucleo/listagem'
 import {
   type ContextoEmpresa,
   type ContextoPlataforma,
   naEmpresa,
   naPlataforma,
-} from '../nucleo/requisicao';
+} from '../nucleo/requisicao'
 
-type Tabela = PgTable & Record<string, AnyPgColumn>;
+type Tabela = PgTable & Record<string, AnyPgColumn>
 
 interface Definicao {
-  tabela: Tabela;
+  tabela: Tabela
   /** Campos próprios do catálogo, além de id, nome, origem e situação. */
-  campos: string[];
+  campos: string[]
   /** Filtro fixo (ex.: a lista de uma opção). */
-  filtro?: SQL;
-  extras?: Record<string, unknown>;
+  filtro?: SQL
+  extras?: Record<string, unknown>
 }
 
 function definicao(catalogo: Catalogo): Definicao {
   if (catalogo.startsWith('opcao:')) {
-    const lista = catalogo.slice(6);
+    const lista = catalogo.slice(6)
     return {
       tabela: s.opcaoLista as unknown as Tabela,
       campos: ['codigo', 'ordem'],
       filtro: eq(s.opcaoLista.lista, lista),
       extras: { lista },
-    };
+    }
   }
   const mapa = {
     tipo_recipiente: { tabela: s.tipoRecipiente, campos: ['pressurizado', 'eBarrica'] },
     tipo_insumo: { tabela: s.tipoInsumo, campos: ['unidades', 'apresentacoes'] },
     tipo_documento: { tabela: s.tipoDocumento, campos: ['temVencimento', 'avisosDias'] },
     variedade: { tabela: s.variedade, campos: ['codigoOficial', 'tipo', 'cor', 'sinonimos'] },
-  } as const;
-  const d = mapa[catalogo as keyof typeof mapa];
-  return { tabela: d.tabela as unknown as Tabela, campos: [...d.campos] };
+  } as const
+  const d = mapa[catalogo as keyof typeof mapa]
+  return { tabela: d.tabela as unknown as Tabela, campos: [...d.campos] }
 }
 
 function lerCatalogo(valor: string): Catalogo {
-  if (!catalogoValido(valor)) throw new ErroNaoEncontrado('Catálogo não encontrado.');
-  return valor;
+  if (!catalogoValido(valor)) throw new ErroNaoEncontrado('Catálogo não encontrado.')
+  return valor
 }
 
 /** Código do item próprio de lista: derivado do nome, sem acento, único na empresa. */
@@ -71,37 +71,37 @@ function codigoDoNome(nome: string): string {
       .replace(/[^a-z0-9]+/g, '_')
       .replace(/^_|_$/g, '')
       .slice(0, 40) || 'item'
-  );
+  )
 }
 
 async function carregarProprio(ctx: ContextoEmpresa, d: Definicao, id: string) {
   const [item] = (await ctx.tx
     .select()
     .from(d.tabela)
-    .where(and(eq(d.tabela.id!, id), d.filtro))) as Array<Record<string, unknown>>;
-  if (!item) throw new ErroNaoEncontrado('Item não encontrado.');
+    .where(and(eq(d.tabela.id!, id), d.filtro))) as Array<Record<string, unknown>>
+  if (!item) throw new ErroNaoEncontrado('Item não encontrado.')
   if (item.empresaId !== ctx.empresaId) {
     throw new ErroRegra(
       'Itens do catálogo global são mantidos pela plataforma e não podem ser alterados.',
       'item_global',
-    );
+    )
   }
-  return item;
+  return item
 }
 
 /** Código do item global novo, derivado do nome e livre entre os globais do catálogo. */
 async function codigoGlobalLivre(ctx: ContextoPlataforma, d: Definicao, nome: string) {
-  const base = codigoDoNome(nome);
+  const base = codigoDoNome(nome)
   const usados = (await ctx.tx
     .select({ codigo: d.tabela.codigo! })
     .from(d.tabela)
     .where(
       and(d.filtro, isNull(d.tabela.empresaId!), sql`${d.tabela.codigo} like ${`${base}%`}`),
-    )) as Array<{ codigo: string }>;
-  const ocupados = new Set(usados.map((u) => u.codigo));
-  let codigo = base;
-  for (let n = 2; ocupados.has(codigo); n++) codigo = `${base}_${n}`;
-  return codigo;
+    )) as Array<{ codigo: string }>
+  const ocupados = new Set(usados.map((u) => u.codigo))
+  let codigo = base
+  for (let n = 2; ocupados.has(codigo); n++) codigo = `${base}_${n}`
+  return codigo
 }
 
 async function carregarGlobal(ctx: ContextoPlataforma, d: Definicao, id: string) {
@@ -110,18 +110,18 @@ async function carregarGlobal(ctx: ContextoPlataforma, d: Definicao, id: string)
     .from(d.tabela)
     .where(and(eq(d.tabela.id!, id), d.filtro, isNull(d.tabela.empresaId!)))) as Array<
     Record<string, unknown>
-  >;
-  if (!item) throw new ErroNaoEncontrado('Item não encontrado.');
-  return item;
+  >
+  if (!item) throw new ErroNaoEncontrado('Item não encontrado.')
+  return item
 }
 
 function tratarNomeRepetido(e: unknown): never {
-  const restricao = (e as { cause?: { constraint?: string } }).cause?.constraint ?? '';
+  const restricao = (e as { cause?: { constraint?: string } }).cause?.constraint ?? ''
   if (restricao.endsWith('_nome'))
-    throw new ErroRegra('Já existe um item com este nome.', 'nome_duplicado');
+    throw new ErroRegra('Já existe um item com este nome.', 'nome_duplicado')
   if (restricao.includes('codigo'))
-    throw new ErroRegra('Já existe um item com este código.', 'codigo_duplicado');
-  throw e;
+    throw new ErroRegra('Já existe um item com este código.', 'codigo_duplicado')
+  throw e
 }
 
 /** Catálogos fixos para os formulários, na empresa e na Administração. */
@@ -146,46 +146,46 @@ async function referencia(tx: ContextoPlataforma['tx']) {
       .from(s.opcaoLista)
       .where(eq(s.opcaoLista.ativo, true))
       .orderBy(asc(s.opcaoLista.ordem), asc(s.opcaoLista.nome)),
-  ]);
-  const listas: Record<string, Array<{ codigo: string; nome: string }>> = {};
-  for (const o of opcoes) (listas[o.lista] ??= []).push({ codigo: o.codigo, nome: o.nome });
+  ])
+  const listas: Record<string, Array<{ codigo: string; nome: string }>> = {}
+  for (const o of opcoes) (listas[o.lista] ??= []).push({ codigo: o.codigo, nome: o.nome })
   return {
     unidades: unidades.map(({ id: _id, ...u }) => u),
     classesProduto: classes,
     igs,
     papeis: papeis.map((p) => ({ codigo: p.codigo, nome: p.nome })),
     listas,
-  };
+  }
 }
 
 export async function rotasCatalogos(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
 
   // Catálogos fixos para os formulários (qualquer usuário da empresa).
   app.get('/api/referencia', async (req) =>
     naEmpresa(db, req, null, async ({ tx }) => referencia(tx)),
-  );
+  )
   app.get('/api/plataforma/referencia', async (req) =>
     naPlataforma(db, req, null, async ({ tx }) => referencia(tx)),
-  );
+  )
 
   app.get<{ Params: { catalogo: string } }>('/api/catalogos/:catalogo', async (req) => {
-    const catalogo = lerCatalogo(req.params.catalogo);
+    const catalogo = lerCatalogo(req.params.catalogo)
     return naEmpresa(db, req, null, async (ctx) => {
-      ctx.exigir(funcionalidadeDoCatalogo(catalogo), 'visualizar');
-      const d = definicao(catalogo);
-      const t = d.tabela;
+      ctx.exigir(funcionalidadeDoCatalogo(catalogo), 'visualizar')
+      const d = definicao(catalogo)
+      const t = d.tabela
       const q = consultaListagem
         .extend({
           situacao: z.enum(['ativos', 'inativos', 'todos']).default('ativos'),
           origem: z.enum(['todos', 'globais', 'proprios']).default('todos'),
           emUso: z.enum(['sim', 'todos']).default('todos'),
         })
-        .parse(req.query);
+        .parse(req.query)
       const emUso =
         catalogo === 'variedade'
           ? sql<boolean>`exists (select 1 from empresa_variedade ev where ev.variedade_id = ${t.id} and ev.empresa_id = ${ctx.empresaId} and ev.ativo)`
-          : sql<boolean>`true`;
+          : sql<boolean>`true`
       const filtro = and(
         d.filtro,
         q.situacao === 'todos' ? undefined : eq(t.ativo!, q.situacao === 'ativos'),
@@ -201,8 +201,8 @@ export async function rotasCatalogos(app: FastifyInstance): Promise<void> {
             ? [t.nome!, t.codigoOficial!, sql`array_to_string(${t.sinonimos}, ' ')`]
             : [t.nome!],
         ),
-      );
-      const colunas = Object.fromEntries(d.campos.map((c) => [c, t[c]!]));
+      )
+      const colunas = Object.fromEntries(d.campos.map((c) => [c, t[c]!]))
       return listar({
         consulta: q,
         ordenaveis: {
@@ -227,27 +227,27 @@ export async function rotasCatalogos(app: FastifyInstance): Promise<void> {
             .orderBy(...(catalogo.startsWith('opcao:') ? [asc(t.ordem!), ...ordem] : ordem))
             .limit(limite)
             .offset(deslocamento),
-      });
-    });
-  });
+      })
+    })
+  })
 
   app.post<{ Params: { catalogo: string } }>('/api/catalogos/:catalogo', async (req) => {
-    const catalogo = lerCatalogo(req.params.catalogo);
+    const catalogo = lerCatalogo(req.params.catalogo)
     if (listaOficial(catalogo))
-      throw new ErroRegra('Esta lista é oficial e só a plataforma a altera.', 'lista_oficial');
+      throw new ErroRegra('Esta lista é oficial e só a plataforma a altera.', 'lista_oficial')
     return naEmpresa(db, req, null, async (ctx) => {
-      ctx.exigir(funcionalidadeDoCatalogo(catalogo), 'criar');
-      const d = definicao(catalogo);
-      const dados = esquemaDoCatalogo(catalogo).parse(req.body) as Record<string, unknown>;
+      ctx.exigir(funcionalidadeDoCatalogo(catalogo), 'criar')
+      const d = definicao(catalogo)
+      const dados = esquemaDoCatalogo(catalogo).parse(req.body) as Record<string, unknown>
       const valores: Record<string, unknown> = {
         ...dados,
         ...d.extras,
         empresaId: ctx.empresaId,
         criadoPor: ctx.usuarioId,
         atualizadoPor: ctx.usuarioId,
-      };
+      }
       if (catalogo.startsWith('opcao:')) {
-        const base = codigoDoNome(String(dados.nome));
+        const base = codigoDoNome(String(dados.nome))
         const [{ n }] = (await ctx.tx
           .select({ n: count() })
           .from(s.opcaoLista)
@@ -257,49 +257,49 @@ export async function rotasCatalogos(app: FastifyInstance): Promise<void> {
               eq(s.opcaoLista.empresaId, ctx.empresaId),
               sql`codigo like ${base + '%'}`,
             ),
-          )) as [{ n: number }];
-        valores.codigo = n ? `${base}_${n + 1}` : base;
+          )) as [{ n: number }]
+        valores.codigo = n ? `${base}_${n + 1}` : base
       }
       if (catalogo === 'variedade') {
         // Variedade sem código oficial: a plataforma é avisada para avaliar a inclusão no catálogo
         // global, e as declarações mostram alerta (ambiente-cliente.md, Cadastros).
-        valores.avisadaPlataformaEm = new Date();
+        valores.avisadaPlataformaEm = new Date()
       }
       const [item] = (await ctx.tx
         .insert(d.tabela)
         .values(valores as never)
         .returning({ id: d.tabela.id! })
-        .catch(tratarNomeRepetido)) as Array<{ id: string }>;
+        .catch(tratarNomeRepetido)) as Array<{ id: string }>
       if (catalogo === 'variedade') {
         await ctx.tx
           .insert(s.empresaVariedade)
-          .values({ empresaId: ctx.empresaId, variedadeId: item!.id, criadoPor: ctx.usuarioId });
+          .values({ empresaId: ctx.empresaId, variedadeId: item!.id, criadoPor: ctx.usuarioId })
       }
       await ctx.auditar({
         acao: 'criar',
         entidade: catalogo.replace(':', '.'),
         registroId: item!.id,
         depois: dados,
-      });
-      return { id: item!.id };
-    });
-  });
+      })
+      return { id: item!.id }
+    })
+  })
 
   app.put<{ Params: { catalogo: string; id: string } }>(
     '/api/catalogos/:catalogo/:id',
     async (req) => {
-      const catalogo = lerCatalogo(req.params.catalogo);
+      const catalogo = lerCatalogo(req.params.catalogo)
       return naEmpresa(db, req, null, async (ctx) => {
-        ctx.exigir(funcionalidadeDoCatalogo(catalogo), 'editar');
-        const d = definicao(catalogo);
-        const id = z.uuid().parse(req.params.id);
-        const corpo = req.body as Record<string, unknown>;
-        const dados = esquemaDoCatalogo(catalogo).parse(corpo) as Record<string, unknown>;
-        const item = await carregarProprio(ctx, d, id);
+        ctx.exigir(funcionalidadeDoCatalogo(catalogo), 'editar')
+        const d = definicao(catalogo)
+        const id = z.uuid().parse(req.params.id)
+        const corpo = req.body as Record<string, unknown>
+        const dados = esquemaDoCatalogo(catalogo).parse(corpo) as Record<string, unknown>
+        const item = await carregarProprio(ctx, d, id)
         conferirVersao(
           item.versao as number,
           typeof corpo.versao === 'number' ? corpo.versao : undefined,
-        );
+        )
         await ctx.tx
           .update(d.tabela)
           .set({
@@ -309,31 +309,31 @@ export async function rotasCatalogos(app: FastifyInstance): Promise<void> {
             versao: sql`versao + 1`,
           } as never)
           .where(eq(d.tabela.id!, id))
-          .catch(tratarNomeRepetido);
-        const antes = Object.fromEntries(Object.keys(dados).map((k) => [k, item[k]]));
+          .catch(tratarNomeRepetido)
+        const antes = Object.fromEntries(Object.keys(dados).map((k) => [k, item[k]]))
         await ctx.auditar({
           acao: 'editar',
           entidade: catalogo.replace(':', '.'),
           registroId: id,
           antes,
           depois: dados,
-        });
-        return { ok: true };
-      });
+        })
+        return { ok: true }
+      })
     },
-  );
+  )
 
   for (const acao of ['inativar', 'reativar'] as const) {
     app.post<{ Params: { catalogo: string; id: string } }>(
       `/api/catalogos/:catalogo/:id/${acao}`,
       async (req) => {
-        const catalogo = lerCatalogo(req.params.catalogo);
+        const catalogo = lerCatalogo(req.params.catalogo)
         return naEmpresa(db, req, null, async (ctx) => {
-          ctx.exigir(funcionalidadeDoCatalogo(catalogo), 'inativar');
-          const d = definicao(catalogo);
-          const id = z.uuid().parse(req.params.id);
-          const m = acao === 'inativar' ? motivo.parse(req.body).motivo : null;
-          await carregarProprio(ctx, d, id);
+          ctx.exigir(funcionalidadeDoCatalogo(catalogo), 'inativar')
+          const d = definicao(catalogo)
+          const id = z.uuid().parse(req.params.id)
+          const m = acao === 'inativar' ? motivo.parse(req.body).motivo : null
+          await carregarProprio(ctx, d, id)
           await ctx.tx
             .update(d.tabela)
             .set(
@@ -351,38 +351,38 @@ export async function rotasCatalogos(app: FastifyInstance): Promise<void> {
                     motivoInativacao: null,
                   }) as never,
             )
-            .where(eq(d.tabela.id!, id));
+            .where(eq(d.tabela.id!, id))
           await ctx.auditar({
             acao,
             entidade: catalogo.replace(':', '.'),
             registroId: id,
             motivo: m,
-          });
-          return { ok: true };
-        });
+          })
+          return { ok: true }
+        })
       },
-    );
+    )
   }
 
   // ---- Administração › Catálogos: a equipe da plataforma mantém os itens globais, que valem
   // para todas as empresas, inclusive as listas oficiais (decisão de 05/10/2026). ----
-  const FP = 'plataforma.catalogos';
+  const FP = 'plataforma.catalogos'
 
   app.get<{ Params: { catalogo: string } }>('/api/plataforma/catalogos/:catalogo', async (req) => {
-    const catalogo = lerCatalogo(req.params.catalogo);
+    const catalogo = lerCatalogo(req.params.catalogo)
     return naPlataforma(db, req, [FP, 'visualizar'], async (ctx) => {
-      const d = definicao(catalogo);
-      const t = d.tabela;
+      const d = definicao(catalogo)
+      const t = d.tabela
       const q = consultaListagem
         .extend({ situacao: z.enum(['ativos', 'inativos', 'todos']).default('ativos') })
-        .parse(req.query);
+        .parse(req.query)
       const filtro = and(
         d.filtro,
         isNull(t.empresaId!),
         q.situacao === 'todos' ? undefined : eq(t.ativo!, q.situacao === 'ativos'),
         buscaTexto(q.busca, catalogo === 'variedade' ? [t.nome!, t.codigoOficial!] : [t.nome!]),
-      );
-      const colunas = Object.fromEntries(d.campos.map((c) => [c, t[c]!]));
+      )
+      const colunas = Object.fromEntries(d.campos.map((c) => [c, t[c]!]))
       return listar({
         consulta: q,
         ordenaveis: { nome: t.nome! },
@@ -405,21 +405,18 @@ export async function rotasCatalogos(app: FastifyInstance): Promise<void> {
             .orderBy(...(catalogo.startsWith('opcao:') ? [asc(t.ordem!), ...ordem] : ordem))
             .limit(limite)
             .offset(deslocamento),
-      });
-    });
-  });
+      })
+    })
+  })
 
   app.post<{ Params: { catalogo: string } }>('/api/plataforma/catalogos/:catalogo', async (req) => {
-    const catalogo = lerCatalogo(req.params.catalogo);
+    const catalogo = lerCatalogo(req.params.catalogo)
     return naPlataforma(db, req, [FP, 'criar'], async (ctx) => {
-      const d = definicao(catalogo);
-      const dados = esquemaDoCatalogoPlataforma(catalogo).parse(req.body) as Record<
-        string,
-        unknown
-      >;
+      const d = definicao(catalogo)
+      const dados = esquemaDoCatalogoPlataforma(catalogo).parse(req.body) as Record<string, unknown>
       const codigo =
         (dados.codigoOficial as string | null | undefined) ??
-        (await codigoGlobalLivre(ctx, d, String(dados.nome)));
+        (await codigoGlobalLivre(ctx, d, String(dados.nome)))
       const [item] = (await ctx.tx
         .insert(d.tabela)
         .values({
@@ -431,31 +428,31 @@ export async function rotasCatalogos(app: FastifyInstance): Promise<void> {
           atualizadoPor: ctx.usuarioId,
         } as never)
         .returning({ id: d.tabela.id! })
-        .catch(tratarNomeRepetido)) as Array<{ id: string }>;
+        .catch(tratarNomeRepetido)) as Array<{ id: string }>
       await ctx.auditar({
         acao: 'criar',
         entidade: catalogo.replace(':', '.'),
         registroId: item!.id,
         depois: { ...dados, codigo },
-      });
-      return { id: item!.id };
-    });
-  });
+      })
+      return { id: item!.id }
+    })
+  })
 
   app.put<{ Params: { catalogo: string; id: string } }>(
     '/api/plataforma/catalogos/:catalogo/:id',
     async (req) => {
-      const catalogo = lerCatalogo(req.params.catalogo);
+      const catalogo = lerCatalogo(req.params.catalogo)
       return naPlataforma(db, req, [FP, 'editar'], async (ctx) => {
-        const d = definicao(catalogo);
-        const id = z.uuid().parse(req.params.id);
-        const corpo = req.body as Record<string, unknown>;
-        const dados = esquemaDoCatalogoPlataforma(catalogo).parse(corpo) as Record<string, unknown>;
-        const item = await carregarGlobal(ctx, d, id);
+        const d = definicao(catalogo)
+        const id = z.uuid().parse(req.params.id)
+        const corpo = req.body as Record<string, unknown>
+        const dados = esquemaDoCatalogoPlataforma(catalogo).parse(corpo) as Record<string, unknown>
+        const item = await carregarGlobal(ctx, d, id)
         conferirVersao(
           item.versao as number,
           typeof corpo.versao === 'number' ? corpo.versao : undefined,
-        );
+        )
         await ctx.tx
           .update(d.tabela)
           .set({
@@ -465,29 +462,29 @@ export async function rotasCatalogos(app: FastifyInstance): Promise<void> {
             versao: sql`versao + 1`,
           } as never)
           .where(eq(d.tabela.id!, id))
-          .catch(tratarNomeRepetido);
+          .catch(tratarNomeRepetido)
         await ctx.auditar({
           acao: 'editar',
           entidade: catalogo.replace(':', '.'),
           registroId: id,
           antes: Object.fromEntries(Object.keys(dados).map((k) => [k, item[k]])),
           depois: dados,
-        });
-        return { ok: true };
-      });
+        })
+        return { ok: true }
+      })
     },
-  );
+  )
 
   for (const acao of ['inativar', 'reativar'] as const) {
     app.post<{ Params: { catalogo: string; id: string } }>(
       `/api/plataforma/catalogos/:catalogo/:id/${acao}`,
       async (req) => {
-        const catalogo = lerCatalogo(req.params.catalogo);
+        const catalogo = lerCatalogo(req.params.catalogo)
         return naPlataforma(db, req, [FP, 'inativar'], async (ctx) => {
-          const d = definicao(catalogo);
-          const id = z.uuid().parse(req.params.id);
-          const m = acao === 'inativar' ? motivo.parse(req.body).motivo : null;
-          await carregarGlobal(ctx, d, id);
+          const d = definicao(catalogo)
+          const id = z.uuid().parse(req.params.id)
+          const m = acao === 'inativar' ? motivo.parse(req.body).motivo : null
+          await carregarGlobal(ctx, d, id)
           await ctx.tx
             .update(d.tabela)
             .set(
@@ -505,24 +502,24 @@ export async function rotasCatalogos(app: FastifyInstance): Promise<void> {
                     motivoInativacao: null,
                   }) as never,
             )
-            .where(eq(d.tabela.id!, id));
+            .where(eq(d.tabela.id!, id))
           await ctx.auditar({
             acao,
             entidade: catalogo.replace(':', '.'),
             registroId: id,
             motivo: m,
-          });
-          return { ok: true };
-        });
+          })
+          return { ok: true }
+        })
       },
-    );
+    )
   }
 
   // Variedades com que a empresa trabalha: só elas aparecem nas telas.
   app.post<{ Params: { id: string } }>('/api/variedades/:id/uso', async (req) =>
     naEmpresa(db, req, ['enotrace.cadastros', 'editar'], async (ctx) => {
-      const id = z.uuid().parse(req.params.id);
-      const { emUso } = z.object({ emUso: z.boolean() }).parse(req.body);
+      const id = z.uuid().parse(req.params.id)
+      const { emUso } = z.object({ emUso: z.boolean() }).parse(req.body)
       const [v] = await ctx.tx
         .select({ id: s.variedade.id, nome: s.variedade.nome })
         .from(s.variedade)
@@ -531,8 +528,8 @@ export async function rotasCatalogos(app: FastifyInstance): Promise<void> {
             eq(s.variedade.id, id),
             or(isNull(s.variedade.empresaId), eq(s.variedade.empresaId, ctx.empresaId)),
           ),
-        );
-      if (!v) throw new ErroNaoEncontrado('Variedade não encontrada.');
+        )
+      if (!v) throw new ErroNaoEncontrado('Variedade não encontrada.')
       await ctx.tx
         .insert(s.empresaVariedade)
         .values({
@@ -544,14 +541,14 @@ export async function rotasCatalogos(app: FastifyInstance): Promise<void> {
         .onConflictDoUpdate({
           target: [s.empresaVariedade.empresaId, s.empresaVariedade.variedadeId],
           set: { ativo: emUso },
-        });
+        })
       await ctx.auditar({
         acao: emUso ? 'usar_variedade' : 'deixar_variedade',
         entidade: 'variedade',
         registroId: id,
         dados: { variedade: v.nome },
-      });
-      return { ok: true };
+      })
+      return { ok: true }
     }),
-  );
+  )
 }

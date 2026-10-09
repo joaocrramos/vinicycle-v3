@@ -1,36 +1,36 @@
 // Gestão › Aprovações (P27, Fluxo de aprovação; 04, roteiro do ciclo 8): a lista de pendências com
 // uma caixa de marcar ao lado de cada uma. Marcou, aprovou: a ação é feita na hora e o pedido sai
 // da tela. A recusa pede motivo. Cada um acompanha os próprios pedidos.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Link } from 'react-router';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { Link } from 'react-router'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
 
 interface Pedido {
-  id: string;
-  tipo: string;
-  nomeTipo: string;
-  resumo: string;
-  situacao: 'pendente' | 'aprovada' | 'recusada' | 'cancelada' | 'falhou';
-  solicitante: string | null;
-  solicitadoEm: string;
-  meu: boolean;
-  podeDecidir: boolean;
-  decisor: string | null;
-  decididoEm: string | null;
-  motivo: string | null;
-  erro: string | null;
-  visto: boolean;
-  link: string;
+  id: string
+  tipo: string
+  nomeTipo: string
+  resumo: string
+  situacao: 'pendente' | 'aprovada' | 'recusada' | 'cancelada' | 'falhou'
+  solicitante: string | null
+  solicitadoEm: string
+  meu: boolean
+  podeDecidir: boolean
+  decisor: string | null
+  decididoEm: string | null
+  motivo: string | null
+  erro: string | null
+  visto: boolean
+  link: string
 }
-type Escopo = 'pendentes' | 'minhas' | 'historico';
+type Escopo = 'pendentes' | 'minhas' | 'historico'
 
 const SITUACAO: Record<
   Pedido['situacao'],
@@ -41,10 +41,10 @@ const SITUACAO: Record<
   recusada: { texto: 'Recusado', tom: 'erro' },
   cancelada: { texto: 'Cancelado', tom: 'neutro' },
   falhou: { texto: 'Aprovado, não feito', tom: 'erro' },
-};
+}
 
 export function PaginaAprovacoes() {
-  const [aba, setAba] = useState<Escopo>('pendentes');
+  const [aba, setAba] = useState<Escopo>('pendentes')
   return (
     <Pagina titulo="Aprovações" trilha={['Gestão']}>
       <p className="text-sm text-muted-foreground">
@@ -65,38 +65,38 @@ export function PaginaAprovacoes() {
         ))}
       </Abas>
     </Pagina>
-  );
+  )
 }
 
 function Lista({ escopo }: { escopo: Escopo }) {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const [recusando, setRecusando] = useState<string | null>(null);
-  const [marcando, setMarcando] = useState<string | null>(null);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const [recusando, setRecusando] = useState<string | null>(null)
+  const [marcando, setMarcando] = useState<string | null>(null)
   const [resultado, setResultado] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(
     null,
-  );
+  )
   const q = useQuery({
     queryKey: ['aprovacoes', escopo],
     queryFn: () =>
       api.get<{ podeAprovar: boolean; itens: Pedido[] }>(`/api/aprovacoes?escopo=${escopo}`),
-  });
+  })
   const atualizar = () =>
     Promise.all([
       qc.invalidateQueries({ queryKey: ['aprovacoes'] }),
       qc.invalidateQueries({ queryKey: ['alertas'] }),
-    ]);
+    ])
   const executar = async (f: () => Promise<unknown>) => {
-    setResultado(null);
+    setResultado(null)
     try {
-      await f();
+      await f()
     } catch (e) {
-      setResultado({ tom: 'erro', texto: e instanceof ErroApi ? e.message : (e as Error).message });
+      setResultado({ tom: 'erro', texto: e instanceof ErroApi ? e.message : (e as Error).message })
     }
-    await atualizar();
-  };
-  const itens = q.data?.itens ?? [];
+    await atualizar()
+  }
+  const itens = q.data?.itens ?? []
   return (
     <div className="flex flex-col gap-3">
       {resultado && <Aviso tom={resultado.tom}>{resultado.texto}</Aviso>}
@@ -119,17 +119,17 @@ function Lista({ escopo }: { escopo: Escopo }) {
                         : 'Sem a permissão de aprovar'
                   }
                   onChange={() => {
-                    setMarcando(p.id);
+                    setMarcando(p.id)
                     void executar(async () => {
                       const r = await api.post<{ situacao: string; erro: string | null }>(
                         `/api/aprovacoes/${p.id}/aprovar`,
-                      );
+                      )
                       setResultado(
                         r.erro
                           ? { tom: 'erro', texto: `Aprovado, mas não foi feito: ${r.erro}` }
                           : { tom: 'sucesso', texto: `Aprovado e feito: ${p.resumo}` },
-                      );
-                    }).finally(() => setMarcando(null));
+                      )
+                    }).finally(() => setMarcando(null))
                   }}
                 />
               )}
@@ -200,11 +200,11 @@ function Lista({ escopo }: { escopo: Escopo }) {
         descricao="A ação não é feita. Quem pediu vê o motivo."
         rotuloBotao="Recusar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/aprovacoes/${recusando}/recusar`, { motivo });
-          setRecusando(null);
-          await atualizar();
+          await api.post(`/api/aprovacoes/${recusando}/recusar`, { motivo })
+          setRecusando(null)
+          await atualizar()
         }}
       />
     </div>
-  );
+  )
 }

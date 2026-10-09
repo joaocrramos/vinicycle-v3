@@ -21,8 +21,8 @@ import {
   TIPOS_INTEGRACAO,
   TIPOS_MUDANCA,
   TIPOS_TERMO,
-} from '@vinicycle/shared';
-import { sql } from 'drizzle-orm';
+} from '@vinicycle/shared'
+import { sql } from 'drizzle-orm'
 import {
   type AnyPgColumn,
   boolean,
@@ -41,10 +41,10 @@ import {
   unique,
   uniqueIndex,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum';
-import { usuario } from './acesso';
-import { ficha } from './ficha';
+} from 'drizzle-orm/pg-core'
+import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum'
+import { usuario } from './acesso'
+import { ficha } from './ficha'
 
 export const modulo = pgTable('modulo', {
   id: id(),
@@ -53,7 +53,7 @@ export const modulo = pgTable('modulo', {
   funcao: text('funcao').notNull(),
   situacao: text('situacao').notNull().$type<'disponivel' | 'em_breve'>(),
   ordem: integer('ordem').notNull(),
-});
+})
 
 export const funcionalidade = pgTable(
   'funcionalidade',
@@ -71,7 +71,7 @@ export const funcionalidade = pgTable(
     check('funcionalidade_escopo', emLista('escopo', ['empresa', 'plataforma'])),
     check('funcionalidade_modulo_escopo', sql`(escopo = 'empresa') = (modulo_id is not null)`),
   ],
-);
+)
 
 export const plano = pgTable('plano', {
   id: id(),
@@ -90,7 +90,7 @@ export const plano = pgTable('plano', {
   ...criacao(),
   ...alteracao(),
   ...inativacao(),
-});
+})
 
 /**
  * Preço do plano por periodicidade, com vigência: um preço novo não muda as assinaturas em vigor,
@@ -113,7 +113,7 @@ export const planoPreco = pgTable(
     check('plano_preco_valor', sql`valor >= 0`),
     unique('plano_preco_vigencia').on(t.planoId, t.periodicidade, t.vigenteDesde),
   ],
-);
+)
 
 /** Itens vendidos à parte: usuário, estabelecimento, armazenamento, módulo avulso (P25). */
 export const adicional = pgTable(
@@ -135,7 +135,7 @@ export const adicional = pgTable(
     check('adicional_modulo', sql`(tipo = 'modulo') = (modulo_id is not null)`),
     check('adicional_quantidade', sql`quantidade_por_unidade >= 1`),
   ],
-);
+)
 
 export const adicionalPreco = pgTable(
   'adicional_preco',
@@ -154,7 +154,7 @@ export const adicionalPreco = pgTable(
     check('adicional_preco_valor', sql`valor >= 0`),
     unique('adicional_preco_vigencia').on(t.adicionalId, t.periodicidade, t.vigenteDesde),
   ],
-);
+)
 
 export const planoModulo = pgTable(
   'plano_modulo',
@@ -167,7 +167,7 @@ export const planoModulo = pgTable(
       .references(() => modulo.id),
   },
   (t) => [primaryKey({ columns: [t.planoId, t.moduloId] })],
-);
+)
 
 /** O cliente que assina (P12). Raiz da empresa. */
 export const empresa = pgTable(
@@ -194,7 +194,7 @@ export const empresa = pgTable(
     uniqueIndex('empresa_ficha').on(t.fichaId),
     check('empresa_situacao', emLista('situacao', SITUACOES_EMPRESA)),
   ],
-);
+)
 
 /** Histórico de situações. Somente inclusão. */
 export const empresaSituacao = pgTable(
@@ -215,7 +215,7 @@ export const empresaSituacao = pgTable(
     check('empresa_situacao_situacao', emLista('situacao', SITUACOES_EMPRESA)),
     check('empresa_situacao_origem', emLista('origem', ORIGENS_SITUACAO)),
   ],
-);
+)
 
 /**
  * Contrato da empresa. No ciclo 1 guarda só o plano, a vigência e o teste; preços, adicionais e
@@ -271,7 +271,7 @@ export const assinatura = pgTable(
       .where(sql`situacao = 'vigente'`),
     unique('assinatura_id_empresa').on(t.id, t.empresaId),
   ],
-);
+)
 
 /** Adicionais contratados, com o preço e a quantidade por unidade congelados (P25). */
 export const assinaturaItem = pgTable(
@@ -303,7 +303,7 @@ export const assinaturaItem = pgTable(
     check('assinatura_item_valor', sql`valor_unitario >= 0`),
     index('assinatura_item_assinatura').on(t.assinaturaId),
   ],
-);
+)
 
 /**
  * Mudança de assinatura (administracao.md, Upgrade e Downgrade): o que aumenta vale na hora, com o
@@ -349,7 +349,7 @@ export const assinaturaMudanca = pgTable(
     check('assinatura_mudanca_origem', emLista('origem', ['plataforma', 'master'])),
     index('assinatura_mudanca_assinatura').on(t.assinaturaId, t.situacao),
   ],
-);
+)
 
 /** Desconto e condição especial por cliente, com motivo e validade (decidido em 03/10/2026). */
 export const desconto = pgTable(
@@ -374,10 +374,10 @@ export const desconto = pgTable(
     check('desconto_valor', sql`valor > 0 and (tipo <> 'percentual' or valor <= 100)`),
     check('desconto_validade', sql`fim is null or fim >= inicio`),
   ],
-);
+)
 
 /** Numeração das faturas da plataforma (administracao.md, Faturas: número sequencial). */
-export const faturaNumero = pgSequence('fatura_numero', { startWith: 1 });
+export const faturaNumero = pgSequence('fatura_numero', { startWith: 1 })
 
 /** Cobrança de um ciclo da assinatura, ou avulsa (administracao.md, Faturas). */
 export const fatura = pgTable(
@@ -425,7 +425,7 @@ export const fatura = pgTable(
     index('fatura_empresa').on(t.empresaId, t.vencimento),
     unique('fatura_id_empresa').on(t.id, t.empresaId),
   ],
-);
+)
 
 export const faturaItem = pgTable(
   'fatura_item',
@@ -450,7 +450,7 @@ export const faturaItem = pgTable(
     check('fatura_item_sinal', sql`(origem = 'desconto') = (valor < 0) or valor = 0`),
     index('fatura_item_fatura').on(t.faturaId),
   ],
-);
+)
 
 /** Baixa de pagamento (administracao.md, Recebimentos). Somente inclusão; erro = estorno. */
 export const recebimento = pgTable(
@@ -480,7 +480,7 @@ export const recebimento = pgTable(
     check('recebimento_estorno', sql`(estornado_em is null) = (motivo_estorno is null)`),
     index('recebimento_fatura').on(t.faturaId),
   ],
-);
+)
 
 /** Avisos da régua de cobrança já enviados: cada um sai uma vez (administracao.md, Inadimplência). */
 export const avisoCobranca = pgTable(
@@ -498,7 +498,7 @@ export const avisoCobranca = pgTable(
     ...criacao(),
   },
   (t) => [unique('aviso_cobranca_unico').on(t.tipo, t.referenciaId, t.chave)],
-);
+)
 
 /**
  * Interesse num módulo não contratado, registrado na vitrine "Conheça e contrate"; chega à
@@ -527,7 +527,7 @@ export const interesseModulo = pgTable(
       .on(t.empresaId, t.moduloId)
       .where(sql`atendido_em is null`),
   ],
-);
+)
 
 /**
  * Provedores plugáveis (administracao.md, Integração de pagamentos; P20): pagamento, WhatsApp, SMS.
@@ -558,7 +558,7 @@ export const integracao = pgTable(
     check('integracao_tipo', emLista('tipo', TIPOS_INTEGRACAO)),
     check('integracao_ambiente', emLista('ambiente', AMBIENTES_INTEGRACAO)),
   ],
-);
+)
 
 /** Avisos recebidos dos provedores. Somente inclusão; o mesmo aviso não é processado duas vezes. */
 export const eventoIntegracao = pgTable(
@@ -581,7 +581,7 @@ export const eventoIntegracao = pgTable(
     unique('evento_integracao_unico').on(t.integracaoId, t.identificadorExterno),
     check('evento_integracao_tipo', emLista('tipo_padrao', EVENTOS_PADRAO)),
   ],
-);
+)
 
 /** A empresa como cliente no provedor de pagamento. */
 export const clienteProvedor = pgTable(
@@ -598,7 +598,7 @@ export const clienteProvedor = pgTable(
     ...criacao(),
   },
   (t) => [unique('cliente_provedor_unico').on(t.empresaId, t.integracaoId)],
-);
+)
 
 /** Cobrança da fatura no provedor: link de pagamento, PIX e boleto. */
 export const cobrancaExterna = pgTable(
@@ -633,7 +633,7 @@ export const cobrancaExterna = pgTable(
       .on(t.integracaoId, t.identificadorExterno)
       .where(sql`identificador_externo is not null`),
   ],
-);
+)
 
 /** Nota fiscal de serviço da fatura, emitida pelo provedor (pendência 25). */
 export const notaServico = pgTable(
@@ -665,7 +665,7 @@ export const notaServico = pgTable(
       .on(t.faturaId)
       .where(sql`situacao <> 'cancelada'`),
   ],
-);
+)
 
 /**
  * Versões dos modelos de mensagem editados pela Administração (administracao.md, Modelos de
@@ -688,9 +688,9 @@ export const modeloMensagemVersao = pgTable(
       .on(t.codigo)
       .where(sql`ativa`),
   ],
-);
+)
 
-export const chamadoNumero = pgSequence('chamado_numero', { startWith: 1 });
+export const chamadoNumero = pgSequence('chamado_numero', { startWith: 1 })
 
 /** Chamado de suporte (administracao.md, Suporte). Sem empresa quando vem da página pública. */
 export const chamado = pgTable(
@@ -724,7 +724,7 @@ export const chamado = pgTable(
     check('chamado_situacao', emLista('situacao', SITUACOES_CHAMADO)),
     index('chamado_empresa').on(t.empresaId, t.situacao),
   ],
-);
+)
 
 /** Conversa do chamado. Somente inclusão; nota interna só a equipe vê. */
 export const chamadoMensagem = pgTable(
@@ -746,7 +746,7 @@ export const chamadoMensagem = pgTable(
     check('chamado_mensagem_interna', sql`not interna or autor_tipo = 'equipe'`),
     index('chamado_mensagem_chamado').on(t.chamadoId),
   ],
-);
+)
 
 /** Mudanças de situação. Somente inclusão. */
 export const chamadoHistorico = pgTable('chamado_historico', {
@@ -758,7 +758,7 @@ export const chamadoHistorico = pgTable('chamado_historico', {
   de: text('de'),
   para: text('para').notNull(),
   ...criacao(),
-});
+})
 
 /** Prazo de atendimento por plano ou por cliente, e por prioridade (horas corridas). */
 export const chamadoPrazo = pgTable(
@@ -782,7 +782,7 @@ export const chamadoPrazo = pgTable(
       .on(t.empresaId, t.prioridade)
       .where(sql`empresa_id is not null`),
   ],
-);
+)
 
 /**
  * Personificação (P28): o membro da equipe vê e age como o usuário do cliente, por tempo limitado e
@@ -817,7 +817,7 @@ export const personificacao = pgTable(
     ),
     index('personificacao_empresa').on(t.empresaId, t.inicio),
   ],
-);
+)
 
 /** Perfil (P27): de plataforma, modelo ou da empresa. */
 export const perfil = pgTable(
@@ -852,7 +852,7 @@ export const perfil = pgTable(
       .where(sql`e_master and escopo = 'empresa'`),
     foreignKey({ columns: [t.modeloOrigemId], foreignColumns: [t.id] }),
   ],
-);
+)
 
 /** Grade telas × ações (P27). Negado por padrão: só as linhas existentes valem. */
 export const perfilPermissao = pgTable(
@@ -876,7 +876,7 @@ export const perfilPermissao = pgTable(
     }),
     index('perfil_permissao_empresa').on(t.empresaId),
   ],
-);
+)
 
 /** Quem é da equipe da plataforma (P8). */
 export const equipeMembro = pgTable('equipe_membro', {
@@ -892,7 +892,7 @@ export const equipeMembro = pgTable('equipe_membro', {
   concedidoEm: dataHora('concedido_em').notNull().defaultNow(),
   ...alteracao(),
   ...inativacao(),
-});
+})
 
 export const termoVersao = pgTable(
   'termo_versao',
@@ -908,7 +908,7 @@ export const termoVersao = pgTable(
     check('termo_versao_tipo', emLista('tipo', TIPOS_TERMO)),
     unique('termo_versao_tipo_versao').on(t.tipo, t.versao),
   ],
-);
+)
 
 /** Aceite datado (P21). Somente inclusão. */
 export const termoAceite = pgTable(
@@ -925,7 +925,7 @@ export const termoAceite = pgTable(
     ip: inet('ip'),
   },
   (t) => [unique('termo_aceite_usuario_versao').on(t.usuarioId, t.termoVersaoId)],
-);
+)
 
 /** Parâmetros gerais (administracao.md). Uma linha só. */
 export const configPlataforma = pgTable(
@@ -957,7 +957,7 @@ export const configPlataforma = pgTable(
     ...alteracao(),
   },
   () => [check('config_plataforma_unica', sql`id`)],
-);
+)
 
 /** Fila de e-mail, WhatsApp e SMS. */
 export const envio = pgTable(
@@ -991,7 +991,7 @@ export const envio = pgTable(
       .on(t.proximaTentativaEm)
       .where(sql`situacao = 'pendente'`),
   ],
-);
+)
 
 /** Cada tentativa de envio. Somente inclusão. */
 export const envioTentativa = pgTable('envio_tentativa', {
@@ -1002,4 +1002,4 @@ export const envioTentativa = pgTable('envio_tentativa', {
   ocorridaEm: dataHora('ocorrida_em').notNull().defaultNow(),
   sucesso: boolean('sucesso').notNull(),
   resposta: jsonb('resposta'),
-});
+})

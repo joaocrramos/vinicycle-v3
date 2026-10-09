@@ -1,69 +1,69 @@
 // EnoTrace › Selos numerados (cantina.md, Engarrafamento, Selos de indicação geográfica; 04,
 // roteiro do ciclo 9): faixas recebidas, números usados e perdidos por produção e os disponíveis.
 // A entrada é por faixa (do nº X ao Y, série opcional); nenhum número se repete.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Undo2 } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router';
-import { BotaoIcone } from '@/componentes/AcoesLinha';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarData, formatarDataHora } from '@/lib/utils';
-import { useLocais } from './Estoque';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Plus, Trash2, Undo2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link } from 'react-router'
+import { BotaoIcone } from '@/componentes/AcoesLinha'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarData, formatarDataHora } from '@/lib/utils'
+import { useLocais } from './Estoque'
 
 interface Faixa {
-  inicio: number;
-  fim: number;
+  inicio: number
+  fim: number
 }
 interface ItemSelo {
-  id: string;
-  nome: string;
+  id: string
+  nome: string
   series: Array<{
-    serie: string;
-    recebidas: number;
-    usados: number;
-    perdidos: number;
-    disponiveis: Faixa[];
-    totalDisponivel: number;
-  }>;
+    serie: string
+    recebidas: number
+    usados: number
+    perdidos: number
+    disponiveis: Faixa[]
+    totalDisponivel: number
+  }>
   faixas: Array<
     Faixa & {
-      id: string;
-      serie: string;
-      recebidaEm: string;
-      documento: string | null;
-      estornada: boolean;
+      id: string
+      serie: string
+      recebidaEm: string
+      documento: string | null
+      estornada: boolean
     }
-  >;
+  >
   usos: Array<
     Faixa & {
-      serie: string;
-      tipo: 'usado' | 'perdido';
-      ordemId: string;
-      lote: string | null;
-      data: string;
+      serie: string
+      tipo: 'usado' | 'perdido'
+      ordemId: string
+      lote: string | null
+      data: string
     }
-  >;
+  >
 }
 
-const N = (n: number) => n.toLocaleString('pt-BR');
+const N = (n: number) => n.toLocaleString('pt-BR')
 export const textoFaixa = (f: Faixa) =>
-  f.inicio === f.fim ? N(f.inicio) : `${N(f.inicio)} a ${N(f.fim)}`;
-const msg = (e: unknown) => (e instanceof ErroApi ? e.message : (e as Error).message);
+  f.inicio === f.fim ? N(f.inicio) : `${N(f.inicio)} a ${N(f.fim)}`
+const msg = (e: unknown) => (e instanceof ErroApi ? e.message : (e as Error).message)
 
 export function PaginaSelos() {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const q = useQuery({ queryKey: ['selos'], queryFn: () => api.get<ItemSelo[]>('/api/selos') });
-  const locais = useLocais();
-  const [estornando, setEstornando] = useState<string | null>(null);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const q = useQuery({ queryKey: ['selos'], queryFn: () => api.get<ItemSelo[]>('/api/selos') })
+  const locais = useLocais()
+  const [estornando, setEstornando] = useState<string | null>(null)
   const [nova, setNova] = useState({
     itemId: '',
     serie: '',
@@ -71,14 +71,14 @@ export function PaginaSelos() {
     fim: '',
     localId: '',
     documento: '',
-  });
-  const [erro, setErro] = useState<string | null>(null);
-  const itens = q.data ?? [];
-  const podeCriar = pode(s, 'enotrace.estoque', 'criar');
+  })
+  const [erro, setErro] = useState<string | null>(null)
+  const itens = q.data ?? []
+  const podeCriar = pode(s, 'enotrace.estoque', 'criar')
   const quantos =
     Number(nova.fim) >= Number(nova.inicio) && nova.inicio && nova.fim
       ? Number(nova.fim) - Number(nova.inicio) + 1
-      : 0;
+      : 0
   return (
     <Pagina titulo="Selos numerados" trilha={['EnoTrace', 'Envase e estoque']}>
       <p className="text-sm text-muted-foreground">
@@ -169,7 +169,7 @@ export function PaginaSelos() {
               <Botao
                 disabled={!nova.itemId || !nova.localId || !quantos}
                 onClick={async () => {
-                  setErro(null);
+                  setErro(null)
                   try {
                     await api.post('/api/selos/faixas', {
                       itemId: nova.itemId,
@@ -179,11 +179,11 @@ export function PaginaSelos() {
                       localId: nova.localId,
                       recebidaEm: new Date().toISOString(),
                       documento: nova.documento || null,
-                    });
-                    setNova({ ...nova, inicio: '', fim: '', documento: '' });
-                    await qc.invalidateQueries({ queryKey: ['selos'] });
+                    })
+                    setNova({ ...nova, inicio: '', fim: '', documento: '' })
+                    await qc.invalidateQueries({ queryKey: ['selos'] })
                   } catch (e) {
-                    setErro(msg(e));
+                    setErro(msg(e))
                   }
                 }}
               >
@@ -267,13 +267,13 @@ export function PaginaSelos() {
         descricao="A entrada sai do estoque e os números deixam de valer. Só se estorna faixa sem número usado ou perdido."
         rotuloBotao="Estornar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/selos/faixas/${estornando}/estornar`, { motivo });
-          setEstornando(null);
-          await qc.invalidateQueries({ queryKey: ['selos'] });
+          await api.post(`/api/selos/faixas/${estornando}/estornar`, { motivo })
+          setEstornando(null)
+          await qc.invalidateQueries({ queryKey: ['selos'] })
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 /** Na produção do engarrafamento: as faixas usadas e os números perdidos de cada selo. */
@@ -281,45 +281,45 @@ export function DialogoSelosProducao({
   producaoId,
   aoFechar,
 }: {
-  producaoId: string | null;
-  aoFechar: () => void;
+  producaoId: string | null
+  aoFechar: () => void
 }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const q = useQuery({
     queryKey: ['selos-producao', producaoId],
     queryFn: () =>
       api.get<{
-        materiais: Array<{ item_id: string; nome: string; real: string }>;
-        usos: Array<Faixa & { itemId: string; serie: string; tipo: 'usado' | 'perdido' }>;
+        materiais: Array<{ item_id: string; nome: string; real: string }>
+        usos: Array<Faixa & { itemId: string; serie: string; tipo: 'usado' | 'perdido' }>
       }>(`/api/engarrafamento/producoes/${producaoId}/selos`),
     enabled: !!producaoId,
-  });
-  const selos = useQuery({ queryKey: ['selos'], queryFn: () => api.get<ItemSelo[]>('/api/selos') });
-  const [itemId, setItemId] = useState('');
-  const [serie, setSerie] = useState('');
+  })
+  const selos = useQuery({ queryKey: ['selos'], queryFn: () => api.get<ItemSelo[]>('/api/selos') })
+  const [itemId, setItemId] = useState('')
+  const [serie, setSerie] = useState('')
   const [usados, setUsados] = useState<Array<{ inicio: string; fim: string }>>([
     { inicio: '', fim: '' },
-  ]);
-  const [perdidos, setPerdidos] = useState('');
+  ])
+  const [perdidos, setPerdidos] = useState('')
   const [resultado, setResultado] = useState<{
-    tom: 'erro' | 'sucesso' | 'alerta';
-    texto: string;
-  } | null>(null);
+    tom: 'erro' | 'sucesso' | 'alerta'
+    texto: string
+  } | null>(null)
   const opcoes = q.data?.materiais.length
     ? q.data.materiais.map((m) => ({ id: m.item_id, nome: m.nome, real: m.real }))
-    : (selos.data ?? []).map((x) => ({ id: x.id, nome: x.nome, real: null as string | null }));
-  const item = itemId || opcoes[0]?.id || '';
+    : (selos.data ?? []).map((x) => ({ id: x.id, nome: x.nome, real: null as string | null }))
+  const item = itemId || opcoes[0]?.id || ''
   const disponiveis = selos.data
     ?.find((x) => x.id === item)
-    ?.series.find((x) => x.serie === serie)?.disponiveis;
-  const jaRegistrados = q.data?.usos.filter((u) => u.itemId === item) ?? [];
+    ?.series.find((x) => x.serie === serie)?.disponiveis
+  const jaRegistrados = q.data?.usos.filter((u) => u.itemId === item) ?? []
   return (
     <Dialogo
       aberto={!!producaoId}
       aoMudar={(v) => {
         if (!v) {
-          setResultado(null);
-          aoFechar();
+          setResultado(null)
+          aoFechar()
         }
       }}
       largo
@@ -333,7 +333,7 @@ export function DialogoSelosProducao({
           <Botao
             disabled={!item}
             onClick={async () => {
-              setResultado(null);
+              setResultado(null)
               try {
                 const r = await api.put<{ total: number; aviso: string | null }>(
                   `/api/engarrafamento/producoes/${producaoId}/selos`,
@@ -348,16 +348,16 @@ export function DialogoSelosProducao({
                       .filter(Boolean)
                       .map(Number),
                   },
-                );
+                )
                 setResultado(
                   r.aviso
                     ? { tom: 'alerta', texto: r.aviso }
                     : { tom: 'sucesso', texto: `${N(r.total)} selos registrados.` },
-                );
-                await qc.invalidateQueries({ queryKey: ['selos-producao', producaoId] });
-                await qc.invalidateQueries({ queryKey: ['selos'] });
+                )
+                await qc.invalidateQueries({ queryKey: ['selos-producao', producaoId] })
+                await qc.invalidateQueries({ queryKey: ['selos'] })
               } catch (e) {
-                setResultado({ tom: 'erro', texto: msg(e) });
+                setResultado({ tom: 'erro', texto: msg(e) })
               }
             }}
           >
@@ -455,5 +455,5 @@ export function DialogoSelosProducao({
         {resultado && <Aviso tom={resultado.tom}>{resultado.texto}</Aviso>}
       </div>
     </Dialogo>
-  );
+  )
 }

@@ -1,50 +1,50 @@
 // Gestão › Diário (ambiente-cliente.md, Diário; 04, roteiro do ciclo 8): notas datadas do
 // estabelecimento, com autor, anexos e vínculo opcional a projeto, recipiente ou parcela. O mesmo
 // bloco aparece na ficha do projeto, do recipiente e da propriedade, já filtrado.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Paperclip } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router';
-import { Anexos } from '@/componentes/Anexos';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarData } from '@/lib/utils';
-import { useProjetos, useRecipientes } from '../enotrace/operacoes/comum';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Paperclip } from 'lucide-react'
+import { useState } from 'react'
+import { Link } from 'react-router'
+import { Anexos } from '@/componentes/Anexos'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarData } from '@/lib/utils'
+import { useProjetos, useRecipientes } from '../enotrace/operacoes/comum'
 
 interface Nota {
-  id: string;
-  data: string;
-  texto: string;
-  autor: string | null;
-  meu: boolean;
-  editada: boolean;
-  projeto: { id: string; nome: string } | null;
-  recipiente: { id: string; codigo: string } | null;
-  parcela: { id: string; nome: string } | null;
-  anexos: number;
+  id: string
+  data: string
+  texto: string
+  autor: string | null
+  meu: boolean
+  editada: boolean
+  projeto: { id: string; nome: string } | null
+  recipiente: { id: string; codigo: string } | null
+  parcela: { id: string; nome: string } | null
+  anexos: number
 }
 interface Vinculo {
-  projetoId?: string | null;
-  recipienteId?: string | null;
-  parcelaId?: string | null;
+  projetoId?: string | null
+  recipienteId?: string | null
+  parcelaId?: string | null
 }
 type Filtro = {
-  projeto?: string;
-  recipiente?: string;
-  propriedade?: string;
-  busca?: string;
-  de?: string;
-  ate?: string;
-};
+  projeto?: string
+  recipiente?: string
+  propriedade?: string
+  busca?: string
+  de?: string
+  ate?: string
+}
 
 const hoje = (fuso: string) =>
-  new Intl.DateTimeFormat('en-CA', { timeZone: fuso }).format(new Date());
-const msg = (e: unknown) => (e instanceof ErroApi ? e.message : (e as Error).message);
+  new Intl.DateTimeFormat('en-CA', { timeZone: fuso }).format(new Date())
+const msg = (e: unknown) => (e instanceof ErroApi ? e.message : (e as Error).message)
 
 function useParcelas(ativo: boolean) {
   return useQuery({
@@ -55,11 +55,11 @@ function useParcelas(ativo: boolean) {
       ),
     enabled: ativo,
     retry: false,
-  });
+  })
 }
 
 export function PaginaDiario() {
-  const [filtro, setFiltro] = useState<Filtro>({});
+  const [filtro, setFiltro] = useState<Filtro>({})
   return (
     <Pagina titulo="Diário" trilha={['Gestão']}>
       <p className="text-sm text-muted-foreground">
@@ -98,18 +98,18 @@ export function PaginaDiario() {
       </div>
       <NotasDoDiario filtro={filtro} escolherVinculo />
     </Pagina>
-  );
+  )
 }
 
 function FiltroPropriedade({
   valor,
   aoMudar,
 }: {
-  valor?: string;
-  aoMudar: (v: string | undefined) => void;
+  valor?: string
+  aoMudar: (v: string | undefined) => void
 }) {
-  const p = useParcelas(true);
-  if (!p.data?.length) return null;
+  const p = useParcelas(true)
+  if (!p.data?.length) return null
   return (
     <Selecao
       aria-label="Propriedade"
@@ -124,7 +124,7 @@ function FiltroPropriedade({
         </option>
       ))}
     </Selecao>
-  );
+  )
 }
 
 /** Lista de notas com o formulário de nova nota; com "vinculo", a nota nova já nasce vinculada. */
@@ -134,47 +134,47 @@ export function NotasDoDiario({
   escolherVinculo,
   titulo,
 }: {
-  filtro: Filtro;
-  vinculo?: Vinculo;
-  escolherVinculo?: boolean;
-  titulo?: string;
+  filtro: Filtro
+  vinculo?: Vinculo
+  escolherVinculo?: boolean
+  titulo?: string
 }) {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const podeVer = pode(s, 'gestao.diario', 'visualizar');
-  const podeCriar = pode(s, 'gestao.diario', 'criar');
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const podeVer = pode(s, 'gestao.diario', 'visualizar')
+  const podeCriar = pode(s, 'gestao.diario', 'criar')
   const params = new URLSearchParams(
     Object.entries(filtro).filter((x): x is [string, string] => !!x[1]),
-  ).toString();
+  ).toString()
   const q = useQuery({
     queryKey: ['diario', params],
     queryFn: () => api.get<Nota[]>(`/api/diario${params ? `?${params}` : ''}`),
     enabled: podeVer,
-  });
-  const vazia = { data: hoje(fuso), texto: '', ...vinculo };
-  const [nova, setNova] = useState<{ data: string; texto: string } & Vinculo>(vazia);
-  const [editando, setEditando] = useState<string | null>(null);
-  const [anexosDe, setAnexosDe] = useState<string | null>(null);
-  const [removendo, setRemovendo] = useState<string | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-  const projetos = useProjetos();
-  const recipientes = useRecipientes();
-  const propriedades = useParcelas(!!escolherVinculo);
-  const atualizar = () => qc.invalidateQueries({ queryKey: ['diario'] });
-  if (!podeVer) return null;
+  })
+  const vazia = { data: hoje(fuso), texto: '', ...vinculo }
+  const [nova, setNova] = useState<{ data: string; texto: string } & Vinculo>(vazia)
+  const [editando, setEditando] = useState<string | null>(null)
+  const [anexosDe, setAnexosDe] = useState<string | null>(null)
+  const [removendo, setRemovendo] = useState<string | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const projetos = useProjetos()
+  const recipientes = useRecipientes()
+  const propriedades = useParcelas(!!escolherVinculo)
+  const atualizar = () => qc.invalidateQueries({ queryKey: ['diario'] })
+  if (!podeVer) return null
   const salvar = async () => {
-    setErro(null);
+    setErro(null)
     try {
-      if (editando) await api.put(`/api/diario/${editando}`, nova);
-      else await api.post('/api/diario', nova);
-      setNova(vazia);
-      setEditando(null);
-      await atualizar();
+      if (editando) await api.put(`/api/diario/${editando}`, nova)
+      else await api.post('/api/diario', nova)
+      setNova(vazia)
+      setEditando(null)
+      await atualizar()
     } catch (e) {
-      setErro(msg(e));
+      setErro(msg(e))
     }
-  };
+  }
   return (
     <Cartao>
       <CabecalhoCartao titulo={titulo ?? 'Notas'} />
@@ -252,8 +252,8 @@ export function NotasDoDiario({
                 <Botao
                   variante="secundario"
                   onClick={() => {
-                    setEditando(null);
-                    setNova(vazia);
+                    setEditando(null)
+                    setNova(vazia)
                   }}
                 >
                   Cancelar
@@ -296,14 +296,14 @@ export function NotasDoDiario({
                     <Botao
                       variante="secundario"
                       onClick={() => {
-                        setEditando(n.id);
+                        setEditando(n.id)
                         setNova({
                           data: n.data,
                           texto: n.texto,
                           projetoId: n.projeto?.id ?? null,
                           recipienteId: n.recipiente?.id ?? null,
                           parcelaId: n.parcela?.id ?? null,
-                        });
+                        })
                       }}
                     >
                       Alterar
@@ -339,11 +339,11 @@ export function NotasDoDiario({
         descricao="A nota sai do diário; o registro fica na auditoria."
         rotuloBotao="Remover"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/diario/${removendo}/inativar`, { motivo });
-          setRemovendo(null);
-          await atualizar();
+          await api.post(`/api/diario/${removendo}/inativar`, { motivo })
+          setRemovendo(null)
+          await atualizar()
         }}
       />
     </Cartao>
-  );
+  )
 }

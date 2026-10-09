@@ -1,19 +1,19 @@
 // Entrar ou cadastrar a partir de um link (convite ou passagem de bastão): quem já tem cadastro
 // confirma a senha (P8); quem não tem preenche os dados (P2), cria a senha e aceita os termos (P21).
-import { aceitarConvite, fichaEntrada, SENHA_MINIMO, senhaNova } from '@vinicycle/shared';
-import { type ReactNode, useState } from 'react';
-import { z } from 'zod';
-import { FICHA_VAZIA_PF, FichaCadastral } from '@/componentes/FichaCadastral';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada } from '@/componentes/ui/campos';
-import { useFormulario } from '@/lib/formulario';
+import { aceitarConvite, fichaEntrada, SENHA_MINIMO, senhaNova } from '@vinicycle/shared'
+import { type ReactNode, useState } from 'react'
+import { z } from 'zod'
+import { FICHA_VAZIA_PF, FichaCadastral } from '@/componentes/FichaCadastral'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada } from '@/componentes/ui/campos'
+import { useFormulario } from '@/lib/formulario'
 
 export interface Termo {
-  id: string;
-  tipo: string;
-  versao: string;
-  texto: string;
+  id: string
+  tipo: string
+  versao: string
+  texto: string
 }
 
 const novoUsuario = z
@@ -26,7 +26,7 @@ const novoUsuario = z
   .refine((d) => d.senha === d.confirmacao, {
     path: ['confirmacao'],
     message: 'As senhas não conferem',
-  });
+  })
 
 export function EntrarOuCadastrar({
   usuarioExiste,
@@ -35,30 +35,30 @@ export function EntrarOuCadastrar({
   rotulo,
   aoEnviar,
 }: {
-  usuarioExiste: boolean;
-  termos: Termo[];
-  resumo: ReactNode;
+  usuarioExiste: boolean
+  termos: Termo[]
+  resumo: ReactNode
   /** Texto do botão (ex.: "Aceitar o convite"). */
-  rotulo: string;
-  aoEnviar: (corpo: unknown) => Promise<void>;
+  rotulo: string
+  aoEnviar: (corpo: unknown) => Promise<void>
 }) {
-  const [enviando, setEnviando] = useState(false);
-  const existente = useFormulario(aceitarConvite, { senha: '' });
+  const [enviando, setEnviando] = useState(false)
+  const existente = useFormulario(aceitarConvite, { senha: '' })
   const novo = useFormulario(novoUsuario, {
     ficha: { ...FICHA_VAZIA_PF, contatos: [] },
     senha: '',
     confirmacao: '',
     aceiteTermos: false as unknown as true,
-  });
+  })
 
   async function enviar(corpo: unknown, form: { erroDaApi: (e: unknown) => void }) {
-    setEnviando(true);
+    setEnviando(true)
     try {
-      await aoEnviar(corpo);
+      await aoEnviar(corpo)
     } catch (e) {
-      form.erroDaApi(e);
+      form.erroDaApi(e)
     } finally {
-      setEnviando(false);
+      setEnviando(false)
     }
   }
 
@@ -68,9 +68,9 @@ export function EntrarOuCadastrar({
         className="flex flex-col gap-4"
         noValidate
         onSubmit={(ev) => {
-          ev.preventDefault();
-          const d = existente.validar();
-          if (d) void enviar(d, existente);
+          ev.preventDefault()
+          const d = existente.validar()
+          if (d) void enviar(d, existente)
         }}
       >
         {resumo}
@@ -91,7 +91,7 @@ export function EntrarOuCadastrar({
           {rotulo}
         </Botao>
       </form>
-    );
+    )
   }
 
   return (
@@ -99,9 +99,9 @@ export function EntrarOuCadastrar({
       className="flex flex-col gap-5"
       noValidate
       onSubmit={(ev) => {
-        ev.preventDefault();
-        const d = novo.validar();
-        if (d) void enviar({ ficha: d.ficha, senha: d.senha, aceiteTermos: true }, novo);
+        ev.preventDefault()
+        const d = novo.validar()
+        if (d) void enviar({ ficha: d.ficha, senha: d.senha, aceiteTermos: true }, novo)
       }}
     >
       {resumo}
@@ -161,5 +161,5 @@ export function EntrarOuCadastrar({
         {enviando ? 'Enviando…' : rotulo}
       </Botao>
     </form>
-  );
+  )
 }

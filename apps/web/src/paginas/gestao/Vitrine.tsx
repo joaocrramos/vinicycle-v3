@@ -1,28 +1,28 @@
 // Conheça e contrate (ambiente-cliente.md, Módulos): os módulos que a empresa ainda não tem, fora
 // do menu de trabalho. O Master contrata o módulo avulso na hora; qualquer usuário registra
 // interesse, que chega à plataforma como oportunidade.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   formatarMoeda,
   NOMES_PERIODICIDADE,
   paraCentavos,
   type Periodicidade,
-} from '@vinicycle/shared';
-import { useState } from 'react';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useAtualizarSessao, type EstadoSessao, useSessao } from '@/lib/sessao';
+} from '@vinicycle/shared'
+import { useState } from 'react'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useAtualizarSessao, type EstadoSessao, useSessao } from '@/lib/sessao'
 
 interface ModuloVitrine {
-  codigo: string;
-  nome: string;
-  funcao: string;
-  situacao: 'disponivel' | 'em_breve';
-  avulso: { id: string; preco: string } | null;
-  periodicidade: Periodicidade | null;
-  interesse: boolean;
+  codigo: string
+  nome: string
+  funcao: string
+  situacao: 'disponivel' | 'em_breve'
+  avulso: { id: string; preco: string } | null
+  periodicidade: Periodicidade | null
+  interesse: boolean
 }
 
 const DESCRICOES: Record<string, string> = {
@@ -31,19 +31,19 @@ const DESCRICOES: Record<string, string> = {
     'Cantina: projetos, recepção, lotes, recipientes, operações, laboratório e declarações.',
   ENOTUR: 'Enoturismo: experiências, agenda, reservas e visitantes.',
   ENOMESA: 'Gastronomia: cardápio, reservas de mesa, eventos e harmonização.',
-};
+}
 
 export function PaginaVitrine() {
-  const qc = useQueryClient();
-  const { data: s } = useSessao();
-  const atualizar = useAtualizarSessao();
+  const qc = useQueryClient()
+  const { data: s } = useSessao()
+  const atualizar = useAtualizarSessao()
   const q = useQuery({
     queryKey: ['vitrine'],
     queryFn: () => api.get<ModuloVitrine[]>('/api/vitrine'),
-  });
-  const [mensagem, setMensagem] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null);
-  const eMaster = !!s?.empresa?.eMaster;
-  const recarregar = () => qc.invalidateQueries({ queryKey: ['vitrine'] });
+  })
+  const [mensagem, setMensagem] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null)
+  const eMaster = !!s?.empresa?.eMaster
+  const recarregar = () => qc.invalidateQueries({ queryKey: ['vitrine'] })
   return (
     <Pagina titulo="Conheça e contrate" trilha={['Gestão']}>
       <p className="text-sm text-muted-foreground">
@@ -78,15 +78,15 @@ export function PaginaVitrine() {
                       await api.post('/api/assinatura/adicionais', {
                         adicionalId: m.avulso!.id,
                         quantidade: 1,
-                      });
+                      })
                       setMensagem({
                         tom: 'sucesso',
                         texto: `${m.nome} contratado. O proporcional do ciclo entra na próxima fatura.`,
-                      });
-                      atualizar(await api.get<EstadoSessao>('/api/auth/sessao'));
-                      await recarregar();
+                      })
+                      atualizar(await api.get<EstadoSessao>('/api/auth/sessao'))
+                      await recarregar()
                     } catch (e) {
-                      setMensagem({ tom: 'erro', texto: (e as Error).message });
+                      setMensagem({ tom: 'erro', texto: (e as Error).message })
                     }
                   }}
                 >
@@ -101,14 +101,14 @@ export function PaginaVitrine() {
                   tamanho="pequeno"
                   onClick={async () => {
                     try {
-                      await api.post(`/api/vitrine/${m.codigo}/interesse`, {});
+                      await api.post(`/api/vitrine/${m.codigo}/interesse`, {})
                       setMensagem({
                         tom: 'sucesso',
                         texto: `Interesse em ${m.nome} registrado. A equipe do ViniCycle vai entrar em contato.`,
-                      });
-                      await recarregar();
+                      })
+                      await recarregar()
                     } catch (e) {
-                      setMensagem({ tom: 'erro', texto: (e as Error).message });
+                      setMensagem({ tom: 'erro', texto: (e as Error).message })
                     }
                   }}
                 >
@@ -120,5 +120,5 @@ export function PaginaVitrine() {
         ))}
       </div>
     </Pagina>
-  );
+  )
 }

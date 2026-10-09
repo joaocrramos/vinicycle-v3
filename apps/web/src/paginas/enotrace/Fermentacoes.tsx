@@ -1,52 +1,52 @@
 // EnoTrace › Fermentações (cantina.md, Fermentações): as em andamento, com a última leitura e a
 // sugestão de fim; início e fim por operação; leituras de densidade e temperatura e as curvas.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatarDecimal } from '@vinicycle/shared';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useParams } from 'react-router';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
-import { agora, doCampo, useRecipientes } from './operacoes/comum';
-import { litros } from './Projetos';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { formatarDecimal } from '@vinicycle/shared'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useParams } from 'react-router'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
+import { agora, doCampo, useRecipientes } from './operacoes/comum'
+import { litros } from './Projetos'
 
-const NOMES = { alcoolica: 'Alcoólica', malolatica: 'Malolática' } as const;
-type Tipo = keyof typeof NOMES;
+const NOMES = { alcoolica: 'Alcoólica', malolatica: 'Malolática' } as const
+type Tipo = keyof typeof NOMES
 
 interface Leitura {
-  analiseId: string;
-  amostraEm: string;
-  recipiente: string | null;
-  densidade: string | null;
-  temperatura: string | null;
+  analiseId: string
+  amostraEm: string
+  recipiente: string | null
+  densidade: string | null
+  temperatura: string | null
 }
 
 interface Fermentacao {
-  id: string;
-  loteId: string;
-  lote: string;
-  tipo: Tipo;
-  recipientes: string | null;
-  inicioId: string;
-  inicioCodigo: string;
-  inicioEm: string;
-  fimId: string | null;
-  fimCodigo: string | null;
-  fimEm: string | null;
-  sugereFim: boolean;
+  id: string
+  loteId: string
+  lote: string
+  tipo: Tipo
+  recipientes: string | null
+  inicioId: string
+  inicioCodigo: string
+  inicioEm: string
+  fimId: string | null
+  fimCodigo: string | null
+  fimEm: string | null
+  sugereFim: boolean
 }
 
 const mensagem = (e: unknown) =>
   e instanceof ErroApi && e.campos.length
     ? `${e.message} ${e.campos.map((c) => c.mensagem).join(' ')}`
-    : (e as Error).message;
+    : (e as Error).message
 
 const dias = (desde: string, ate?: string | null) =>
   Math.max(
@@ -54,7 +54,7 @@ const dias = (desde: string, ate?: string | null) =>
     Math.floor(
       ((ate ? new Date(ate) : new Date()).getTime() - new Date(desde).getTime()) / 86400_000,
     ),
-  );
+  )
 
 // Curva ------------------------------------------------------------------------------------------
 
@@ -69,16 +69,16 @@ export function Curva({
   pontos,
   fuso,
 }: {
-  titulo: string;
-  unidade: string;
-  casas: number;
-  pontos: Array<{ em: string; valor: number }>;
-  fuso: string;
+  titulo: string
+  unidade: string
+  casas: number
+  pontos: Array<{ em: string; valor: number }>
+  fuso: string
 }) {
-  const [foco, setFoco] = useState<number | null>(null);
-  const L = 640;
-  const A = 200;
-  const m = { e: 56, d: 16, t: 12, b: 28 };
+  const [foco, setFoco] = useState<number | null>(null)
+  const L = 640
+  const A = 200
+  const m = { e: 56, d: 16, t: 12, b: 28 }
   if (pontos.length < 2)
     return (
       <Cartao>
@@ -87,17 +87,17 @@ export function Curva({
           A curva aparece com duas leituras ou mais.
         </CorpoCartao>
       </Cartao>
-    );
-  const xs = pontos.map((p) => new Date(p.em).getTime());
-  const ys = pontos.map((p) => p.valor);
-  const [x0, x1] = [Math.min(...xs), Math.max(...xs)];
-  const folga = (Math.max(...ys) - Math.min(...ys)) * 0.1 || Math.abs(ys[0]!) * 0.01 || 1;
-  const [y0, y1] = [Math.min(...ys) - folga, Math.max(...ys) + folga];
-  const px = (x: number) => m.e + ((x - x0) / (x1 - x0 || 1)) * (L - m.e - m.d);
-  const py = (y: number) => m.t + (1 - (y - y0) / (y1 - y0)) * (A - m.t - m.b);
-  const grade = [0, 1, 2, 3].map((i) => y0 + ((y1 - y0) * i) / 3);
-  const fmt = (v: number) => formatarDecimal(v.toFixed(casas), casas);
-  const p = foco === null ? null : pontos[foco]!;
+    )
+  const xs = pontos.map((p) => new Date(p.em).getTime())
+  const ys = pontos.map((p) => p.valor)
+  const [x0, x1] = [Math.min(...xs), Math.max(...xs)]
+  const folga = (Math.max(...ys) - Math.min(...ys)) * 0.1 || Math.abs(ys[0]!) * 0.01 || 1
+  const [y0, y1] = [Math.min(...ys) - folga, Math.max(...ys) + folga]
+  const px = (x: number) => m.e + ((x - x0) / (x1 - x0 || 1)) * (L - m.e - m.d)
+  const py = (y: number) => m.t + (1 - (y - y0) / (y1 - y0)) * (A - m.t - m.b)
+  const grade = [0, 1, 2, 3].map((i) => y0 + ((y1 - y0) * i) / 3)
+  const fmt = (v: number) => formatarDecimal(v.toFixed(casas), casas)
+  const p = foco === null ? null : pontos[foco]!
   return (
     <Cartao>
       <CabecalhoCartao titulo={titulo} descricao={`Em ${unidade}, pela hora da amostra.`} />
@@ -110,13 +110,13 @@ export function Curva({
             aria-label={`${titulo}: ${pontos.length} leituras, de ${fmt(ys[0]!)} a ${fmt(ys.at(-1)!)} ${unidade}`}
             onMouseLeave={() => setFoco(null)}
             onMouseMove={(e) => {
-              const r = e.currentTarget.getBoundingClientRect();
-              const x = ((e.clientX - r.left) / r.width) * L;
-              let melhor = 0;
+              const r = e.currentTarget.getBoundingClientRect()
+              const x = ((e.clientX - r.left) / r.width) * L
+              let melhor = 0
               xs.forEach((v, i) => {
-                if (Math.abs(px(v) - x) < Math.abs(px(xs[melhor]!) - x)) melhor = i;
-              });
-              setFoco(melhor);
+                if (Math.abs(px(v) - x) < Math.abs(px(xs[melhor]!) - x)) melhor = i
+              })
+              setFoco(melhor)
             }}
           >
             {grade.map((g) => (
@@ -197,19 +197,19 @@ export function Curva({
         </div>
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 // Diálogos ---------------------------------------------------------------------------------------
 
 function DialogoLeitura({ f, aoFechar }: { f: Fermentacao; aoFechar: () => void }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const [d, setD] = useState({
     amostraEm: agora(),
     densidade: null as string | null,
     temperatura: null as string | null,
-  });
-  const [erro, setErro] = useState<string | null>(null);
+  })
+  const [erro, setErro] = useState<string | null>(null)
   return (
     <Dialogo
       aberto
@@ -223,18 +223,18 @@ function DialogoLeitura({ f, aoFechar }: { f: Fermentacao; aoFechar: () => void 
           </Botao>
           <Botao
             onClick={async () => {
-              setErro(null);
+              setErro(null)
               try {
                 await api.post(`/api/fermentacoes/${f.id}/leituras`, {
                   amostraEm: doCampo(d.amostraEm),
                   densidade: d.densidade,
                   temperatura: d.temperatura,
-                });
-                await qc.invalidateQueries({ queryKey: ['fermentacoes'] });
-                await qc.invalidateQueries({ queryKey: ['fermentacao', f.id] });
-                aoFechar();
+                })
+                await qc.invalidateQueries({ queryKey: ['fermentacoes'] })
+                await qc.invalidateQueries({ queryKey: ['fermentacao', f.id] })
+                aoFechar()
               } catch (e) {
-                setErro(mensagem(e));
+                setErro(mensagem(e))
               }
             }}
           >
@@ -277,20 +277,20 @@ function DialogoLeitura({ f, aoFechar }: { f: Fermentacao; aoFechar: () => void 
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 /** Início (escolhe recipiente e tipo) ou fim (da fermentação dada): uma operação sem volume. */
 function DialogoEvento({ fim, aoFechar }: { fim: Fermentacao | null; aoFechar: () => void }) {
-  const qc = useQueryClient();
-  const recipientes = useRecipientes();
+  const qc = useQueryClient()
+  const recipientes = useRecipientes()
   const [d, setD] = useState({
     executadoEm: agora(),
     recipienteId: '',
     tipoFermentacao: (fim?.tipo ?? 'alcoolica') as Tipo,
-  });
-  const [erro, setErro] = useState<string | null>(null);
-  const doLote = recipientes.data?.find((r) => r.lote?.id === fim?.loteId);
+  })
+  const [erro, setErro] = useState<string | null>(null)
+  const doLote = recipientes.data?.find((r) => r.lote?.id === fim?.loteId)
   return (
     <Dialogo
       aberto
@@ -312,7 +312,7 @@ function DialogoEvento({ fim, aoFechar }: { fim: Fermentacao | null; aoFechar: (
           </Botao>
           <Botao
             onClick={async () => {
-              setErro(null);
+              setErro(null)
               try {
                 await api.post('/api/operacoes/fermentacao', {
                   executadoEm: doCampo(d.executadoEm),
@@ -320,12 +320,12 @@ function DialogoEvento({ fim, aoFechar }: { fim: Fermentacao | null; aoFechar: (
                   tipoFermentacao: d.tipoFermentacao,
                   evento: fim ? 'fim' : 'inicio',
                   cientes: [],
-                });
-                await qc.invalidateQueries({ queryKey: ['fermentacoes'] });
-                if (fim) await qc.invalidateQueries({ queryKey: ['fermentacao', fim.id] });
-                aoFechar();
+                })
+                await qc.invalidateQueries({ queryKey: ['fermentacoes'] })
+                if (fim) await qc.invalidateQueries({ queryKey: ['fermentacao', fim.id] })
+                aoFechar()
               } catch (e) {
-                setErro(mensagem(e));
+                setErro(mensagem(e))
               }
             }}
           >
@@ -380,25 +380,25 @@ function DialogoEvento({ fim, aoFechar }: { fim: Fermentacao | null; aoFechar: (
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 // Lista ------------------------------------------------------------------------------------------
 
 export function ListaFermentacoes() {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const [situacao, setSituacao] = useState<'em_andamento' | 'todas'>('em_andamento');
-  const [leitura, setLeitura] = useState<Fermentacao | null>(null);
-  const [evento, setEvento] = useState<{ fim: Fermentacao | null } | null>(null);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const [situacao, setSituacao] = useState<'em_andamento' | 'todas'>('em_andamento')
+  const [leitura, setLeitura] = useState<Fermentacao | null>(null)
+  const [evento, setEvento] = useState<{ fim: Fermentacao | null } | null>(null)
   const q = useQuery({
     queryKey: ['fermentacoes', situacao],
     queryFn: () =>
       api.get<Array<Fermentacao & { ultima: Leitura | null; leituras: number }>>(
         `/api/fermentacoes?situacao=${situacao}`,
       ),
-  });
-  const podeLancar = pode(s, 'enotrace.operacoes', 'confirmar');
+  })
+  const podeLancar = pode(s, 'enotrace.operacoes', 'confirmar')
   return (
     <Pagina
       titulo="Fermentações"
@@ -485,33 +485,33 @@ export function ListaFermentacoes() {
       {leitura && <DialogoLeitura f={leitura} aoFechar={() => setLeitura(null)} />}
       {evento && <DialogoEvento fim={evento.fim} aoFechar={() => setEvento(null)} />}
     </Pagina>
-  );
+  )
 }
 
 // Ficha ------------------------------------------------------------------------------------------
 
 export function FichaFermentacao() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const [leitura, setLeitura] = useState(false);
-  const [encerrar, setEncerrar] = useState(false);
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const [leitura, setLeitura] = useState(false)
+  const [encerrar, setEncerrar] = useState(false)
   const q = useQuery({
     queryKey: ['fermentacao', id],
     queryFn: () =>
       api.get<Fermentacao & { leituras: Leitura[]; fimSugeridoEm: string | null }>(
         `/api/fermentacoes/${id}`,
       ),
-  });
+  })
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const f = q.data;
+    )
+  const f = q.data
   const serie = (k: 'densidade' | 'temperatura') =>
-    f.leituras.flatMap((l) => (l[k] === null ? [] : [{ em: l.amostraEm, valor: Number(l[k]) }]));
+    f.leituras.flatMap((l) => (l[k] === null ? [] : [{ em: l.amostraEm, valor: Number(l[k]) }]))
   return (
     <Pagina
       titulo={`Fermentação ${NOMES[f.tipo].toLowerCase()} · lote ${f.lote}`}
@@ -617,5 +617,5 @@ export function FichaFermentacao() {
       {leitura && <DialogoLeitura f={f} aoFechar={() => setLeitura(false)} />}
       {encerrar && <DialogoEvento fim={f} aoFechar={() => setEncerrar(false)} />}
     </Pagina>
-  );
+  )
 }

@@ -1,66 +1,66 @@
 // EnoTrace › Painel da cantina (cantina.md, Recipientes: painel): ocupação de cada recipiente, com
 // lote, volume, % da capacidade, etapa, dias no recipiente e situação; filtros por local, tipo e
 // situação; fermentações em andamento; atalhos para as operações. Tudo vem do livro (seção 4).
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query'
 import {
   type Composicao,
   formatarDecimal,
   NOMES_SITUACAO_RECIPIENTE,
   type SITUACOES_RECIPIENTE,
-} from '@vinicycle/shared';
-import { MoreHorizontal, Snowflake } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { Botao } from '@/componentes/ui/botao';
-import { Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Entrada, Selecao } from '@/componentes/ui/campos';
-import { ConteudoMenu, GatilhoMenu, ItemMenu, Menu, SeparadorMenu } from '@/componentes/ui/menu';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { nomeNaLista, useReferencia } from '@/lib/referencia';
-import { pode, useSessao } from '@/lib/sessao';
-import { ResumoComposicao } from './operacoes/comum';
-import { litros } from './Projetos';
+} from '@vinicycle/shared'
+import { MoreHorizontal, Snowflake } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router'
+import { Botao } from '@/componentes/ui/botao'
+import { Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Entrada, Selecao } from '@/componentes/ui/campos'
+import { ConteudoMenu, GatilhoMenu, ItemMenu, Menu, SeparadorMenu } from '@/componentes/ui/menu'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { nomeNaLista, useReferencia } from '@/lib/referencia'
+import { pode, useSessao } from '@/lib/sessao'
+import { ResumoComposicao } from './operacoes/comum'
+import { litros } from './Projetos'
 
-type Situacao = (typeof SITUACOES_RECIPIENTE)[number];
+type Situacao = (typeof SITUACOES_RECIPIENTE)[number]
 const TOM: Record<Situacao, 'sucesso' | 'alerta' | 'erro' | 'neutro'> = {
   ativo: 'sucesso',
   aguardando_higienizacao: 'alerta',
   manutencao: 'erro',
   inativo: 'neutro',
-};
-const FERMENTACAO = { alcoolica: 'FA', malolatica: 'FML' } as Record<string, string>;
+}
+const FERMENTACAO = { alcoolica: 'FA', malolatica: 'FML' } as Record<string, string>
 
 interface Linha {
-  id: string;
-  codigo: string;
-  tipo: string;
-  tipoRecipienteId: string;
-  eBarrica: boolean;
-  local: string;
-  localId: string;
-  capacidade: string;
-  possuiFrio: boolean;
-  situacao: Situacao;
-  motivoSituacao: string | null;
-  volume: string;
-  lote: { id: string; codigo: string; etapa: string | null; projeto: string } | null;
-  desde: string | null;
-  composicao: Composicao | null;
-  fermentacoes: Array<{ id: string; tipo: string; inicioEm: string }>;
-  ultimaHigienizacao: string | null;
-  higienizacaoVencida: boolean;
+  id: string
+  codigo: string
+  tipo: string
+  tipoRecipienteId: string
+  eBarrica: boolean
+  local: string
+  localId: string
+  capacidade: string
+  possuiFrio: boolean
+  situacao: Situacao
+  motivoSituacao: string | null
+  volume: string
+  lote: { id: string; codigo: string; etapa: string | null; projeto: string } | null
+  desde: string | null
+  composicao: Composicao | null
+  fermentacoes: Array<{ id: string; tipo: string; inicioEm: string }>
+  ultimaHigienizacao: string | null
+  higienizacaoVencida: boolean
 }
 
 const dias = (desde: string) =>
-  Math.max(0, Math.floor((Date.now() - new Date(desde).getTime()) / 86400_000));
+  Math.max(0, Math.floor((Date.now() - new Date(desde).getTime()) / 86400_000))
 const pct = (volume: string, capacidade: string) =>
-  Number(capacidade) > 0 ? (Number(volume) / Number(capacidade)) * 100 : 0;
-const pctBr = (v: number) => `${formatarDecimal(v.toFixed(0), 0)}%`;
+  Number(capacidade) > 0 ? (Number(volume) / Number(capacidade)) * 100 : 0
+const pctBr = (v: number) => `${formatarDecimal(v.toFixed(0), 0)}%`
 
 /** Ocupação: trilho discreto e a parte cheia na cor primária, com a ponta arredondada. */
 function Ocupacao({ volume, capacidade }: { volume: string; capacidade: string }) {
-  const p = Math.min(100, pct(volume, capacidade));
+  const p = Math.min(100, pct(volume, capacidade))
   return (
     <div
       className="h-2 w-full overflow-hidden rounded-full bg-muted"
@@ -72,7 +72,7 @@ function Ocupacao({ volume, capacidade }: { volume: string; capacidade: string }
     >
       <div className="h-full rounded-full bg-primary" style={{ width: `${p}%` }} />
     </div>
-  );
+  )
 }
 
 function Resumo({ titulo, valor, detalhe }: { titulo: string; valor: string; detalhe?: string }) {
@@ -84,14 +84,14 @@ function Resumo({ titulo, valor, detalhe }: { titulo: string; valor: string; det
         {detalhe && <span className="text-xs text-muted-foreground">{detalhe}</span>}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 function Atalhos({ r }: { r: Linha }) {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const ir = (tipo: string) => navegar(`/enotrace/operacoes/${tipo}?recipiente=${r.id}`);
-  const lanca = pode(s, 'enotrace.operacoes', 'criar');
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const ir = (tipo: string) => navegar(`/enotrace/operacoes/${tipo}?recipiente=${r.id}`)
+  const lanca = pode(s, 'enotrace.operacoes', 'criar')
   return (
     <Menu>
       <GatilhoMenu asChild>
@@ -125,12 +125,12 @@ function Atalhos({ r }: { r: Linha }) {
         )}
       </ConteudoMenu>
     </Menu>
-  );
+  )
 }
 
 function CartaoRecipiente({ r }: { r: Linha }) {
-  const { data: ref } = useReferencia();
-  const p = pct(r.volume, r.capacidade);
+  const { data: ref } = useReferencia()
+  const p = pct(r.volume, r.capacidade)
   return (
     <Cartao>
       <CorpoCartao className="flex flex-col gap-2">
@@ -201,18 +201,18 @@ function CartaoRecipiente({ r }: { r: Linha }) {
         )}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 export function PaginaPainel() {
   const q = useQuery({
     queryKey: ['painel-recipientes'],
     queryFn: () => api.get<Linha[]>('/api/painel/recipientes'),
-  });
-  const [f, setF] = useState({ local: '', tipo: '', situacao: '', ocupacao: '', busca: '' });
-  const todos = useMemo(() => q.data ?? [], [q.data]);
-  const locais = [...new Map(todos.map((r) => [r.localId, r.local])).entries()];
-  const tipos = [...new Map(todos.map((r) => [r.tipoRecipienteId, r.tipo])).entries()];
+  })
+  const [f, setF] = useState({ local: '', tipo: '', situacao: '', ocupacao: '', busca: '' })
+  const todos = useMemo(() => q.data ?? [], [q.data])
+  const locais = [...new Map(todos.map((r) => [r.localId, r.local])).entries()]
+  const tipos = [...new Map(todos.map((r) => [r.tipoRecipienteId, r.tipo])).entries()]
   const lista = todos.filter(
     (r) =>
       (!f.local || r.localId === f.local) &&
@@ -223,12 +223,12 @@ export function PaginaPainel() {
         `${r.codigo} ${r.lote?.codigo ?? ''} ${r.lote?.projeto ?? ''}`
           .toLowerCase()
           .includes(f.busca.toLowerCase())),
-  );
-  const volume = lista.reduce((t, r) => t + Number(r.volume), 0);
-  const capacidade = lista.reduce((t, r) => t + Number(r.capacidade), 0);
-  const cheios = lista.filter((r) => r.lote).length;
-  const aguardando = lista.filter((r) => r.situacao === 'aguardando_higienizacao').length;
-  const fermentando = lista.reduce((t, r) => t + r.fermentacoes.length, 0);
+  )
+  const volume = lista.reduce((t, r) => t + Number(r.volume), 0)
+  const capacidade = lista.reduce((t, r) => t + Number(r.capacidade), 0)
+  const cheios = lista.filter((r) => r.lote).length
+  const aguardando = lista.filter((r) => r.situacao === 'aguardando_higienizacao').length
+  const fermentando = lista.reduce((t, r) => t + r.fermentacoes.length, 0)
   return (
     <Pagina titulo="Painel da cantina" trilha={['EnoTrace']}>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -311,5 +311,5 @@ export function PaginaPainel() {
         </p>
       )}
     </Pagina>
-  );
+  )
 }

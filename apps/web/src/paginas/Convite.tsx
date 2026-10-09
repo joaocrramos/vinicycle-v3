@@ -1,30 +1,30 @@
 // Aceite do convite (administracao.md, Fluxo, passo 3): dados pessoais (P2), senha e aceite dos
 // termos (P21). Quem já tem cadastro só confirma a senha (P8).
-import { useQuery } from '@tanstack/react-query';
-import { Link, useNavigate, useParams } from 'react-router';
-import { EntrarOuCadastrar, type Termo } from '@/componentes/EntrarOuCadastrar';
-import { Aviso } from '@/componentes/ui/cartao';
-import { api } from '@/lib/api';
-import { type EstadoSessao, useAtualizarSessao } from '@/lib/sessao';
-import { TelaPublica } from './publicas';
+import { useQuery } from '@tanstack/react-query'
+import { Link, useNavigate, useParams } from 'react-router'
+import { EntrarOuCadastrar, type Termo } from '@/componentes/EntrarOuCadastrar'
+import { Aviso } from '@/componentes/ui/cartao'
+import { api } from '@/lib/api'
+import { type EstadoSessao, useAtualizarSessao } from '@/lib/sessao'
+import { TelaPublica } from './publicas'
 
 interface Convite {
-  email: string;
-  empresa: string;
-  perfil: string;
-  master: boolean;
-  situacao: string;
-  usuarioExiste: boolean;
-  termos: Termo[];
+  email: string
+  empresa: string
+  perfil: string
+  master: boolean
+  situacao: string
+  usuarioExiste: boolean
+  termos: Termo[]
 }
 
 export function PaginaConvite() {
-  const { token = '' } = useParams();
+  const { token = '' } = useParams()
   const q = useQuery({
     queryKey: ['convite', token],
     queryFn: () => api.get<Convite>(`/api/convites/${token}`),
     retry: false,
-  });
+  })
   return (
     <TelaPublica
       titulo="Convite"
@@ -46,12 +46,12 @@ export function PaginaConvite() {
       )}
       {q.data?.situacao === 'pendente' && <Aceite token={token} c={q.data} />}
     </TelaPublica>
-  );
+  )
 }
 
 function Aceite({ token, c }: { token: string; c: Convite }) {
-  const navegar = useNavigate();
-  const atualizar = useAtualizarSessao();
+  const navegar = useNavigate()
+  const atualizar = useAtualizarSessao()
   return (
     <EntrarOuCadastrar
       usuarioExiste={c.usuarioExiste}
@@ -66,9 +66,9 @@ function Aceite({ token, c }: { token: string; c: Convite }) {
         </p>
       }
       aoEnviar={async (corpo) => {
-        atualizar(await api.post<EstadoSessao>(`/api/convites/${token}/aceitar`, corpo));
-        navegar('/');
+        atualizar(await api.post<EstadoSessao>(`/api/convites/${token}/aceitar`, corpo))
+        navegar('/')
       }}
     />
-  );
+  )
 }

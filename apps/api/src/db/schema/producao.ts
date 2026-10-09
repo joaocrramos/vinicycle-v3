@@ -18,8 +18,8 @@ import {
   SITUACOES_ROMANEIO,
   TIPOS_GENEALOGIA,
   TIPOS_LOTE,
-} from '@vinicycle/shared';
-import { sql } from 'drizzle-orm';
+} from '@vinicycle/shared'
+import { sql } from 'drizzle-orm'
 import {
   type AnyPgColumn,
   boolean,
@@ -35,15 +35,15 @@ import {
   unique,
   uniqueIndex,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, local } from './acesso';
-import { itemEstoque, recipiente, tipoTratamentoParametro } from './cantina';
-import { classeProduto, parametroAnalise, variedade } from './catalogos';
-import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum';
-import { pessoa } from './gestao';
-import { nfe, nfeItem } from './notas';
-import { empresa } from './plataforma';
-import { contratoTerceirizacao } from './terceiros';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento, local } from './acesso'
+import { itemEstoque, recipiente, tipoTratamentoParametro } from './cantina'
+import { classeProduto, parametroAnalise, variedade } from './catalogos'
+import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum'
+import { pessoa } from './gestao'
+import { nfe, nfeItem } from './notas'
+import { empresa } from './plataforma'
+import { contratoTerceirizacao } from './terceiros'
 
 /** Chave estrangeira dentro da mesma empresa (03-modelo-de-dados.md, 1.2). */
 function daEmpresa(
@@ -51,18 +51,18 @@ function daEmpresa(
   empresaId: AnyPgColumn,
   alvo: { id: AnyPgColumn; empresaId: AnyPgColumn },
 ) {
-  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] });
+  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] })
 }
 
 const empresaId = () =>
   uuid('empresa_id')
     .notNull()
-    .references(() => empresa.id);
+    .references(() => empresa.id)
 
-const ORIGENS_ROMANEIO = ['vinhedo_proprio', 'fornecedor'] as const;
-const PAPEIS_GENEALOGIA = TIPOS_GENEALOGIA;
-const TIPOS_RESIDUO = ['engaco', 'bagaco'] as const;
-const TIPOS_HIGIENIZACAO = ['higienizacao', 'manutencao'] as const;
+const ORIGENS_ROMANEIO = ['vinhedo_proprio', 'fornecedor'] as const
+const PAPEIS_GENEALOGIA = TIPOS_GENEALOGIA
+const TIPOS_RESIDUO = ['engaco', 'bagaco'] as const
+const TIPOS_HIGIENIZACAO = ['higienizacao', 'manutencao'] as const
 
 // Projeto e plano ------------------------------------------------------------------------------
 
@@ -105,7 +105,7 @@ export const projeto = pgTable(
     check('projeto_situacao', emLista('situacao', CHAVES_SITUACAO_PROJETO)),
     check('projeto_safra', sql`safra_prevista between 1900 and 2200`),
   ],
-);
+)
 
 /** Variedades previstas, sem percentual: o real vem da composição (cantina.md, Dados do projeto). */
 export const projetoVariedade = pgTable(
@@ -121,7 +121,7 @@ export const projetoVariedade = pgTable(
     daEmpresa(t.projetoId, t.empresaId, projeto),
     unique('projeto_variedade_pk').on(t.projetoId, t.variedadeId),
   ],
-);
+)
 
 /** Plano reutilizável com dias relativos (cantina.md, Modelos de plano). */
 export const modeloPlano = pgTable(
@@ -139,7 +139,7 @@ export const modeloPlano = pgTable(
     unique('modelo_plano_id_empresa').on(t.id, t.empresaId),
     uniqueIndex('modelo_plano_nome').on(t.empresaId, sql`lower(nome)`),
   ],
-);
+)
 
 export const modeloPlanoEtapa = pgTable(
   'modelo_plano_etapa',
@@ -161,7 +161,7 @@ export const modeloPlanoEtapa = pgTable(
     unique('modelo_plano_etapa_id_empresa').on(t.id, t.empresaId),
     check('modelo_plano_etapa_tipo', emLista('tipo_operacao', CHAVES_TIPO_OPERACAO)),
   ],
-);
+)
 
 /** Passo planejado do projeto (cantina.md, Plano do projeto). */
 export const planoEtapa = pgTable(
@@ -184,7 +184,7 @@ export const planoEtapa = pgTable(
     unique('plano_etapa_id_empresa').on(t.id, t.empresaId),
     check('plano_etapa_tipo', emLista('tipo_operacao', CHAVES_TIPO_OPERACAO)),
   ],
-);
+)
 
 /** Dose prevista, na etapa do plano ou do modelo (cantina.md, Previsto × executado). */
 export const planoInsumo = pgTable(
@@ -212,7 +212,7 @@ export const planoInsumo = pgTable(
     check('plano_insumo_dono', sql`(plano_etapa_id is null) <> (modelo_etapa_id is null)`),
     check('plano_insumo_dose', sql`dose > 0`),
   ],
-);
+)
 
 // Vinhedo (cadastro mínimo em 2026; o resto fica para o VitiTrack) -------------------------------
 
@@ -242,7 +242,7 @@ export const propriedade = pgTable(
       sql`lower(nome)`,
     ),
   ],
-);
+)
 
 export const parcela = pgTable(
   'parcela',
@@ -263,7 +263,7 @@ export const parcela = pgTable(
     uniqueIndex('parcela_nome').on(t.propriedadeId, sql`lower(nome)`),
     check('parcela_area', sql`area_ha is null or area_ha > 0`),
   ],
-);
+)
 
 // Lotes ----------------------------------------------------------------------------------------
 
@@ -303,7 +303,7 @@ export const lote = pgTable(
     check('lote_situacao', emLista('situacao', SITUACOES_LOTE)),
     index('lote_projeto').on(t.projetoId),
   ],
-);
+)
 
 /** Histórico de etapas do lote, mudadas pelo enólogo (cantina.md, Etapas de produção). */
 export const loteEtapa = pgTable(
@@ -317,7 +317,7 @@ export const loteEtapa = pgTable(
     por: uuid('por'),
   },
   (t) => [daEmpresa(t.loteId, t.empresaId, lote), index('lote_etapa_lote').on(t.loteId)],
-);
+)
 
 // Recepção da uva -------------------------------------------------------------------------------
 
@@ -384,7 +384,7 @@ export const romaneio = pgTable(
     check('romaneio_caixas', sql`caixas is null or caixas >= 0`),
     index('romaneio_projeto').on(t.projetoId),
   ],
-);
+)
 
 /** Uma variedade da carga (cantina.md, Dados de cada item). */
 export const romaneioItem = pgTable(
@@ -430,7 +430,7 @@ export const romaneioItem = pgTable(
     check('romaneio_item_brix', sql`brix is null or (brix >= 0 and brix <= 60)`),
     check('romaneio_item_sanidade', sql`sanidade is null or sanidade between 0 and 100`),
   ],
-);
+)
 
 /** Cada passagem na balança: líquido = bruto − tara (digitada; balança integrada no futuro). */
 export const pesagem = pgTable(
@@ -450,7 +450,7 @@ export const pesagem = pgTable(
     }).onDelete('cascade'),
     check('pesagem_liquido', sql`bruto_kg > tara_kg and tara_kg >= 0`),
   ],
-);
+)
 
 // Operações ------------------------------------------------------------------------------------
 
@@ -502,7 +502,7 @@ export const operacao = pgTable(
     ),
     index('operacao_projeto').on(t.projetoId),
   ],
-);
+)
 
 /** Origens, destinos, perdas e ajustes da operação (2.5, Linha da operação). */
 export const operacaoLinha = pgTable(
@@ -538,7 +538,7 @@ export const operacaoLinha = pgTable(
       sql`mistura is null or ${emLista('mistura', DECISOES_MISTURA)}`,
     ),
   ],
-);
+)
 
 /** Engaço e bagaço, com destino (cantina.md, Resíduos; opcional). */
 export const operacaoResiduo = pgTable(
@@ -560,7 +560,7 @@ export const operacaoResiduo = pgTable(
     check('operacao_residuo_tipo', emLista('tipo', TIPOS_RESIDUO)),
     check('operacao_residuo_kg', sql`kg > 0`),
   ],
-);
+)
 
 /**
  * Insumo aplicado (2.5, Adição de insumo): item e lote do estoque, ou descrição do não estocado;
@@ -600,7 +600,7 @@ export const operacaoInsumo = pgTable(
     index('operacao_insumo_lote_item').on(t.loteItemId),
     index('operacao_insumo_operacao').on(t.operacaoId),
   ],
-);
+)
 
 /** Chaptalização (2.5): açúcar, g/L, ganho estimado e a classe usada no alerta. */
 export const operacaoChaptalizacao = pgTable(
@@ -620,7 +620,7 @@ export const operacaoChaptalizacao = pgTable(
       foreignColumns: [operacao.id, operacao.empresaId],
     }).onDelete('cascade'),
   ],
-);
+)
 
 /** Parâmetro técnico do tratamento (2.5, Parâmetro técnico da operação). */
 export const operacaoParametro = pgTable(
@@ -639,7 +639,7 @@ export const operacaoParametro = pgTable(
     }).onDelete('cascade'),
     daEmpresa(t.parametroId, t.empresaId, tipoTratamentoParametro),
   ],
-);
+)
 
 /**
  * Higienização ou manutenção de recipiente (2.5; cantina.md, Recipientes): operação sem volume,
@@ -667,7 +667,7 @@ export const operacaoHigienizacao = pgTable(
     check('operacao_higienizacao_tipo', emLista('tipo', TIPOS_HIGIENIZACAO)),
     index('operacao_higienizacao_recipiente').on(t.recipienteId),
   ],
-);
+)
 
 /**
  * Entrada e saída de granel (03-modelo-de-dados.md, 2.5, Granel): nota, partes, GLT, embalagem e a
@@ -708,12 +708,12 @@ export const operacaoGranel = pgTable(
     check('operacao_granel_chave', sql`nota_chave ~ '^[0-9]{44}$'`),
     index('operacao_granel_glt').on(t.glt),
   ],
-);
+)
 
 // Análises e fermentações ----------------------------------------------------------------------
 
-const TIPOS_ANALISE = ['interna', 'laudo'] as const;
-const TIPOS_FERMENTACAO = ['alcoolica', 'malolatica'] as const;
+const TIPOS_ANALISE = ['interna', 'laudo'] as const
+const TIPOS_FERMENTACAO = ['alcoolica', 'malolatica'] as const
 
 /** Pedido de análise externa (2.5, Amostra): coletada → enviada → laudo recebido. */
 export const amostra = pgTable(
@@ -748,7 +748,7 @@ export const amostra = pgTable(
     check('amostra_situacao', emLista('situacao', CHAVES_SITUACAO_AMOSTRA)),
     index('amostra_lote').on(t.loteId),
   ],
-);
+)
 
 /** Leitura interna ou laudo (2.5, Análise): do lote, com o recipiente, o laboratório e o pedido. */
 export const analise = pgTable(
@@ -782,7 +782,7 @@ export const analise = pgTable(
     index('analise_lote').on(t.loteId, t.amostraEm),
     uniqueIndex('analise_amostra').on(t.amostraId),
   ],
-);
+)
 
 /** Valor de um parâmetro (2.5, Resultado da análise), na unidade padrão e como foi digitado. */
 export const analiseResultado = pgTable(
@@ -806,7 +806,7 @@ export const analiseResultado = pgTable(
     }).onDelete('cascade'),
     index('analise_resultado_analise').on(t.analiseId),
   ],
-);
+)
 
 /**
  * Fermentação alcoólica ou malolática de um lote (2.5, Fermentação): começa e termina por
@@ -833,11 +833,11 @@ export const fermentacao = pgTable(
     check('fermentacao_tipo', emLista('tipo', TIPOS_FERMENTACAO)),
     index('fermentacao_lote').on(t.loteId),
   ],
-);
+)
 
 // Inventário da cantina -------------------------------------------------------------------------
 
-const SITUACOES_INVENTARIO = ['rascunho', 'confirmado'] as const;
+const SITUACOES_INVENTARIO = ['rascunho', 'confirmado'] as const
 
 /**
  * Sessão de contagem dos recipientes (2.5, Inventário da cantina; cantina.md, Inventário). O
@@ -876,7 +876,7 @@ export const inventarioCantina = pgTable(
       sql`(situacao = 'confirmado') = (confirmado_em is not null)`,
     ),
   ],
-);
+)
 
 /**
  * Linha da contagem (2.5, Contagem de recipiente): o medido e o motivo, digitados; o lote e o
@@ -905,7 +905,7 @@ export const inventarioCantinaItem = pgTable(
     unique('inventario_cantina_item_recipiente').on(t.inventarioId, t.recipienteId),
     check('inventario_cantina_item_medido', sql`volume_medido is null or volume_medido >= 0`),
   ],
-);
+)
 
 // Livros (somente inclusão) ---------------------------------------------------------------------
 
@@ -939,7 +939,7 @@ export const movimentoVolume = pgTable(
     index('movimento_volume_lote').on(t.loteId),
     index('movimento_volume_operacao').on(t.operacaoId),
   ],
-);
+)
 
 /** Livro de uva: kg consumidos dos itens do romaneio (2.5, Movimento de uva). */
 export const movimentoUva = pgTable(
@@ -968,7 +968,7 @@ export const movimentoUva = pgTable(
     check('movimento_uva_kg', sql`kg <> 0`),
     index('movimento_uva_item').on(t.itemId),
   ],
-);
+)
 
 /** De onde veio e para onde foi (seção 5.6). */
 export const genealogia = pgTable(
@@ -993,7 +993,7 @@ export const genealogia = pgTable(
     index('genealogia_origem').on(t.origemLoteId),
     index('genealogia_destino').on(t.destinoLoteId),
   ],
-);
+)
 
 /** Versão da composição de uma parte do lote (o lote num recipiente): nunca se edita (5.1). */
 export const composicaoParte = pgTable(
@@ -1023,7 +1023,7 @@ export const composicaoParte = pgTable(
     index('composicao_parte_recipiente').on(t.recipienteId, t.vigenteDesde),
     index('composicao_parte_lote').on(t.loteId),
   ],
-);
+)
 
 export const composicaoParteItem = pgTable(
   'composicao_parte_item',
@@ -1045,4 +1045,4 @@ export const composicaoParteItem = pgTable(
     check('composicao_parte_item_fracao', sql`fracao > 0 and fracao <= 1`),
     index('composicao_parte_item_parte').on(t.parteId),
   ],
-);
+)

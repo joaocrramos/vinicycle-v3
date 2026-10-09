@@ -2,21 +2,21 @@
 // enólogo testa proporções (em % sobre um volume desejado ou direto em litros) e vê a composição e
 // o que o rótulo pode declarar, sem mexer no volume. As simulações ficam salvas no projeto; a
 // aprovada abre o corte já preenchido, com os litros conferidos com os saldos do momento.
-import { misturar, paraCentilitros, porSafra } from '@vinicycle/shared';
-import { and, desc, eq, inArray, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import * as s from '../../db/schema';
-import { ErroNaoEncontrado, ErroRegra } from '../../nucleo/erros';
-import { type ContextoEmpresa, naEmpresa } from '../../nucleo/requisicao';
-import { partesComSaldo, rotulo } from './consultas';
+import { misturar, paraCentilitros, porSafra } from '@vinicycle/shared'
+import { and, desc, eq, inArray, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import * as s from '../../db/schema'
+import { ErroNaoEncontrado, ErroRegra } from '../../nucleo/erros'
+import { type ContextoEmpresa, naEmpresa } from '../../nucleo/requisicao'
+import { partesComSaldo, rotulo } from './consultas'
 
-const F = 'enotrace.operacoes';
+const F = 'enotrace.operacoes'
 
 const numero = z
   .string()
   .trim()
-  .regex(/^\d+(\.\d{1,2})?$/, 'Número inválido');
+  .regex(/^\d+(\.\d{1,2})?$/, 'Número inválido')
 
 const esquemaSimulacao = z
   .object({
@@ -41,18 +41,18 @@ const esquemaSimulacao = z
   .refine((d) => new Set(d.itens.map((i) => i.recipienteId)).size === d.itens.length, {
     path: ['itens'],
     message: 'O mesmo recipiente aparece duas vezes',
-  });
+  })
 
 /** Litros e % de cada parte, composição resultante, rótulo e avisos (saldo menor que o pedido). */
 async function simular(ctx: ContextoEmpresa, estab: string, d: z.infer<typeof esquemaSimulacao>) {
-  const ids = d.itens.map((i) => i.recipienteId);
-  const partes = await partesComSaldo(ctx, { recipienteIds: ids });
+  const ids = d.itens.map((i) => i.recipienteId)
+  const partes = await partesComSaldo(ctx, { recipienteIds: ids })
   const recs = await ctx.tx
     .select({ id: s.recipiente.id, codigo: s.recipiente.codigo, e: s.recipiente.estabelecimentoId })
     .from(s.recipiente)
-    .where(and(inArray(s.recipiente.id, ids), eq(s.recipiente.empresaId, ctx.empresaId)));
+    .where(and(inArray(s.recipiente.id, ids), eq(s.recipiente.empresaId, ctx.empresaId)))
   if (recs.some((r) => r.e !== estab) || recs.length !== ids.length)
-    throw new ErroRegra('Recipiente de outro estabelecimento.', 'recipiente');
+    throw new ErroRegra('Recipiente de outro estabelecimento.', 'recipiente')
   const lotes = partes.length
     ? await ctx.tx
         .select({
@@ -70,37 +70,37 @@ async function simular(ctx: ContextoEmpresa, estab: string, d: z.infer<typeof es
             partes.map((p) => p.loteId),
           ),
         )
-    : [];
-  const somaPct = d.itens.reduce((t, i) => t + Number(i.valor), 0);
-  const avisos: string[] = [];
+    : []
+  const somaPct = d.itens.reduce((t, i) => t + Number(i.valor), 0)
+  const avisos: string[] = []
   if (d.modo === 'percentual' && Math.abs(somaPct - 100) > 0.001)
-    avisos.push(`As proporções somam ${somaPct.toLocaleString('pt-BR')}%, não 100%.`);
+    avisos.push(`As proporções somam ${somaPct.toLocaleString('pt-BR')}%, não 100%.`)
   const itens = d.itens.map((i) => {
-    const parte = partes.find((p) => p.recipienteId === i.recipienteId);
-    const codigo = recs.find((r) => r.id === i.recipienteId)!.codigo;
-    if (!parte) throw new ErroRegra(`O recipiente ${codigo} está vazio.`, 'vazio');
+    const parte = partes.find((p) => p.recipienteId === i.recipienteId)
+    const codigo = recs.find((r) => r.id === i.recipienteId)!.codigo
+    if (!parte) throw new ErroRegra(`O recipiente ${codigo} está vazio.`, 'vazio')
     const cl =
       d.modo === 'litros'
         ? paraCentilitros(i.valor)
-        : Math.round((paraCentilitros(d.volume!) * Number(i.valor)) / 100);
-    const lote = lotes.find((l) => l.id === parte.loteId)!;
+        : Math.round((paraCentilitros(d.volume!) * Number(i.valor)) / 100)
+    const lote = lotes.find((l) => l.id === parte.loteId)!
     if (cl > parte.cl)
       avisos.push(
         `${codigo}: pedidos ${(cl / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} L, mas há ${(parte.cl / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} L.`,
-      );
-    return { parte, cl, codigo, lote };
-  });
-  const titulares = new Set(itens.map((i) => i.lote.titularId ?? ''));
+      )
+    return { parte, cl, codigo, lote }
+  })
+  const titulares = new Set(itens.map((i) => i.lote.titularId ?? ''))
   if (titulares.size > 1)
     avisos.push(
       'Lotes de titulares diferentes: o corte é bloqueado. Registre antes a transferência de titularidade.',
-    );
-  const total = itens.reduce((t, i) => t + i.cl, 0);
+    )
+  const total = itens.reduce((t, i) => t + i.cl, 0)
   const composicao = misturar(
     itens.map((i) => ({ centilitros: i.cl, composicao: i.parte.composicao })),
-  );
-  const r = await rotulo(ctx, estab, composicao);
-  const pct = (cl: number) => (total ? Number(((cl / total) * 100).toFixed(2)) : 0);
+  )
+  const r = await rotulo(ctx, estab, composicao)
+  const pct = (cl: number) => (total ? Number(((cl / total) * 100).toFixed(2)) : 0)
   return {
     itens: itens.map((i) => ({
       recipienteId: i.parte.recipienteId,
@@ -126,7 +126,7 @@ async function simular(ctx: ContextoEmpresa, estab: string, d: z.infer<typeof es
     rotulo: r,
     avisos,
     projetos: [...new Set(itens.map((i) => i.lote.projetoId))].length,
-  };
+  }
 }
 
 async function carregar(ctx: ContextoEmpresa, id: string) {
@@ -134,25 +134,25 @@ async function carregar(ctx: ContextoEmpresa, id: string) {
     .select()
     .from(s.simulacaoCorte)
     .where(and(eq(s.simulacaoCorte.id, id), eq(s.simulacaoCorte.empresaId, ctx.empresaId)))
-    .for('update');
+    .for('update')
   if (!x || x.estabelecimentoId !== ctx.exigirEstabelecimento())
-    throw new ErroNaoEncontrado('Simulação não encontrada.');
-  return x;
+    throw new ErroNaoEncontrado('Simulação não encontrada.')
+  return x
 }
 
 export async function rotasSimulacoes(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
 
   /** Prévia: calcula sem gravar. */
   app.post('/api/simulacoes-corte/previa', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) =>
       simular(ctx, ctx.exigirEstabelecimento(), esquemaSimulacao.parse(req.body)),
     ),
-  );
+  )
 
   app.get<{ Params: { id: string } }>('/api/projetos/:id/simulacoes', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const projetoId = z.uuid().parse(req.params.id);
+      const projetoId = z.uuid().parse(req.params.id)
       return ctx.tx
         .select({
           id: s.simulacaoCorte.id,
@@ -175,15 +175,15 @@ export async function rotasSimulacoes(app: FastifyInstance): Promise<void> {
             sql`${s.simulacaoCorte.situacao} <> 'descartada'`,
           ),
         )
-        .orderBy(desc(s.simulacaoCorte.criadoEm));
+        .orderBy(desc(s.simulacaoCorte.criadoEm))
     }),
-  );
+  )
 
   /** Uma simulação, com os litros recalculados pelos saldos de agora (para abrir o corte). */
   app.get<{ Params: { id: string } }>('/api/simulacoes-corte/:id', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const x = await carregar(ctx, z.uuid().parse(req.params.id));
-      const itens = x.itens as Array<{ recipienteId: string; valor: string }>;
+      const x = await carregar(ctx, z.uuid().parse(req.params.id))
+      const itens = x.itens as Array<{ recipienteId: string; valor: string }>
       return {
         id: x.id,
         nome: x.nome,
@@ -194,19 +194,19 @@ export async function rotasSimulacoes(app: FastifyInstance): Promise<void> {
           volume: x.volumeLitros,
           itens,
         }),
-      };
+      }
     }),
-  );
+  )
 
   app.post<{ Params: { id: string } }>('/api/projetos/:id/simulacoes', async (req) =>
     naEmpresa(db, req, [F, 'criar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
-      const projetoId = z.uuid().parse(req.params.id);
+      const estab = ctx.exigirEstabelecimento()
+      const projetoId = z.uuid().parse(req.params.id)
       const [p] = await ctx.tx
         .select({ e: s.projeto.estabelecimentoId })
         .from(s.projeto)
-        .where(and(eq(s.projeto.id, projetoId), eq(s.projeto.empresaId, ctx.empresaId)));
-      if (p?.e !== estab) throw new ErroNaoEncontrado('Projeto não encontrado.');
+        .where(and(eq(s.projeto.id, projetoId), eq(s.projeto.empresaId, ctx.empresaId)))
+      if (p?.e !== estab) throw new ErroNaoEncontrado('Projeto não encontrado.')
       const d = esquemaSimulacao
         .and(
           z.object({
@@ -214,8 +214,8 @@ export async function rotasSimulacoes(app: FastifyInstance): Promise<void> {
             observacao: z.string().trim().max(1000).nullable().optional(),
           }),
         )
-        .parse(req.body);
-      const resultado = await simular(ctx, estab, d);
+        .parse(req.body)
+      const resultado = await simular(ctx, estab, d)
       const [x] = await ctx.tx
         .insert(s.simulacaoCorte)
         .values({
@@ -231,16 +231,16 @@ export async function rotasSimulacoes(app: FastifyInstance): Promise<void> {
           criadoPor: ctx.usuarioId,
           atualizadoPor: ctx.usuarioId,
         })
-        .returning({ id: s.simulacaoCorte.id });
+        .returning({ id: s.simulacaoCorte.id })
       await ctx.auditar({
         acao: 'criar',
         entidade: 'simulacao_corte',
         registroId: x!.id,
         dados: { nome: d.nome, modo: d.modo, volume: d.volume, itens: d.itens },
-      });
-      return { id: x!.id };
+      })
+      return { id: x!.id }
     }),
-  );
+  )
 
   for (const [acao, situacao] of [
     ['aprovar', 'aprovada'],
@@ -248,9 +248,9 @@ export async function rotasSimulacoes(app: FastifyInstance): Promise<void> {
   ] as const)
     app.post<{ Params: { id: string } }>(`/api/simulacoes-corte/:id/${acao}`, async (req) =>
       naEmpresa(db, req, [F, 'criar'], async (ctx) => {
-        const x = await carregar(ctx, z.uuid().parse(req.params.id));
+        const x = await carregar(ctx, z.uuid().parse(req.params.id))
         if (x.situacao !== 'rascunho' && !(acao === 'descartar' && x.situacao === 'aprovada'))
-          throw new ErroRegra('A simulação já foi decidida.', 'situacao');
+          throw new ErroRegra('A simulação já foi decidida.', 'situacao')
         await ctx.tx
           .update(s.simulacaoCorte)
           .set({
@@ -259,14 +259,14 @@ export async function rotasSimulacoes(app: FastifyInstance): Promise<void> {
             atualizadoEm: sql`now()`,
             atualizadoPor: ctx.usuarioId,
           })
-          .where(eq(s.simulacaoCorte.id, x.id));
+          .where(eq(s.simulacaoCorte.id, x.id))
         await ctx.auditar({
           acao,
           entidade: 'simulacao_corte',
           registroId: x.id,
           dados: { nome: x.nome },
-        });
-        return { ok: true };
+        })
+        return { ok: true }
       }),
-    );
+    )
 }

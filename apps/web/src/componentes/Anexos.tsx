@@ -1,29 +1,29 @@
 // Componente único de anexos (P15).
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CATEGORIAS_ANEXO, NOMES_CATEGORIA_ANEXO, TAMANHO_MAXIMO_ANEXO } from '@vinicycle/shared';
-import { Download, Paperclip, Trash2 } from 'lucide-react';
-import { useRef, useState } from 'react';
-import { api } from '@/lib/api';
-import { formatarDataHora } from '@/lib/utils';
-import { PedirMotivo } from './PedirMotivo';
-import { Botao } from './ui/botao';
-import { Aviso } from './ui/cartao';
-import { Selecao } from './ui/campos';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { CATEGORIAS_ANEXO, NOMES_CATEGORIA_ANEXO, TAMANHO_MAXIMO_ANEXO } from '@vinicycle/shared'
+import { Download, Paperclip, Trash2 } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { api } from '@/lib/api'
+import { formatarDataHora } from '@/lib/utils'
+import { PedirMotivo } from './PedirMotivo'
+import { Botao } from './ui/botao'
+import { Aviso } from './ui/cartao'
+import { Selecao } from './ui/campos'
 
 interface Anexo {
-  id: string;
-  categoria: keyof typeof NOMES_CATEGORIA_ANEXO;
-  nomeOriginal: string;
-  tamanhoBytes: number;
-  descricao: string | null;
-  criadoEm: string;
-  enviadoPor: string | null;
+  id: string
+  categoria: keyof typeof NOMES_CATEGORIA_ANEXO
+  nomeOriginal: string
+  tamanhoBytes: number
+  descricao: string | null
+  criadoEm: string
+  enviadoPor: string | null
 }
 
 function tamanho(b: number): string {
-  if (b < 1024) return `${b} B`;
-  if (b < 1024 ** 2) return `${(b / 1024).toFixed(0)} KB`;
-  return `${(b / 1024 ** 2).toFixed(1).replace('.', ',')} MB`;
+  if (b < 1024) return `${b} B`
+  if (b < 1024 ** 2) return `${(b / 1024).toFixed(0)} KB`
+  return `${(b / 1024 ** 2).toFixed(1).replace('.', ',')} MB`
 }
 
 export function Anexos({
@@ -32,41 +32,41 @@ export function Anexos({
   podeAlterar,
   fuso,
 }: {
-  entidade: string;
-  registroId: string;
-  podeAlterar: boolean;
-  fuso?: string;
+  entidade: string
+  registroId: string
+  podeAlterar: boolean
+  fuso?: string
 }) {
-  const qc = useQueryClient();
-  const chave = ['anexos', entidade, registroId];
+  const qc = useQueryClient()
+  const chave = ['anexos', entidade, registroId]
   const q = useQuery({
     queryKey: chave,
     queryFn: () => api.get<Anexo[]>(`/api/anexos?entidade=${entidade}&registroId=${registroId}`),
-  });
-  const [categoria, setCategoria] = useState<(typeof CATEGORIAS_ANEXO)[number]>('outro');
-  const [erro, setErro] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
-  const [remover, setRemover] = useState<Anexo | null>(null);
-  const arquivo = useRef<HTMLInputElement>(null);
+  })
+  const [categoria, setCategoria] = useState<(typeof CATEGORIAS_ANEXO)[number]>('outro')
+  const [erro, setErro] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
+  const [remover, setRemover] = useState<Anexo | null>(null)
+  const arquivo = useRef<HTMLInputElement>(null)
 
   async function enviar(f: File) {
-    setErro(null);
-    if (f.size > TAMANHO_MAXIMO_ANEXO) return setErro('Arquivo acima do tamanho máximo (25 MB).');
-    const dados = new FormData();
-    dados.set('entidade', entidade);
-    dados.set('registroId', registroId);
-    dados.set('categoria', categoria);
-    dados.set('arquivo', f);
-    setEnviando(true);
+    setErro(null)
+    if (f.size > TAMANHO_MAXIMO_ANEXO) return setErro('Arquivo acima do tamanho máximo (25 MB).')
+    const dados = new FormData()
+    dados.set('entidade', entidade)
+    dados.set('registroId', registroId)
+    dados.set('categoria', categoria)
+    dados.set('arquivo', f)
+    setEnviando(true)
     try {
-      await api.post('/api/anexos', dados);
-      await qc.invalidateQueries({ queryKey: chave });
-      await qc.invalidateQueries({ queryKey: ['historico', entidade, registroId] });
+      await api.post('/api/anexos', dados)
+      await qc.invalidateQueries({ queryKey: chave })
+      await qc.invalidateQueries({ queryKey: ['historico', entidade, registroId] })
     } catch (e) {
-      setErro((e as Error).message);
+      setErro((e as Error).message)
     } finally {
-      setEnviando(false);
-      if (arquivo.current) arquivo.current.value = '';
+      setEnviando(false)
+      if (arquivo.current) arquivo.current.value = ''
     }
   }
 
@@ -144,10 +144,10 @@ export function Anexos({
         descricao="O arquivo sai da lista, mas fica guardado e registrado no histórico."
         rotuloBotao="Remover"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/anexos/${remover!.id}/inativar`, { motivo });
-          await qc.invalidateQueries({ queryKey: chave });
+          await api.post(`/api/anexos/${remover!.id}/inativar`, { motivo })
+          await qc.invalidateQueries({ queryKey: chave })
         }}
       />
     </div>
-  );
+  )
 }

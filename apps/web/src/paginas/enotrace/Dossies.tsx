@@ -1,39 +1,39 @@
 // EnoTrace › Terceiros › Dossiês (cantina.md, Dossiê do lote para o cliente; 04, roteiro do ciclo 10,
 // bloco 4): o registro do vinho do cliente, guardado como foi gerado; imprime em PDF pelo navegador,
 // baixa em CSV e vai por e-mail ao cliente, com o registro de cada envio.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Download, Mail, Plus, Printer } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { baixarCsv, type CelulaCsv } from '@/lib/csv';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Download, Mail, Plus, Printer } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { baixarCsv, type CelulaCsv } from '@/lib/csv'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
 
 interface SecaoDossie {
-  titulo: string;
-  cabecalho: string[];
-  linhas: string[][];
-  vazio: string;
+  titulo: string
+  cabecalho: string[]
+  linhas: string[][]
+  vazio: string
 }
 interface Dossie {
-  id: string;
-  titulo: string;
-  titularId: string;
-  geradoEm: string;
+  id: string
+  titulo: string
+  titularId: string
+  geradoEm: string
   conteudo: {
-    titulo: string;
-    geradoPor: string | null;
-    identificacao: Array<[string, string]>;
-    secoes: SecaoDossie[];
-  };
-  envios: Array<{ para: string; enviadoEm: string; por: string | null }>;
-  emailCliente: string | null;
+    titulo: string
+    geradoPor: string | null
+    identificacao: Array<[string, string]>
+    secoes: SecaoDossie[]
+  }
+  envios: Array<{ para: string; enviadoEm: string; por: string | null }>
+  emailCliente: string | null
 }
 
 function useClientes() {
@@ -41,24 +41,24 @@ function useClientes() {
     queryKey: ['pessoas-opcoes', 'cliente_vinificacao'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=cliente_vinificacao'),
-  });
+  })
 }
 
 function NovoDossie({ titular, aoFechar }: { titular: string; aoFechar: () => void }) {
-  const navegar = useNavigate();
-  const clientes = useClientes();
-  const [cliente, setCliente] = useState(titular);
-  const [partida, setPartida] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
+  const navegar = useNavigate()
+  const clientes = useClientes()
+  const [cliente, setCliente] = useState(titular)
+  const [partida, setPartida] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
   const lotes = useQuery({
     queryKey: ['lotes-do-cliente', cliente],
     queryFn: () =>
       api.get<{
-        lotes: Array<{ id: string; codigo: string; projeto: string; saldo: string }>;
-        comerciais: Array<{ id: string; codigo: string; produto: string | null }>;
+        lotes: Array<{ id: string; codigo: string; projeto: string; saldo: string }>
+        comerciais: Array<{ id: string; codigo: string; produto: string | null }>
       }>(`/api/terceiros/lotes-do-cliente?titularId=${cliente}`),
     enabled: !!cliente,
-  });
+  })
   return (
     <Dialogo
       aberto
@@ -73,16 +73,16 @@ function NovoDossie({ titular, aoFechar }: { titular: string; aoFechar: () => vo
           <Botao
             disabled={!partida}
             onClick={async () => {
-              setErro(null);
+              setErro(null)
               try {
-                const [tipo, id] = partida.split(':');
+                const [tipo, id] = partida.split(':')
                 const r = await api.post<{ id: string }>(
                   '/api/terceiros/dossies',
                   tipo === 'lote' ? { loteId: id } : { loteComercialId: id },
-                );
-                navegar(`/enotrace/terceiros/dossies/${r.id}`);
+                )
+                navegar(`/enotrace/terceiros/dossies/${r.id}`)
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               }
             }}
           >
@@ -98,8 +98,8 @@ function NovoDossie({ titular, aoFechar }: { titular: string; aoFechar: () => vo
             id="nd-cliente"
             value={cliente}
             onChange={(e) => {
-              setCliente(e.target.value);
-              setPartida('');
+              setCliente(e.target.value)
+              setPartida('')
             }}
           >
             <option value="">Escolha</option>
@@ -140,23 +140,23 @@ function NovoDossie({ titular, aoFechar }: { titular: string; aoFechar: () => vo
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function ListaDossies() {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const [busca, setBusca] = useSearchParams();
-  const titular = busca.get('titular') ?? '';
-  const [novo, setNovo] = useState(false);
-  const clientes = useClientes();
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const [busca, setBusca] = useSearchParams()
+  const titular = busca.get('titular') ?? ''
+  const [novo, setNovo] = useState(false)
+  const clientes = useClientes()
   const lista = useQuery({
     queryKey: ['dossies', titular],
     queryFn: () =>
       api.get<
         Array<{ id: string; titulo: string; geradoEm: string; titular: string; envios: number }>
       >(`/api/terceiros/dossies${titular ? `?titularId=${titular}` : ''}`),
-  });
+  })
   return (
     <Pagina
       titulo="Dossiês"
@@ -214,13 +214,13 @@ export function ListaDossies() {
       </Cartao>
       {novo && <NovoDossie titular={titular} aoFechar={() => setNovo(false)} />}
     </Pagina>
-  );
+  )
 }
 
 function DialogoEnvio({ d, aoFechar }: { d: Dossie; aoFechar: () => void }) {
-  const qc = useQueryClient();
-  const [para, setPara] = useState(d.emailCliente ?? '');
-  const [erro, setErro] = useState<string | null>(null);
+  const qc = useQueryClient()
+  const [para, setPara] = useState(d.emailCliente ?? '')
+  const [erro, setErro] = useState<string | null>(null)
   return (
     <Dialogo
       aberto
@@ -234,13 +234,13 @@ function DialogoEnvio({ d, aoFechar }: { d: Dossie; aoFechar: () => void }) {
           </Botao>
           <Botao
             onClick={async () => {
-              setErro(null);
+              setErro(null)
               try {
-                await api.post(`/api/terceiros/dossies/${d.id}/enviar`, { para });
-                await qc.invalidateQueries({ queryKey: ['dossie', d.id] });
-                aoFechar();
+                await api.post(`/api/terceiros/dossies/${d.id}/enviar`, { para })
+                await qc.invalidateQueries({ queryKey: ['dossie', d.id] })
+                aoFechar()
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               }
             }}
           >
@@ -261,37 +261,37 @@ function DialogoEnvio({ d, aoFechar }: { d: Dossie; aoFechar: () => void }) {
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function FichaDossie() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const [enviar, setEnviar] = useState(false);
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const [enviar, setEnviar] = useState(false)
   const q = useQuery({
     queryKey: ['dossie', id],
     queryFn: () => api.get<Dossie>(`/api/terceiros/dossies/${id}`),
-  });
+  })
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const d = q.data;
-  const c = d.conteudo;
+    )
+  const d = q.data
+  const c = d.conteudo
   const csv = () => {
-    const linhas: CelulaCsv[][] = [[c.titulo], [`Gerado em ${formatarDataHora(d.geradoEm, fuso)}`]];
-    for (const [k, v] of c.identificacao) linhas.push([k, v]);
+    const linhas: CelulaCsv[][] = [[c.titulo], [`Gerado em ${formatarDataHora(d.geradoEm, fuso)}`]]
+    for (const [k, v] of c.identificacao) linhas.push([k, v])
     for (const sec of c.secoes) {
-      linhas.push([], [sec.titulo]);
-      if (sec.linhas.length) linhas.push(sec.cabecalho, ...sec.linhas);
-      else linhas.push([sec.vazio]);
+      linhas.push([], [sec.titulo])
+      if (sec.linhas.length) linhas.push(sec.cabecalho, ...sec.linhas)
+      else linhas.push([sec.vazio])
     }
-    baixarCsv(c.titulo.replace(/[^\w\-. ]+/g, '_'), linhas);
-  };
-  const podeEnviar = pode(s, 'enotrace.relatorios', 'exportar');
+    baixarCsv(c.titulo.replace(/[^\w\-. ]+/g, '_'), linhas)
+  }
+  const podeEnviar = pode(s, 'enotrace.relatorios', 'exportar')
   return (
     <Pagina
       titulo={c.titulo}
@@ -380,5 +380,5 @@ export function FichaDossie() {
       </Cartao>
       {enviar && <DialogoEnvio d={d} aoFechar={() => setEnviar(false)} />}
     </Pagina>
-  );
+  )
 }

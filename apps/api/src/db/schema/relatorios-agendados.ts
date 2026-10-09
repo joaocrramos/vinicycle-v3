@@ -1,10 +1,10 @@
 // Relatório agendado (03-modelo-de-dados.md, 2.2; 04, roteiro do ciclo 8): envio periódico por
 // e-mail, por usuário, sempre com as permissões dele no momento do envio (P27).
-import { CHAVES_FREQUENCIA_ENVIO, CHAVES_RELATORIO_AGENDAVEL } from '@vinicycle/shared';
-import { boolean, check, index, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
-import { estabelecimento, usuario } from './acesso';
-import { criacao, dataHora, emLista, id } from './comum';
-import { empresa } from './plataforma';
+import { CHAVES_FREQUENCIA_ENVIO, CHAVES_RELATORIO_AGENDAVEL } from '@vinicycle/shared'
+import { boolean, check, index, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import { estabelecimento, usuario } from './acesso'
+import { criacao, dataHora, emLista, id } from './comum'
+import { empresa } from './plataforma'
 
 export const relatorioAgendado = pgTable(
   'relatorio_agendado',
@@ -37,4 +37,4 @@ export const relatorioAgendado = pgTable(
     uniqueIndex('relatorio_agendado_unico').on(t.usuarioId, t.estabelecimentoId, t.relatorio),
     index('relatorio_agendado_proximo').on(t.proximoEnvio),
   ],
-);
+)

@@ -1,12 +1,12 @@
 // Fluxo de aprovação (P27; 03-modelo-de-dados.md, 2.2; 04, roteiro do ciclo 8): a ação sujeita à
 // aprovação vira um pedido pendente; aprovado, é feito na hora com os dados do pedido. Quais ações
 // exigem aprovação é parâmetro da empresa ("aprovacoes"), não tabela própria.
-import { CHAVES_SITUACAO_APROVACAO, CHAVES_TIPO_APROVACAO } from '@vinicycle/shared';
-import { sql } from 'drizzle-orm';
-import { check, index, jsonb, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
-import { estabelecimento, usuario } from './acesso';
-import { dataHora, emLista, id } from './comum';
-import { empresa } from './plataforma';
+import { CHAVES_SITUACAO_APROVACAO, CHAVES_TIPO_APROVACAO } from '@vinicycle/shared'
+import { sql } from 'drizzle-orm'
+import { check, index, jsonb, pgTable, text, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
+import { estabelecimento, usuario } from './acesso'
+import { dataHora, emLista, id } from './comum'
+import { empresa } from './plataforma'
 
 export const solicitacaoAprovacao = pgTable(
   'solicitacao_aprovacao',
@@ -55,4 +55,4 @@ export const solicitacaoAprovacao = pgTable(
       .where(sql`situacao = 'pendente'`),
     index('solicitacao_aprovacao_estabelecimento').on(t.estabelecimentoId, t.situacao),
   ],
-);
+)

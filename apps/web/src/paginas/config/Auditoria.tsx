@@ -1,13 +1,13 @@
 // Consulta da auditoria da empresa (P14), incluindo personificações (P28).
-import { api } from '@/lib/api';
-import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { useQuery } from '@tanstack/react-query';
-import { Diferencas, NOMES_ACAO, type RegistroAuditoria } from '@/componentes/Historico';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
+import { api } from '@/lib/api'
+import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { useQuery } from '@tanstack/react-query'
+import { Diferencas, NOMES_ACAO, type RegistroAuditoria } from '@/componentes/Historico'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
 
 const ENTIDADES: Record<string, string> = {
   empresa: 'Empresa',
@@ -35,11 +35,11 @@ const ENTIDADES: Record<string, string> = {
   periodicidade_higienizacao: 'Higienização',
   troca_master: 'Passagem de bastão',
   listagem: 'Listagem',
-};
+}
 
 export function PaginaAuditoria() {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
   return (
     <Pagina titulo="Auditoria" trilha={['Configurações']}>
       <p className="text-sm text-muted-foreground">
@@ -136,7 +136,7 @@ export function PaginaAuditoria() {
         ]}
       />
     </Pagina>
-  );
+  )
 }
 
 /** Quando e por quem a empresa foi personificada pelo suporte (P28, transparência). */
@@ -146,16 +146,16 @@ function AcessosDoSuporte() {
     queryFn: () =>
       api.get<
         Array<{
-          id: string;
-          membro: string;
-          usuario: string;
-          motivo: string;
-          inicio: string;
-          fim: string | null;
+          id: string
+          membro: string
+          usuario: string
+          motivo: string
+          inicio: string
+          fim: string | null
         }>
       >('/api/personificacoes'),
-  });
-  if (!q.data?.length) return null;
+  })
+  if (!q.data?.length) return null
   return (
     <Cartao>
       <CabecalhoCartao
@@ -171,5 +171,5 @@ function AcessosDoSuporte() {
         ))}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }

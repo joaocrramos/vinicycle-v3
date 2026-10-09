@@ -9,18 +9,18 @@ import {
   text,
   uniqueIndex,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento } from './acesso';
-import { criacao, id } from './comum';
-import { movimentoEstoque } from './estoque';
-import { empresa } from './plataforma';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento } from './acesso'
+import { criacao, id } from './comum'
+import { movimentoEstoque } from './estoque'
+import { empresa } from './plataforma'
 
 function daEmpresa(
   coluna: AnyPgColumn,
   empresaId: AnyPgColumn,
   alvo: { id: AnyPgColumn; empresaId: AnyPgColumn },
 ) {
-  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] });
+  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] })
 }
 
 export const comunicacaoAlcool = pgTable(
@@ -43,4 +43,4 @@ export const comunicacaoAlcool = pgTable(
     daEmpresa(t.movimentoId, t.empresaId, movimentoEstoque),
     uniqueIndex('comunicacao_alcool_movimento').on(t.movimentoId),
   ],
-);
+)

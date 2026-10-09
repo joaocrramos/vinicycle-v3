@@ -2,7 +2,7 @@
 // (decidido em 03/10/2026). Fora só a linha "teste excluir" (código 49211), que é sujeira da tabela.
 // Fonte: https://www.agricultura.rs.gov.br/upload/arquivos/202303/30112422-sisdevin-lista-cultivares-atualizado-em-marco-de-2023.pdf
 
-export const FONTE_CULTIVARES = 'SISDEVIN, lista de cultivares de 30/03/2023';
+export const FONTE_CULTIVARES = 'SISDEVIN, lista de cultivares de 30/03/2023'
 
 export const CULTIVARES: ReadonlyArray<
   readonly [
@@ -253,4 +253,4 @@ export const CULTIVARES: ReadonlyArray<
   ['2496', 'Viognier', 'branca', 'vinifera'],
   ['49550', 'Xarello', 'branca', 'vinifera'],
   ['1325', 'Zinfandel', 'tinta', 'vinifera'],
-];
+]

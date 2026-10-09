@@ -1,5 +1,5 @@
 // Configuração lida do ambiente. Segredos nunca ficam no código (02-arquitetura.md, Princípio 5).
-import { z } from 'zod';
+import { z } from 'zod'
 
 const esquema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -19,14 +19,14 @@ const esquema = z.object({
   RESEND_API_KEY: z.string().optional(),
   /** Pasta da interface compilada, servida pela API em produção. */
   WEB_DIR: z.string().optional(),
-});
+})
 
-export type Config = z.infer<typeof esquema> & { cookieSeguro: boolean };
+export type Config = z.infer<typeof esquema> & { cookieSeguro: boolean }
 
 export function lerConfig(env: NodeJS.ProcessEnv = process.env): Config {
-  const c = esquema.parse(env);
+  const c = esquema.parse(env)
   if (c.EMAIL_PROVEDOR === 'resend' && !c.RESEND_API_KEY) {
-    throw new Error('EMAIL_PROVEDOR=resend exige RESEND_API_KEY');
+    throw new Error('EMAIL_PROVEDOR=resend exige RESEND_API_KEY')
   }
-  return { ...c, cookieSeguro: c.URL_APLICACAO.startsWith('https://') };
+  return { ...c, cookieSeguro: c.URL_APLICACAO.startsWith('https://') }
 }

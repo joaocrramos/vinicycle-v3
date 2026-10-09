@@ -1,5 +1,5 @@
 // Gestão › Pessoas (P2; gestao.md): cadastro único com papéis.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   dadosPessoa,
   formatarDocumento,
@@ -7,57 +7,57 @@ import {
   NOMES_SITUACAO_SIVIBE,
   SITUACOES_SIVIBE,
   type CodigoPapel,
-} from '@vinicycle/shared';
-import { Plus, Trash2 } from 'lucide-react';
-import { type FormEvent, type ReactNode, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha';
-import { Anexos } from '@/componentes/Anexos';
-import { CampoTelefone } from '@/componentes/campos-especiais';
-import { FICHA_VAZIA_PJ, FichaCadastral } from '@/componentes/FichaCadastral';
-import { Historico } from '@/componentes/Historico';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { type Formulario, useFormulario } from '@/lib/formulario';
-import { useReferencia } from '@/lib/referencia';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarTelefone } from '@vinicycle/shared';
+} from '@vinicycle/shared'
+import { Plus, Trash2 } from 'lucide-react'
+import { type FormEvent, type ReactNode, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha'
+import { Anexos } from '@/componentes/Anexos'
+import { CampoTelefone } from '@/componentes/campos-especiais'
+import { FICHA_VAZIA_PJ, FichaCadastral } from '@/componentes/FichaCadastral'
+import { Historico } from '@/componentes/Historico'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { type Formulario, useFormulario } from '@/lib/formulario'
+import { useReferencia } from '@/lib/referencia'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarTelefone } from '@vinicycle/shared'
 
 interface Linha {
-  id: string;
-  nome: string;
-  nomeFantasia: string | null;
-  tipoPessoa: string;
-  documento: string | null;
-  ativo: boolean;
-  papeis: CodigoPapel[];
-  municipio: string | null;
-  email: string | null;
-  telefone: string | null;
+  id: string
+  nome: string
+  nomeFantasia: string | null
+  tipoPessoa: string
+  documento: string | null
+  ativo: boolean
+  papeis: CodigoPapel[]
+  municipio: string | null
+  email: string | null
+  telefone: string | null
 }
 
 function documentoFormatado(tipo: string, doc: string | null) {
-  if (!doc) return '—';
+  if (!doc) return '—'
   return tipo === 'fisica'
     ? formatarDocumento('cpf', doc)
     : tipo === 'juridica'
       ? formatarDocumento('cnpj', doc)
-      : doc;
+      : doc
 }
 
 export function ListaPessoas() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [inativar, setInativar] = useState<Linha | null>(null);
-  const podeInativar = pode(s, 'gestao.pessoas', 'inativar');
-  const { data: ref } = useReferencia();
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [inativar, setInativar] = useState<Linha | null>(null)
+  const podeInativar = pode(s, 'gestao.pessoas', 'inativar')
+  const { data: ref } = useReferencia()
   return (
     <Pagina
       titulo="Pessoas"
@@ -190,8 +190,8 @@ export function ListaPessoas() {
               aoReativar={
                 podeInativar
                   ? async () => {
-                      await api.post(`/api/pessoas/${p.id}/reativar`);
-                      await qc.invalidateQueries({ queryKey: ['lista', '/api/pessoas'] });
+                      await api.post(`/api/pessoas/${p.id}/reativar`)
+                      await qc.invalidateQueries({ queryKey: ['lista', '/api/pessoas'] })
                     }
                   : undefined
               }
@@ -206,12 +206,12 @@ export function ListaPessoas() {
         descricao="A pessoa deixa de aparecer em registros novos; os antigos continuam com ela (P26)."
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/pessoas/${inativar!.id}/inativar`, { motivo });
-          await qc.invalidateQueries({ queryKey: ['lista', '/api/pessoas'] });
+          await api.post(`/api/pessoas/${inativar!.id}/inativar`, { motivo })
+          await qc.invalidateQueries({ queryKey: ['lista', '/api/pessoas'] })
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 const VAZIA = {
@@ -236,7 +236,7 @@ const VAZIA = {
   transportador: { placas: [] as string[] },
   contatos: [] as Array<{ nome: string; cargo: string; emails: string[]; telefones: string[] }>,
   versao: undefined as number | undefined,
-};
+}
 
 /** Lista de textos com incluir e remover (marcas, placas). */
 function ListaTextos({
@@ -245,12 +245,12 @@ function ListaTextos({
   rotulo,
   placeholder,
 }: {
-  valores: string[];
-  aoMudar: (v: string[]) => void;
-  rotulo: string;
-  placeholder: string;
+  valores: string[]
+  aoMudar: (v: string[]) => void
+  rotulo: string
+  placeholder: string
 }) {
-  const [novo, setNovo] = useState('');
+  const [novo, setNovo] = useState('')
   return (
     <div className="flex flex-col gap-2">
       <span className="text-sm font-medium">{rotulo}</span>
@@ -280,9 +280,9 @@ function ListaTextos({
           onChange={(e) => setNovo(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && novo.trim()) {
-              e.preventDefault();
-              aoMudar([...valores, novo.trim()]);
-              setNovo('');
+              e.preventDefault()
+              aoMudar([...valores, novo.trim()])
+              setNovo('')
             }
           }}
         />
@@ -290,15 +290,15 @@ function ListaTextos({
           variante="secundario"
           disabled={!novo.trim()}
           onClick={() => {
-            aoMudar([...valores, novo.trim()]);
-            setNovo('');
+            aoMudar([...valores, novo.trim()])
+            setNovo('')
           }}
         >
           Incluir
         </Botao>
       </div>
     </div>
-  );
+  )
 }
 
 function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
@@ -307,14 +307,14 @@ function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
       <legend className="px-1 text-sm font-semibold">{titulo}</legend>
       {children}
     </fieldset>
-  );
+  )
 }
 
 function CamposPapeis({ form }: { form: Formulario }) {
-  const { data: ref } = useReferencia();
-  const papeis = (form.valor('papeis') as CodigoPapel[]) ?? [];
-  const tem = (p: CodigoPapel) => papeis.includes(p);
-  const valor = (c: string) => (form.valor(c) as string | null) ?? '';
+  const { data: ref } = useReferencia()
+  const papeis = (form.valor('papeis') as CodigoPapel[]) ?? []
+  const tem = (p: CodigoPapel) => papeis.includes(p)
+  const valor = (c: string) => (form.valor(c) as string | null) ?? ''
   const texto = (c: string, props: Record<string, unknown> = {}) => (
     <Entrada
       id={c}
@@ -323,10 +323,10 @@ function CamposPapeis({ form }: { form: Formulario }) {
       onBlur={() => form.tocar(c)}
       {...props}
     />
-  );
-  const lista = (nome: string) => ref?.listas[nome] ?? [];
-  const pj = form.valor('ficha.tipoPessoa') === 'juridica';
-  const contatos = (form.valor('contatos') as typeof VAZIA.contatos) ?? [];
+  )
+  const lista = (nome: string) => ref?.listas[nome] ?? []
+  const pj = form.valor('ficha.tipoPessoa') === 'juridica'
+  const contatos = (form.valor('contatos') as typeof VAZIA.contatos) ?? []
 
   return (
     <div className="flex flex-col gap-5">
@@ -412,7 +412,7 @@ function CamposPapeis({ form }: { form: Formulario }) {
         <Secao titulo="Fornecedor">
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             {lista('categoria_fornecimento').map((o) => {
-              const atuais = (form.valor('fornecedor.categorias') as string[]) ?? [];
+              const atuais = (form.valor('fornecedor.categorias') as string[]) ?? []
               return (
                 <Caixa
                   key={o.codigo}
@@ -427,7 +427,7 @@ function CamposPapeis({ form }: { form: Formulario }) {
                     )
                   }
                 />
-              );
+              )
             })}
           </div>
         </Secao>
@@ -633,7 +633,7 @@ function CamposPapeis({ form }: { form: Formulario }) {
         </Secao>
       )}
     </div>
-  );
+  )
 }
 
 function FormularioPessoa({
@@ -641,26 +641,26 @@ function FormularioPessoa({
   aoSalvar,
   somenteLeitura,
 }: {
-  inicial: typeof VAZIA;
-  aoSalvar: (d: unknown) => Promise<void>;
-  somenteLeitura?: boolean;
+  inicial: typeof VAZIA
+  aoSalvar: (d: unknown) => Promise<void>
+  somenteLeitura?: boolean
 }) {
-  const form = useFormulario(dadosPessoa, inicial);
-  const [enviando, setEnviando] = useState(false);
-  const [salvo, setSalvo] = useState(false);
+  const form = useFormulario(dadosPessoa, inicial)
+  const [enviando, setEnviando] = useState(false)
+  const [salvo, setSalvo] = useState(false)
   async function enviar(ev: FormEvent) {
-    ev.preventDefault();
-    setSalvo(false);
-    const d = form.validar();
-    if (!d) return;
-    setEnviando(true);
+    ev.preventDefault()
+    setSalvo(false)
+    const d = form.validar()
+    if (!d) return
+    setEnviando(true)
     try {
-      await aoSalvar(d);
-      setSalvo(true);
+      await aoSalvar(d)
+      setSalvo(true)
     } catch (e) {
-      form.erroDaApi(e);
+      form.erroDaApi(e)
     } finally {
-      setEnviando(false);
+      setEnviando(false)
     }
   }
   return (
@@ -683,14 +683,14 @@ function FormularioPessoa({
         </div>
       )}
     </form>
-  );
+  )
 }
 
 /** Mistura os dados lidos com os vazios, para todos os campos existirem no formulário. */
 function comVazios(p: Partial<typeof VAZIA>): typeof VAZIA {
-  const r = { ...VAZIA } as Record<string, unknown>;
+  const r = { ...VAZIA } as Record<string, unknown>
   for (const [k, v] of Object.entries(p)) {
-    const base = r[k];
+    const base = r[k]
     r[k] =
       v &&
       typeof v === 'object' &&
@@ -699,13 +699,13 @@ function comVazios(p: Partial<typeof VAZIA>): typeof VAZIA {
       typeof base === 'object' &&
       !Array.isArray(base)
         ? { ...base, ...v }
-        : (v ?? base);
+        : (v ?? base)
   }
-  return r as typeof VAZIA;
+  return r as typeof VAZIA
 }
 
 export function NovaPessoa() {
-  const navegar = useNavigate();
+  const navegar = useNavigate()
   return (
     <Pagina titulo="Nova pessoa" trilha={['Gestão', 'Pessoas']}>
       <Cartao>
@@ -713,36 +713,36 @@ export function NovaPessoa() {
           <FormularioPessoa
             inicial={VAZIA}
             aoSalvar={async (d) => {
-              const r = await api.post<{ id: string }>('/api/pessoas', d);
-              navegar(`/gestao/pessoas/${r.id}`, { replace: true });
+              const r = await api.post<{ id: string }>('/api/pessoas', d)
+              navegar(`/gestao/pessoas/${r.id}`, { replace: true })
             }}
           />
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }
 
 export function FichaPessoa() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [inativar, setInativar] = useState(false);
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [inativar, setInativar] = useState(false)
   const q = useQuery({
     queryKey: ['pessoa', id],
     queryFn: () =>
       api.get<
         typeof VAZIA & { id: string; ativo: boolean; versao: number; ficha: { nome: string } }
       >(`/api/pessoas/${id}`),
-  });
-  const podeEditar = pode(s, 'gestao.pessoas', 'editar');
-  if (q.isLoading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
-  if (q.isError) return <Aviso tom="erro">{(q.error as Error).message}</Aviso>;
-  const p = q.data!;
+  })
+  const podeEditar = pode(s, 'gestao.pessoas', 'editar')
+  if (q.isLoading) return <p className="text-sm text-muted-foreground">Carregando…</p>
+  if (q.isError) return <Aviso tom="erro">{(q.error as Error).message}</Aviso>
+  const p = q.data!
   const recarregar = async () => {
-    await qc.invalidateQueries({ queryKey: ['pessoa', id] });
-    await qc.invalidateQueries({ queryKey: ['historico', 'pessoa', id] });
-  };
+    await qc.invalidateQueries({ queryKey: ['pessoa', id] })
+    await qc.invalidateQueries({ queryKey: ['historico', 'pessoa', id] })
+  }
   return (
     <Pagina
       titulo={p.ficha.nome}
@@ -754,8 +754,8 @@ export function FichaPessoa() {
             ativo={p.ativo}
             aoInativar={() => setInativar(true)}
             aoReativar={async () => {
-              await api.post(`/api/pessoas/${id}/reativar`);
-              await recarregar();
+              await api.post(`/api/pessoas/${id}/reativar`)
+              await recarregar()
             }}
           />
         )
@@ -779,8 +779,8 @@ export function FichaPessoa() {
                 inicial={comVazios(p)}
                 somenteLeitura={!podeEditar}
                 aoSalvar={async (d) => {
-                  await api.put(`/api/pessoas/${id}`, d);
-                  await recarregar();
+                  await api.put(`/api/pessoas/${id}`, d)
+                  await recarregar()
                 }}
               />
             </CorpoCartao>
@@ -800,10 +800,10 @@ export function FichaPessoa() {
         descricao="A pessoa deixa de aparecer em registros novos; os antigos continuam com ela (P26)."
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/pessoas/${id}/inativar`, { motivo });
-          await recarregar();
+          await api.post(`/api/pessoas/${id}/inativar`, { motivo })
+          await recarregar()
         }}
       />
     </Pagina>
-  );
+  )
 }

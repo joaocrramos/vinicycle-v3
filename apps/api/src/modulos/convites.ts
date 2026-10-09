@@ -1,40 +1,40 @@
 // Convites (P8; administracao.md, Fluxo, passo 3). Link de uso único, com validade de 7 dias e
 // reenviável. Quem já tem cadastro só aceita o vínculo, confirmando a senha.
-import { aceitarConvite, senhaNova } from '@vinicycle/shared';
-import { and, desc, eq, inArray, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import type { z } from 'zod';
-import { definirContexto, type Tx } from '../db/cliente';
-import * as s from '../db/schema';
-import { auditar, type Origem } from '../nucleo/auditoria';
-import { enfileirarEmail } from '../nucleo/email';
-import { ErroAplicacao, ErroNaoEncontrado, ErroRegra } from '../nucleo/erros';
-import { emailConvite } from '../nucleo/modelos-email';
-import { origemDaRequisicao } from '../nucleo/requisicao';
-import { conferirSenha, gerarHashSenha, gerarToken, hashToken } from '../nucleo/seguranca';
-import { autenticar, criarSessao } from '../nucleo/sessoes';
-import { limitesEfetivos } from './assinaturas';
-import { gravarCookie, TENTATIVAS_MAXIMAS, BLOQUEIO_MINUTOS } from './autenticacao';
-import { estabelecimentosDoVinculo, estadoSessao } from './estado-sessao';
-import { criarFicha } from './fichas';
+import { aceitarConvite, senhaNova } from '@vinicycle/shared'
+import { and, desc, eq, inArray, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import type { z } from 'zod'
+import { definirContexto, type Tx } from '../db/cliente'
+import * as s from '../db/schema'
+import { auditar, type Origem } from '../nucleo/auditoria'
+import { enfileirarEmail } from '../nucleo/email'
+import { ErroAplicacao, ErroNaoEncontrado, ErroRegra } from '../nucleo/erros'
+import { emailConvite } from '../nucleo/modelos-email'
+import { origemDaRequisicao } from '../nucleo/requisicao'
+import { conferirSenha, gerarHashSenha, gerarToken, hashToken } from '../nucleo/seguranca'
+import { autenticar, criarSessao } from '../nucleo/sessoes'
+import { limitesEfetivos } from './assinaturas'
+import { gravarCookie, TENTATIVAS_MAXIMAS, BLOQUEIO_MINUTOS } from './autenticacao'
+import { estabelecimentosDoVinculo, estadoSessao } from './estado-sessao'
+import { criarFicha } from './fichas'
 
 export async function validadeConviteDias(tx: Tx): Promise<number> {
   const [c] = await tx
     .select({ dias: s.configPlataforma.conviteValidadeDias })
-    .from(s.configPlataforma);
-  return c?.dias ?? 7;
+    .from(s.configPlataforma)
+  return c?.dias ?? 7
 }
 
 /** Usuários ativos mais convites pendentes não podem passar do limite do plano (P25). */
 export async function conferirLimiteUsuarios(tx: Tx, empresaId: string): Promise<void> {
-  const limite = (await limitesEfetivos(tx, empresaId))?.usuarios ?? null;
-  if (limite === null) return;
+  const limite = (await limitesEfetivos(tx, empresaId))?.usuarios ?? null
+  if (limite === null) return
   const [{ ativos }] = (await tx
     .select({ ativos: sql<number>`count(*)::int` })
     .from(s.vinculo)
     .where(and(eq(s.vinculo.empresaId, empresaId), eq(s.vinculo.ativo, true)))) as [
     { ativos: number },
-  ];
+  ]
   const [{ pendentes }] = (await tx
     .select({ pendentes: sql<number>`count(*)::int` })
     .from(s.convite)
@@ -44,12 +44,12 @@ export async function conferirLimiteUsuarios(tx: Tx, empresaId: string): Promise
         eq(s.convite.situacao, 'pendente'),
         sql`${s.convite.expiraEm} > now()`,
       ),
-    )) as [{ pendentes: number }];
+    )) as [{ pendentes: number }]
   if (ativos + pendentes >= limite) {
     throw new ErroRegra(
       `A assinatura permite ${limite} usuários, e esse limite já foi atingido (contando convites pendentes). Para incluir mais, contrate usuários adicionais.`,
       'limite_plano',
-    );
+    )
   }
 }
 
@@ -58,18 +58,18 @@ export async function criarConvite(
   tx: Tx,
   origem: Origem,
   dados: {
-    empresaId: string;
-    email: string;
-    perfilId: string;
-    estabelecimentos: string[];
-    urlAplicacao: string;
+    empresaId: string
+    email: string
+    perfilId: string
+    estabelecimentos: string[]
+    urlAplicacao: string
   },
 ): Promise<string> {
   const [p] = await tx
     .select({ eMaster: s.perfil.eMaster, ativo: s.perfil.ativo })
     .from(s.perfil)
-    .where(and(eq(s.perfil.id, dados.perfilId), eq(s.perfil.empresaId, dados.empresaId)));
-  if (!p || !p.ativo) throw new ErroRegra('Perfil inválido.', 'perfil');
+    .where(and(eq(s.perfil.id, dados.perfilId), eq(s.perfil.empresaId, dados.empresaId)))
+  if (!p || !p.ativo) throw new ErroRegra('Perfil inválido.', 'perfil')
   if (dados.estabelecimentos.length) {
     const validos = await tx
       .select({ id: s.estabelecimento.id })
@@ -79,9 +79,9 @@ export async function criarConvite(
           eq(s.estabelecimento.empresaId, dados.empresaId),
           inArray(s.estabelecimento.id, dados.estabelecimentos),
         ),
-      );
+      )
     if (validos.length !== new Set(dados.estabelecimentos).size) {
-      throw new ErroRegra('Estabelecimento inválido.', 'estabelecimento');
+      throw new ErroRegra('Estabelecimento inválido.', 'estabelecimento')
     }
   }
   const [jaVinculado] = await tx
@@ -94,8 +94,8 @@ export async function criarConvite(
         eq(s.vinculo.ativo, true),
         eq(sql`lower(${s.usuario.email})`, dados.email.toLowerCase()),
       ),
-    );
-  if (jaVinculado) throw new ErroRegra('Este e-mail já tem acesso à empresa.', 'ja_vinculado');
+    )
+  if (jaVinculado) throw new ErroRegra('Este e-mail já tem acesso à empresa.', 'ja_vinculado')
 
   // Um convite pendente por e-mail: o anterior é cancelado e substituído.
   await tx
@@ -107,10 +107,10 @@ export async function criarConvite(
         eq(s.convite.situacao, 'pendente'),
         eq(sql`lower(${s.convite.email})`, dados.email.toLowerCase()),
       ),
-    );
+    )
 
-  const dias = await validadeConviteDias(tx);
-  const { token, hash } = gerarToken();
+  const dias = await validadeConviteDias(tx)
+  const { token, hash } = gerarToken()
   const [c] = await tx
     .insert(s.convite)
     .values({
@@ -123,8 +123,8 @@ export async function criarConvite(
       expiraEm: new Date(Date.now() + dias * 86400_000),
       criadoPor: origem.usuarioId,
     })
-    .returning({ id: s.convite.id });
-  await enviarEmailConvite(tx, origem, c!.id, token, dados.urlAplicacao, p.eMaster);
+    .returning({ id: s.convite.id })
+  await enviarEmailConvite(tx, origem, c!.id, token, dados.urlAplicacao, p.eMaster)
   await auditar(tx, origem, {
     acao: 'criar',
     entidade: 'convite',
@@ -135,8 +135,8 @@ export async function criarConvite(
       perfilId: dados.perfilId,
       estabelecimentos: dados.estabelecimentos,
     },
-  });
-  return c!.id;
+  })
+  return c!.id
 }
 
 async function enviarEmailConvite(
@@ -157,17 +157,17 @@ async function enviarEmailConvite(
     .from(s.convite)
     .innerJoin(s.empresa, eq(s.empresa.id, s.convite.empresaId))
     .innerJoin(s.ficha, eq(s.ficha.id, s.empresa.fichaId))
-    .where(eq(s.convite.id, conviteId));
-  let quem: string | null = null;
+    .where(eq(s.convite.id, conviteId))
+  let quem: string | null = null
   if (origem.usuarioId) {
     const [u] = await tx
       .select({ nome: s.ficha.nome })
       .from(s.usuario)
       .innerJoin(s.ficha, eq(s.ficha.id, s.usuario.fichaId))
-      .where(eq(s.usuario.id, origem.usuarioId));
-    quem = u?.nome ?? null;
+      .where(eq(s.usuario.id, origem.usuarioId))
+    quem = u?.nome ?? null
   }
-  const dias = await validadeConviteDias(tx);
+  const dias = await validadeConviteDias(tx)
   await enfileirarEmail(tx, {
     ...emailConvite({
       para: c!.email,
@@ -181,7 +181,7 @@ async function enviarEmailConvite(
     origem: 'convite',
     origemId: conviteId,
     empresaId: c!.empresaId,
-  });
+  })
 }
 
 /** Reenvia com novo link e nova validade (o link anterior deixa de valer). */
@@ -200,16 +200,16 @@ export async function reenviarConvite(
     })
     .from(s.convite)
     .innerJoin(s.perfil, eq(s.perfil.id, s.convite.perfilId))
-    .where(eq(s.convite.id, conviteId));
-  if (!c) throw new ErroNaoEncontrado('Convite não encontrado.');
+    .where(eq(s.convite.id, conviteId))
+  if (!c) throw new ErroNaoEncontrado('Convite não encontrado.')
   if (c.situacao !== 'pendente' && c.situacao !== 'expirado') {
     throw new ErroRegra(
       'Só convites pendentes ou expirados podem ser reenviados.',
       'convite_situacao',
-    );
+    )
   }
-  const dias = await validadeConviteDias(tx);
-  const { token, hash } = gerarToken();
+  const dias = await validadeConviteDias(tx)
+  const { token, hash } = gerarToken()
   await tx
     .update(s.convite)
     .set({
@@ -219,25 +219,25 @@ export async function reenviarConvite(
       expiraEm: new Date(Date.now() + dias * 86400_000),
       reenvios: sql`${s.convite.reenvios} + 1`,
     })
-    .where(eq(s.convite.id, conviteId));
-  await enviarEmailConvite(tx, origem, conviteId, token, urlAplicacao, c.eMaster);
+    .where(eq(s.convite.id, conviteId))
+  await enviarEmailConvite(tx, origem, conviteId, token, urlAplicacao, c.eMaster)
   await auditar(tx, origem, {
     acao: 'reenviar',
     entidade: 'convite',
     registroId: conviteId,
     empresaId: c.empresaId,
-  });
+  })
 }
 
 /** Lê o convite pelo link e ativa o contexto da empresa que convidou. */
 async function abrirConvite(tx: Tx, token: string) {
-  const hash = hashToken(token);
+  const hash = hashToken(token)
   const r = await tx.execute<{ empresa: string | null }>(
     sql`select convite_empresa_por_token(${hash}) as empresa`,
-  );
-  const empresaId = r.rows[0]?.empresa;
-  if (!empresaId) throw new ErroNaoEncontrado('Convite inválido. Peça um novo a quem convidou.');
-  await definirContexto(tx, { empresaId, autenticacao: true });
+  )
+  const empresaId = r.rows[0]?.empresa
+  if (!empresaId) throw new ErroNaoEncontrado('Convite inválido. Peça um novo a quem convidou.')
+  await definirContexto(tx, { empresaId, autenticacao: true })
   const [c] = await tx
     .select({
       id: s.convite.id,
@@ -256,11 +256,11 @@ async function abrirConvite(tx: Tx, token: string) {
     .innerJoin(s.perfil, eq(s.perfil.id, s.convite.perfilId))
     .innerJoin(s.empresa, eq(s.empresa.id, s.convite.empresaId))
     .innerJoin(s.ficha, eq(s.ficha.id, s.empresa.fichaId))
-    .where(eq(s.convite.tokenHash, hash));
-  if (!c) throw new ErroNaoEncontrado('Convite inválido. Peça um novo a quem convidou.');
+    .where(eq(s.convite.tokenHash, hash))
+  if (!c) throw new ErroNaoEncontrado('Convite inválido. Peça um novo a quem convidou.')
   const situacao =
-    c.situacao === 'pendente' && c.expiraEm.getTime() < Date.now() ? 'expirado' : c.situacao;
-  return { ...c, situacao };
+    c.situacao === 'pendente' && c.expiraEm.getTime() < Date.now() ? 'expirado' : c.situacao
+  return { ...c, situacao }
 }
 
 export async function termosVigentes(tx: Tx) {
@@ -273,7 +273,7 @@ export async function termosVigentes(tx: Tx) {
     })
     .from(s.termoVersao)
     .where(sql`${s.termoVersao.vigenteDesde} <= now()`)
-    .orderBy(s.termoVersao.tipo, desc(s.termoVersao.vigenteDesde));
+    .orderBy(s.termoVersao.tipo, desc(s.termoVersao.vigenteDesde))
 }
 
 /**
@@ -290,38 +290,38 @@ export async function entrarOuCadastrar(
   const [existente] = await tx
     .select()
     .from(s.usuario)
-    .where(eq(sql`lower(${s.usuario.email})`, email));
-  let usuarioId: string;
+    .where(eq(sql`lower(${s.usuario.email})`, email))
+  let usuarioId: string
   if (existente) {
     if (existente.bloqueadoAte && existente.bloqueadoAte.getTime() > Date.now()) {
-      return { erro: 'Conta bloqueada por excesso de tentativas. Tente mais tarde.' };
+      return { erro: 'Conta bloqueada por excesso de tentativas. Tente mais tarde.' }
     }
     if (!existente.ativo || !(await conferirSenha(existente.senhaHash, dados.senha))) {
-      const tentativas = existente.tentativasLogin + 1;
-      const bloquear = tentativas >= TENTATIVAS_MAXIMAS;
+      const tentativas = existente.tentativasLogin + 1
+      const bloquear = tentativas >= TENTATIVAS_MAXIMAS
       await tx
         .update(s.usuario)
         .set({
           tentativasLogin: bloquear ? 0 : tentativas,
           bloqueadoAte: bloquear ? new Date(Date.now() + BLOQUEIO_MINUTOS * 60000) : null,
         })
-        .where(eq(s.usuario.id, existente.id));
-      return { erro: 'Senha incorreta.' };
+        .where(eq(s.usuario.id, existente.id))
+      return { erro: 'Senha incorreta.' }
     }
-    usuarioId = existente.id;
+    usuarioId = existente.id
   } else {
-    if (!dados.ficha) throw new ErroRegra('Preencha os seus dados.', 'ficha');
+    if (!dados.ficha) throw new ErroRegra('Preencha os seus dados.', 'ficha')
     if (!dados.aceiteTermos) {
       throw new ErroRegra(
         'É preciso aceitar os termos de uso e a política de privacidade.',
         'termos',
-      );
+      )
     }
-    const senha = senhaNova.parse(dados.senha);
+    const senha = senhaNova.parse(dados.senha)
     if (senha.toLowerCase().includes(email.split('@')[0]!.toLowerCase())) {
-      throw new ErroRegra('A senha não pode conter o seu e-mail.', 'senha');
+      throw new ErroRegra('A senha não pode conter o seu e-mail.', 'senha')
     }
-    const fichaId = await criarFicha(tx, dados.ficha, 'usuario', null, null);
+    const fichaId = await criarFicha(tx, dados.ficha, 'usuario', null, null)
     const [u] = await tx
       .insert(s.usuario)
       .values({
@@ -330,36 +330,36 @@ export async function entrarOuCadastrar(
         senhaHash: await gerarHashSenha(senha),
         senhaAlteradaEm: sql`now()`,
       })
-      .returning({ id: s.usuario.id });
-    usuarioId = u!.id;
+      .returning({ id: s.usuario.id })
+    usuarioId = u!.id
   }
-  await definirContexto(tx, { empresaId, usuarioId, autenticacao: true });
+  await definirContexto(tx, { empresaId, usuarioId, autenticacao: true })
   await tx
     .update(s.usuario)
     .set({ tentativasLogin: 0, bloqueadoAte: null, ultimoAcessoEm: sql`now()` })
-    .where(eq(s.usuario.id, usuarioId));
+    .where(eq(s.usuario.id, usuarioId))
   // Aceite datado dos termos vigentes (P21).
   if (dados.aceiteTermos || !existente) {
     for (const t of await termosVigentes(tx)) {
       await tx
         .insert(s.termoAceite)
         .values({ usuarioId, termoVersaoId: t.id, ip })
-        .onConflictDoNothing();
+        .onConflictDoNothing()
     }
   }
-  return { usuarioId, novo: !existente };
+  return { usuarioId, novo: !existente }
 }
 
 export async function rotasConvites(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
 
   app.get<{ Params: { token: string } }>('/api/convites/:token', async (req) =>
     db.transaction(async (tx) => {
-      const c = await abrirConvite(tx, req.params.token);
+      const c = await abrirConvite(tx, req.params.token)
       const [u] = await tx
         .select({ id: s.usuario.id })
         .from(s.usuario)
-        .where(eq(sql`lower(${s.usuario.email})`, c.email));
+        .where(eq(sql`lower(${s.usuario.email})`, c.email))
       return {
         email: c.email,
         empresa: c.fantasia || c.empresa,
@@ -368,37 +368,37 @@ export async function rotasConvites(app: FastifyInstance): Promise<void> {
         situacao: c.situacao,
         usuarioExiste: !!u,
         termos: await termosVigentes(tx),
-      };
+      }
     }),
-  );
+  )
 
   app.post<{ Params: { token: string } }>(
     '/api/convites/:token/aceitar',
     { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
     async (req, reply) => {
-      const dados = aceitarConvite.parse(req.body);
-      const base = origemDaRequisicao(req);
+      const dados = aceitarConvite.parse(req.body)
+      const base = origemDaRequisicao(req)
       const r = await db.transaction(async (tx) => {
-        const c = await abrirConvite(tx, req.params.token);
+        const c = await abrirConvite(tx, req.params.token)
         if (c.situacao !== 'pendente') {
           throw new ErroRegra(
             c.situacao === 'expirado'
               ? 'Este convite expirou. Peça a quem convidou para reenviar.'
               : 'Este convite não está mais disponível.',
             'convite_situacao',
-          );
+          )
         }
-        const entrada = await entrarOuCadastrar(tx, c.email, c.empresaId, dados, req.ip);
-        if ('erro' in entrada) return entrada;
-        const { usuarioId, novo } = entrada;
+        const entrada = await entrarOuCadastrar(tx, c.email, c.empresaId, dados, req.ip)
+        if ('erro' in entrada) return entrada
+        const { usuarioId, novo } = entrada
 
         const [vinculoAnterior] = await tx
           .select()
           .from(s.vinculo)
-          .where(and(eq(s.vinculo.empresaId, c.empresaId), eq(s.vinculo.usuarioId, usuarioId)));
+          .where(and(eq(s.vinculo.empresaId, c.empresaId), eq(s.vinculo.usuarioId, usuarioId)))
         if (vinculoAnterior?.ativo)
-          throw new ErroRegra('Você já tem acesso a esta empresa.', 'ja_vinculado');
-        let vinculoId: string;
+          throw new ErroRegra('Você já tem acesso a esta empresa.', 'ja_vinculado')
+        let vinculoId: string
         if (vinculoAnterior) {
           await tx
             .update(s.vinculo)
@@ -414,11 +414,11 @@ export async function rotasConvites(app: FastifyInstance): Promise<void> {
               atualizadoPor: usuarioId,
               versao: sql`${s.vinculo.versao} + 1`,
             })
-            .where(eq(s.vinculo.id, vinculoAnterior.id));
-          vinculoId = vinculoAnterior.id;
+            .where(eq(s.vinculo.id, vinculoAnterior.id))
+          vinculoId = vinculoAnterior.id
           await tx
             .delete(s.vinculoEstabelecimento)
-            .where(eq(s.vinculoEstabelecimento.vinculoId, vinculoId));
+            .where(eq(s.vinculoEstabelecimento.vinculoId, vinculoId))
         } else {
           const [v] = await tx
             .insert(s.vinculo)
@@ -434,11 +434,11 @@ export async function rotasConvites(app: FastifyInstance): Promise<void> {
             .returning({ id: s.vinculo.id })
             .catch((e: { cause?: { constraint?: string } }) => {
               if (e.cause?.constraint === 'vinculo_master') {
-                throw new ErroRegra('A empresa já tem um Master ativo.', 'master_existente');
+                throw new ErroRegra('A empresa já tem um Master ativo.', 'master_existente')
               }
-              throw e;
-            });
-          vinculoId = v!.id;
+              throw e
+            })
+          vinculoId = v!.id
         }
         if (c.estabelecimentos.length) {
           const ativos = await tx
@@ -449,42 +449,42 @@ export async function rotasConvites(app: FastifyInstance): Promise<void> {
                 eq(s.estabelecimento.empresaId, c.empresaId),
                 inArray(s.estabelecimento.id, c.estabelecimentos),
               ),
-            );
+            )
           if (ativos.length) {
             await tx
               .insert(s.vinculoEstabelecimento)
               .values(
                 ativos.map((e) => ({ vinculoId, estabelecimentoId: e.id, empresaId: c.empresaId })),
-              );
+              )
           }
         }
         await tx
           .update(s.convite)
           .set({ situacao: 'aceito', aceitoEm: sql`now()`, aceitoPor: usuarioId })
-          .where(eq(s.convite.id, c.id));
+          .where(eq(s.convite.id, c.id))
 
-        const restritos = c.estabelecimentos;
-        const estabs = await estabelecimentosDoVinculo(tx, c.empresaId, restritos);
+        const restritos = c.estabelecimentos
+        const estabs = await estabelecimentosDoVinculo(tx, c.empresaId, restritos)
         const sessao = await criarSessao(tx, {
           usuarioId,
           ip: req.ip,
           navegador: req.headers['user-agent'] ?? null,
           empresaId: c.empresaId,
           estabelecimentoId: estabs[0]?.id ?? null,
-        });
-        const origem: Origem = { ...base, usuarioId, empresaId: c.empresaId };
+        })
+        const origem: Origem = { ...base, usuarioId, empresaId: c.empresaId }
         await auditar(tx, origem, {
           acao: 'aceitar',
           entidade: 'convite',
           registroId: c.id,
           dados: { vinculoId, novoUsuario: novo },
-        });
-        await auditar(tx, origem, { acao: 'login', entidade: 'sessao', registroId: sessao.id });
-        return { token: sessao.token };
-      });
-      if ('erro' in r) throw new ErroAplicacao(401, 'credenciais', r.erro!);
-      gravarCookie(app, reply, r.token);
-      return estadoSessao(db, (await autenticar(db, r.token))!);
+        })
+        await auditar(tx, origem, { acao: 'login', entidade: 'sessao', registroId: sessao.id })
+        return { token: sessao.token }
+      })
+      if ('erro' in r) throw new ErroAplicacao(401, 'credenciais', r.erro!)
+      gravarCookie(app, reply, r.token)
+      return estadoSessao(db, (await autenticar(db, r.token))!)
     },
-  );
+  )
 }

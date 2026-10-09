@@ -1,88 +1,88 @@
 // EnoTrace › Inventário da cantina (cantina.md, Inventário): a contagem lista os recipientes com o
 // volume do livro na hora da contagem; o cantineiro digita o medido; a confirmação lança de uma vez
 // os ajustes das diferenças, com motivo, numa operação "ajuste de inventário" (P27).
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatarDecimal } from '@vinicycle/shared';
-import { Plus } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
-import { agora, doCampo, MostrarPrevia, type Previa, paraCampo } from './operacoes/comum';
-import { litros } from './Projetos';
-import { useLocaisRecipientes } from './Recipientes';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { formatarDecimal } from '@vinicycle/shared'
+import { Plus } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
+import { agora, doCampo, MostrarPrevia, type Previa, paraCampo } from './operacoes/comum'
+import { litros } from './Projetos'
+import { useLocaisRecipientes } from './Recipientes'
 
-const F = 'enotrace.operacoes';
+const F = 'enotrace.operacoes'
 
 interface Resumo {
-  id: string;
-  contadoEm: string;
-  situacao: 'rascunho' | 'confirmado';
-  local: string | null;
-  operacaoId: string | null;
-  operacao: string | null;
-  operacaoSituacao: string | null;
-  recipientes: number;
-  contados: number;
-  observacao: string | null;
+  id: string
+  contadoEm: string
+  situacao: 'rascunho' | 'confirmado'
+  local: string | null
+  operacaoId: string | null
+  operacao: string | null
+  operacaoSituacao: string | null
+  recipientes: number
+  contados: number
+  observacao: string | null
 }
 
 interface Item {
-  recipienteId: string;
-  codigo: string;
-  tipo: string;
-  local: string;
-  capacidade: string;
-  situacao: string;
-  lote: { id: string; codigo: string } | null;
-  volumeLivro: string;
-  volumeMedido: string | null;
-  diferenca: string | null;
-  motivo: string | null;
+  recipienteId: string
+  codigo: string
+  tipo: string
+  local: string
+  capacidade: string
+  situacao: string
+  lote: { id: string; codigo: string } | null
+  volumeLivro: string
+  volumeMedido: string | null
+  diferenca: string | null
+  motivo: string | null
 }
 
 interface Inventario extends Omit<Resumo, 'recipientes' | 'contados'> {
-  versao: number;
-  percentual: number;
-  confirmadoEm: string | null;
-  confirmadoPor: string | null;
-  itens: Item[];
+  versao: number
+  percentual: number
+  confirmadoEm: string | null
+  confirmadoPor: string | null
+  itens: Item[]
 }
 
 const mensagem = (e: unknown) =>
   e instanceof ErroApi && e.campos.length
     ? `${e.message} ${e.campos.map((c) => c.mensagem).join(' ')}`
-    : (e as Error).message;
+    : (e as Error).message
 
-const centilitros = (v: string | null) => (v === null ? null : Math.round(Number(v) * 100));
+const centilitros = (v: string | null) => (v === null ? null : Math.round(Number(v) * 100))
 
 function Diferenca({ livro, medido }: { livro: string; medido: string | null }) {
-  const m = centilitros(medido);
-  if (m === null) return <span className="text-muted-foreground">—</span>;
-  const d = m - centilitros(livro)!;
-  if (d === 0) return <span className="text-muted-foreground">0</span>;
+  const m = centilitros(medido)
+  if (m === null) return <span className="text-muted-foreground">—</span>
+  const d = m - centilitros(livro)!
+  if (d === 0) return <span className="text-muted-foreground">0</span>
   return (
     <span className={d < 0 ? 'text-destructive' : 'text-success'}>
       {d > 0 ? '+' : '−'}
       {formatarDecimal((Math.abs(d) / 100).toFixed(2), 2)} L
     </span>
-  );
+  )
 }
 
 // Nova contagem ----------------------------------------------------------------------------------
 
 function DialogoNovo({ aoFechar }: { aoFechar: () => void }) {
-  const navegar = useNavigate();
-  const locais = useLocaisRecipientes();
-  const [d, setD] = useState({ contadoEm: agora(), localId: '' });
-  const [erro, setErro] = useState<string | null>(null);
+  const navegar = useNavigate()
+  const locais = useLocaisRecipientes()
+  const [d, setD] = useState({ contadoEm: agora(), localId: '' })
+  const [erro, setErro] = useState<string | null>(null)
   return (
     <Dialogo
       aberto
@@ -96,15 +96,15 @@ function DialogoNovo({ aoFechar }: { aoFechar: () => void }) {
           </Botao>
           <Botao
             onClick={async () => {
-              setErro(null);
+              setErro(null)
               try {
                 const r = await api.post<{ id: string }>('/api/inventarios', {
                   contadoEm: doCampo(d.contadoEm),
                   localId: d.localId || null,
-                });
-                navegar(`/enotrace/inventarios/${r.id}`);
+                })
+                navegar(`/enotrace/inventarios/${r.id}`)
               } catch (e) {
-                setErro(mensagem(e));
+                setErro(mensagem(e))
               }
             }}
           >
@@ -143,19 +143,19 @@ function DialogoNovo({ aoFechar }: { aoFechar: () => void }) {
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 // Lista ------------------------------------------------------------------------------------------
 
 export function ListaInventarios() {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const [novo, setNovo] = useState(false);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const [novo, setNovo] = useState(false)
   const q = useQuery({
     queryKey: ['inventarios'],
     queryFn: () => api.get<Resumo[]>('/api/inventarios'),
-  });
+  })
   return (
     <Pagina
       titulo="Inventário da cantina"
@@ -232,33 +232,33 @@ export function ListaInventarios() {
       </Cartao>
       {novo && <DialogoNovo aoFechar={() => setNovo(false)} />}
     </Pagina>
-  );
+  )
 }
 
 // Ficha ------------------------------------------------------------------------------------------
 
 export function FichaInventario() {
-  const { id = '' } = useParams();
+  const { id = '' } = useParams()
   const q = useQuery({
     queryKey: ['inventario', id],
     queryFn: () => api.get<Inventario>(`/api/inventarios/${id}`),
-  });
+  })
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
+    )
   // Confirmado, o formulário recomeça com o que ficou gravado.
-  return <Contagem key={`${q.data.id}:${q.data.situacao}`} inv={q.data} />;
+  return <Contagem key={`${q.data.id}:${q.data.situacao}`} inv={q.data} />
 }
 
 function Contagem({ inv }: { inv: Inventario }) {
-  const id = inv.id;
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const navegar = useNavigate();
+  const id = inv.id
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const navegar = useNavigate()
   const [form, setForm] = useState(() => ({
     contadoEm: paraCampo(inv.contadoEm),
     observacao: inv.observacao ?? '',
@@ -268,33 +268,33 @@ function Contagem({ inv }: { inv: Inventario }) {
         { volumeMedido: i.volumeMedido, motivo: i.motivo ?? '' },
       ]),
     ) as Record<string, { volumeMedido: string | null; motivo: string }>,
-  }));
-  const [motivoTodos, setMotivoTodos] = useState('');
-  const [previa, setPrevia] = useState<(Previa & { semDiferencas: boolean }) | null>(null);
-  const [cientes, setCientes] = useState<string[]>([]);
-  const [erro, setErro] = useState<string | null>(null);
-  const [ocupado, setOcupado] = useState(false);
-  const [salvo, setSalvo] = useState(true);
+  }))
+  const [motivoTodos, setMotivoTodos] = useState('')
+  const [previa, setPrevia] = useState<(Previa & { semDiferencas: boolean }) | null>(null)
+  const [cientes, setCientes] = useState<string[]>([])
+  const [erro, setErro] = useState<string | null>(null)
+  const [ocupado, setOcupado] = useState(false)
+  const [salvo, setSalvo] = useState(true)
 
   const resumo = useMemo(() => {
-    let contados = 0;
-    let comDiferenca = 0;
+    let contados = 0
+    let comDiferenca = 0
     for (const i of inv.itens) {
-      const m = form.itens[i.recipienteId]?.volumeMedido ?? null;
-      if (m === null) continue;
-      contados += 1;
-      if (centilitros(m) !== centilitros(i.volumeLivro)) comDiferenca += 1;
+      const m = form.itens[i.recipienteId]?.volumeMedido ?? null
+      if (m === null) continue
+      contados += 1
+      if (centilitros(m) !== centilitros(i.volumeLivro)) comDiferenca += 1
     }
-    return { contados, comDiferenca };
-  }, [inv, form]);
+    return { contados, comDiferenca }
+  }, [inv, form])
 
-  const rascunho = inv.situacao === 'rascunho';
-  const podeEditar = rascunho && pode(s, F, 'editar');
+  const rascunho = inv.situacao === 'rascunho'
+  const podeEditar = rascunho && pode(s, F, 'editar')
   const mudarItem = (rid: string, v: Partial<{ volumeMedido: string | null; motivo: string }>) => {
-    setForm({ ...form, itens: { ...form.itens, [rid]: { ...form.itens[rid]!, ...v } } });
-    setPrevia(null);
-    setSalvo(false);
-  };
+    setForm({ ...form, itens: { ...form.itens, [rid]: { ...form.itens[rid]!, ...v } } })
+    setPrevia(null)
+    setSalvo(false)
+  }
 
   const salvar = async () => {
     const r = await api.put<{ versao: number }>(`/api/inventarios/${id}`, {
@@ -306,22 +306,22 @@ function Contagem({ inv }: { inv: Inventario }) {
         volumeMedido: form.itens[i.recipienteId]?.volumeMedido ?? null,
         motivo: form.itens[i.recipienteId]?.motivo || null,
       })),
-    });
-    await qc.invalidateQueries({ queryKey: ['inventario', id] });
-    setSalvo(true);
-    return r;
-  };
+    })
+    await qc.invalidateQueries({ queryKey: ['inventario', id] })
+    setSalvo(true)
+    return r
+  }
   const acao = async (fn: () => Promise<void>) => {
-    setErro(null);
-    setOcupado(true);
+    setErro(null)
+    setOcupado(true)
     try {
-      await fn();
+      await fn()
     } catch (e) {
-      setErro(mensagem(e));
+      setErro(mensagem(e))
     } finally {
-      setOcupado(false);
+      setOcupado(false)
     }
-  };
+  }
 
   return (
     <Pagina
@@ -361,9 +361,9 @@ function Contagem({ inv }: { inv: Inventario }) {
                 disabled={!podeEditar}
                 value={form.contadoEm}
                 onChange={(e) => {
-                  setForm({ ...form, contadoEm: e.target.value });
-                  setPrevia(null);
-                  setSalvo(false);
+                  setForm({ ...form, contadoEm: e.target.value })
+                  setPrevia(null)
+                  setSalvo(false)
                 }}
               />
             </Campo>
@@ -384,18 +384,18 @@ function Contagem({ inv }: { inv: Inventario }) {
                   variante="secundario"
                   disabled={!podeEditar || !motivoTodos.trim()}
                   onClick={() => {
-                    const itens = { ...form.itens };
+                    const itens = { ...form.itens }
                     for (const i of inv.itens) {
-                      const f = itens[i.recipienteId]!;
+                      const f = itens[i.recipienteId]!
                       if (
                         f.volumeMedido !== null &&
                         centilitros(f.volumeMedido) !== centilitros(i.volumeLivro) &&
                         !f.motivo
                       )
-                        itens[i.recipienteId] = { ...f, motivo: motivoTodos.trim() };
+                        itens[i.recipienteId] = { ...f, motivo: motivoTodos.trim() }
                     }
-                    setForm({ ...form, itens });
-                    setSalvo(false);
+                    setForm({ ...form, itens })
+                    setSalvo(false)
                   }}
                 >
                   Aplicar
@@ -409,8 +409,8 @@ function Contagem({ inv }: { inv: Inventario }) {
                 disabled={!podeEditar}
                 value={form.observacao}
                 onChange={(e) => {
-                  setForm({ ...form, observacao: e.target.value });
-                  setSalvo(false);
+                  setForm({ ...form, observacao: e.target.value })
+                  setSalvo(false)
                 }}
               />
             </Campo>
@@ -440,7 +440,7 @@ function Contagem({ inv }: { inv: Inventario }) {
             </thead>
             <tbody className="divide-y">
               {inv.itens.map((i) => {
-                const f = form.itens[i.recipienteId]!;
+                const f = form.itens[i.recipienteId]!
                 return (
                   <tr key={i.recipienteId}>
                     <td className="px-5 py-2 font-medium">
@@ -491,7 +491,7 @@ function Contagem({ inv }: { inv: Inventario }) {
                       )}
                     </td>
                   </tr>
-                );
+                )
               })}
             </tbody>
           </table>
@@ -512,10 +512,10 @@ function Contagem({ inv }: { inv: Inventario }) {
             disabled={ocupado || !podeEditar}
             onClick={() =>
               acao(async () => {
-                if (!window.confirm('Descartar esta contagem?')) return;
-                await api.post(`/api/inventarios/${id}/descartar`);
-                await qc.invalidateQueries({ queryKey: ['inventarios'] });
-                navegar('/enotrace/inventarios');
+                if (!window.confirm('Descartar esta contagem?')) return
+                await api.post(`/api/inventarios/${id}/descartar`)
+                await qc.invalidateQueries({ queryKey: ['inventarios'] })
+                navegar('/enotrace/inventarios')
               })
             }
           >
@@ -534,9 +534,9 @@ function Contagem({ inv }: { inv: Inventario }) {
               disabled={ocupado || !podeEditar}
               onClick={() =>
                 acao(async () => {
-                  if (!salvo) await salvar();
-                  setPrevia(await api.post(`/api/inventarios/${id}/previa`));
-                  setCientes([]);
+                  if (!salvo) await salvar()
+                  setPrevia(await api.post(`/api/inventarios/${id}/previa`))
+                  setCientes([])
                 })
               }
             >
@@ -547,11 +547,11 @@ function Contagem({ inv }: { inv: Inventario }) {
                 disabled={ocupado || !previa || !salvo || previa.bloqueios.length > 0}
                 onClick={() =>
                   acao(async () => {
-                    await api.post(`/api/inventarios/${id}/confirmar`, { cientes });
-                    await qc.invalidateQueries({ queryKey: ['inventario', id] });
-                    await qc.invalidateQueries({ queryKey: ['inventarios'] });
-                    await qc.invalidateQueries({ queryKey: ['recipientes-saldo'] });
-                    setPrevia(null);
+                    await api.post(`/api/inventarios/${id}/confirmar`, { cientes })
+                    await qc.invalidateQueries({ queryKey: ['inventario', id] })
+                    await qc.invalidateQueries({ queryKey: ['inventarios'] })
+                    await qc.invalidateQueries({ queryKey: ['recipientes-saldo'] })
+                    setPrevia(null)
                   })
                 }
               >
@@ -568,5 +568,5 @@ function Contagem({ inv }: { inv: Inventario }) {
         </p>
       )}
     </Pagina>
-  );
+  )
 }

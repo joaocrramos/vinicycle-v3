@@ -1,37 +1,37 @@
 // Relatório de história do lote (cantina.md, Lote comercial): a história completa do vinho, do lote
 // comercial (ou do lote de produção, ou do projeto) às uvas de origem, para a fiscalização e o
 // recolhimento. Imprime ou salva em PDF pelo navegador.
-import { useQuery } from '@tanstack/react-query';
-import { type Composicao, formatarDecimal, TIPOS_OPERACAO } from '@vinicycle/shared';
-import { Printer } from 'lucide-react';
-import type { ReactNode } from 'react';
-import { Link, useSearchParams } from 'react-router';
-import { Botao } from '@/componentes/ui/botao';
-import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { nomeNaLista, useReferencia } from '@/lib/referencia';
-import { fusoAtivo, useSessao } from '@/lib/sessao';
-import { formatarData, formatarDataHora } from '@/lib/utils';
-import { ResumoComposicao } from './operacoes/comum';
-import { litros } from './Projetos';
+import { useQuery } from '@tanstack/react-query'
+import { type Composicao, formatarDecimal, TIPOS_OPERACAO } from '@vinicycle/shared'
+import { Printer } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { Link, useSearchParams } from 'react-router'
+import { Botao } from '@/componentes/ui/botao'
+import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { nomeNaLista, useReferencia } from '@/lib/referencia'
+import { fusoAtivo, useSessao } from '@/lib/sessao'
+import { formatarData, formatarDataHora } from '@/lib/utils'
+import { ResumoComposicao } from './operacoes/comum'
+import { litros } from './Projetos'
 
-type Linha = Record<string, string | number | boolean | null | Composicao>;
+type Linha = Record<string, string | number | boolean | null | Composicao>
 
 interface Historia {
-  titulo: string;
-  geradoEm: string;
-  lotes: Linha[];
-  uvas: Linha[];
-  operacoes: Linha[];
-  insumos: Linha[];
-  analises: Linha[];
-  genealogia: Linha[];
-  envases: Linha[];
-  saidas: Linha[];
+  titulo: string
+  geradoEm: string
+  lotes: Linha[]
+  uvas: Linha[]
+  operacoes: Linha[]
+  insumos: Linha[]
+  analises: Linha[]
+  genealogia: Linha[]
+  envases: Linha[]
+  saidas: Linha[]
 }
 
-const t = (v: unknown) => (v === null || v === undefined ? '—' : String(v));
+const t = (v: unknown) => (v === null || v === undefined ? '—' : String(v))
 const ORIGENS: Record<string, string> = {
   recepcao: 'Recepção da uva',
   corte: 'Corte',
@@ -40,7 +40,7 @@ const ORIGENS: Record<string, string> = {
   retorno_terceiro: 'Retorno de terceiro',
   titularidade: 'Transferência de titularidade',
   carga_inicial: 'Carga inicial',
-};
+}
 
 function Secao({
   titulo,
@@ -48,10 +48,10 @@ function Secao({
   n,
   children,
 }: {
-  titulo: string;
-  vazio: string;
-  n: number;
-  children: ReactNode;
+  titulo: string
+  vazio: string
+  n: number
+  children: ReactNode
 }) {
   return (
     <Cartao className="break-inside-avoid print:border-0 print:shadow-none">
@@ -60,7 +60,7 @@ function Secao({
         {n ? children : <p className="text-muted-foreground">{vazio}</p>}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 function Tabela({ cabecalho, linhas }: { cabecalho: string[]; linhas: ReactNode[][] }) {
@@ -87,26 +87,26 @@ function Tabela({ cabecalho, linhas }: { cabecalho: string[]; linhas: ReactNode[
         ))}
       </tbody>
     </table>
-  );
+  )
 }
 
 export function PaginaHistoria() {
-  const [params] = useSearchParams();
-  const { data: s } = useSessao();
-  const { data: ref } = useReferencia();
-  const fuso = fusoAtivo(s);
+  const [params] = useSearchParams()
+  const { data: s } = useSessao()
+  const { data: ref } = useReferencia()
+  const fuso = fusoAtivo(s)
   const q = useQuery({
     queryKey: ['historia', params.toString()],
     queryFn: () => api.get<Historia>(`/api/historia?${params.toString()}`),
-  });
+  })
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const h = q.data;
-  const dh = (v: unknown) => (v ? formatarDataHora(String(v), fuso) : '—');
+    )
+  const h = q.data
+  const dh = (v: unknown) => (v ? formatarDataHora(String(v), fuso) : '—')
   return (
     <Pagina
       titulo={`História: ${h.titulo}`}
@@ -263,5 +263,5 @@ export function PaginaHistoria() {
         />
       </Secao>
     </Pagina>
-  );
+  )
 }

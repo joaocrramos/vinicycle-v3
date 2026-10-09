@@ -1,50 +1,50 @@
 // Administração › Regras regulatórias (P16): cada regra com as suas versões, vigência, abrangência
 // e fonte legal. Mudou a norma: nova versão; a anterior se encerra na véspera.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatarDecimal, novaRegra } from '@vinicycle/shared';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { pode, useSessao } from '@/lib/sessao';
-import { formatarData } from '@/lib/utils';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { formatarDecimal, novaRegra } from '@vinicycle/shared'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { pode, useSessao } from '@/lib/sessao'
+import { formatarData } from '@/lib/utils'
 
 interface Regra {
-  id: string;
-  tipo: string;
-  chave: string;
-  abrangencia: 'nacional' | 'uf' | 'ig';
-  abrangenciaCodigo: string | null;
-  vigenteDesde: string;
-  vigenteAte: string | null;
-  minimo: string | null;
-  maximo: string | null;
-  unidade: string | null;
-  descricao: string;
-  fonteNorma: string;
-  fonteArtigo: string | null;
-  fonteLink: string | null;
-  fonteNota: string | null;
+  id: string
+  tipo: string
+  chave: string
+  abrangencia: 'nacional' | 'uf' | 'ig'
+  abrangenciaCodigo: string | null
+  vigenteDesde: string
+  vigenteAte: string | null
+  minimo: string | null
+  maximo: string | null
+  unidade: string | null
+  descricao: string
+  fonteNorma: string
+  fonteArtigo: string | null
+  fonteLink: string | null
+  fonteNota: string | null
 }
 
-const ABRANGENCIA = { nacional: 'Nacional', uf: 'UF', ig: 'IG' } as const;
-const hoje = () => new Date().toISOString().slice(0, 10);
-const vigente = (r: Regra) => r.vigenteDesde <= hoje() && (!r.vigenteAte || r.vigenteAte >= hoje());
+const ABRANGENCIA = { nacional: 'Nacional', uf: 'UF', ig: 'IG' } as const
+const hoje = () => new Date().toISOString().slice(0, 10)
+const vigente = (r: Regra) => r.vigenteDesde <= hoje() && (!r.vigenteAte || r.vigenteAte >= hoje())
 const valor = (r: Regra) =>
   [
     r.minimo && `mín. ${formatarDecimal(r.minimo, 2)}`,
     r.maximo && `máx. ${formatarDecimal(r.maximo, 4).replace(/0+$/, '').replace(/,$/, '')}`,
   ]
     .filter(Boolean)
-    .join(' · ') + (r.unidade && (r.minimo || r.maximo) ? ` ${r.unidade}` : '');
+    .join(' · ') + (r.unidade && (r.minimo || r.maximo) ? ` ${r.unidade}` : '')
 
 function NovaVersao({ base, aoFechar }: { base: Regra | null; aoFechar: () => void }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const form = useFormulario(novaRegra, {
     tipo: (base?.tipo ?? 'limite') as 'limite',
     chave: base?.chave ?? '',
@@ -59,8 +59,8 @@ function NovaVersao({ base, aoFechar }: { base: Regra | null; aoFechar: () => vo
     fonteArtigo: '',
     fonteLink: '',
     fonteNota: '',
-  });
-  const v = form.valores;
+  })
+  const v = form.valores
   const texto = (
     campo: keyof typeof v,
     rotulo: string,
@@ -74,7 +74,7 @@ function NovaVersao({ base, aoFechar }: { base: Regra | null; aoFechar: () => vo
         onChange={(e) => form.definir(campo, e.target.value)}
       />
     </Campo>
-  );
+  )
   return (
     <Dialogo
       aberto
@@ -88,14 +88,14 @@ function NovaVersao({ base, aoFechar }: { base: Regra | null; aoFechar: () => vo
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                await api.post('/api/plataforma/regras', d);
-                await qc.invalidateQueries({ queryKey: ['regras-plataforma'] });
-                aoFechar();
+                await api.post('/api/plataforma/regras', d)
+                await qc.invalidateQueries({ queryKey: ['regras-plataforma'] })
+                aoFechar()
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -185,21 +185,21 @@ function NovaVersao({ base, aoFechar }: { base: Regra | null; aoFechar: () => vo
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function PaginaRegras() {
-  const { data: s } = useSessao();
-  const [nova, setNova] = useState<Regra | 'nova' | null>(null);
+  const { data: s } = useSessao()
+  const [nova, setNova] = useState<Regra | 'nova' | null>(null)
   const q = useQuery({
     queryKey: ['regras-plataforma'],
     queryFn: () => api.get<Regra[]>('/api/plataforma/regras'),
-  });
-  const podeCriar = pode(s, 'plataforma.regras', 'criar');
-  const series = new Map<string, Regra[]>();
+  })
+  const podeCriar = pode(s, 'plataforma.regras', 'criar')
+  const series = new Map<string, Regra[]>()
   for (const r of q.data ?? []) {
-    const k = `${r.chave}|${r.abrangencia}|${r.abrangenciaCodigo ?? ''}`;
-    series.set(k, [...(series.get(k) ?? []), r]);
+    const k = `${r.chave}|${r.abrangencia}|${r.abrangenciaCodigo ?? ''}`
+    series.set(k, [...(series.get(k) ?? []), r])
   }
   return (
     <Pagina
@@ -219,7 +219,7 @@ export function PaginaRegras() {
       </p>
       {q.isError && <Aviso tom="erro">{(q.error as Error).message}</Aviso>}
       {[...series.values()].map((versoes) => {
-        const atual = versoes[0]!;
+        const atual = versoes[0]!
         return (
           <Cartao key={atual.id}>
             <CabecalhoCartao
@@ -256,9 +256,9 @@ export function PaginaRegras() {
               ))}
             </CorpoCartao>
           </Cartao>
-        );
+        )
       })}
       {nova && <NovaVersao base={nova === 'nova' ? null : nova} aoFechar={() => setNova(null)} />}
     </Pagina>
-  );
+  )
 }

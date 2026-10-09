@@ -2,22 +2,22 @@
 // de fora num lote novo ou incorporado, com a composição informada ou "não informada"; a saída tira
 // litros para fora. As duas guardam nota, partes, GLT e embalagem; a saída sem GLT pede "ciente"
 // (Decreto 12.709/2025, art. 203, IV).
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query'
 import {
   EMBALAGENS_GRANEL,
   formatarDecimal,
   TIPOS_ENTRADA_GRANEL,
   TIPOS_SAIDA_GRANEL,
-} from '@vinicycle/shared';
-import { Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Botao } from '@/componentes/ui/botao';
-import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { litros, useVariedadesEmUso } from '../Projetos';
+} from '@vinicycle/shared'
+import { Plus, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Botao } from '@/componentes/ui/botao'
+import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { litros, useVariedadesEmUso } from '../Projetos'
 import {
   agora,
   Cabecalho,
@@ -33,10 +33,10 @@ import {
   useLotesDoProjeto,
   useProjetos,
   useRecipientes,
-} from './comum';
+} from './comum'
 
 const rotuloRecipiente = (r: RecipienteSaldo) =>
-  `${r.codigo} · ${litros(r.volume)} de ${litros(r.capacidadeLitros)}${r.lote ? ` · ${r.lote.codigo}` : ''}`;
+  `${r.codigo} · ${litros(r.volume)} de ${litros(r.capacidadeLitros)}${r.lote ? ` · ${r.lote.codigo}` : ''}`
 
 function usePessoas(papel?: string) {
   return useQuery({
@@ -45,17 +45,17 @@ function usePessoas(papel?: string) {
       api.get<Array<{ id: string; nome: string }>>(
         `/api/pessoas/opcoes${papel ? `?papel=${papel}` : ''}`,
       ),
-  });
+  })
 }
 
 interface Documento {
-  notaNumero: string;
-  notaChave: string;
-  remetenteId: string;
-  destinatarioId: string;
-  transportadorId: string;
-  glt: string;
-  embalagem: string;
+  notaNumero: string
+  notaChave: string
+  remetenteId: string
+  destinatarioId: string
+  transportadorId: string
+  glt: string
+  embalagem: string
 }
 
 const DOCUMENTO_VAZIO: Documento = {
@@ -66,7 +66,7 @@ const DOCUMENTO_VAZIO: Documento = {
   transportadorId: '',
   glt: '',
   embalagem: '',
-};
+}
 
 const documentoParaApi = (d: Documento) => ({
   notaNumero: d.notaNumero,
@@ -76,7 +76,7 @@ const documentoParaApi = (d: Documento) => ({
   transportadorId: d.transportadorId || null,
   glt: d.glt,
   embalagem: d.embalagem || null,
-});
+})
 
 /** Nota, partes, GLT e embalagem: comum à entrada e à saída. */
 function CartaoDocumento({
@@ -85,14 +85,14 @@ function CartaoDocumento({
   parte,
   children,
 }: {
-  d: Documento;
-  set: (p: Partial<Documento>) => void;
+  d: Documento
+  set: (p: Partial<Documento>) => void
   /** A outra parte: quem mandou (entrada) ou quem recebe (saída). */
-  parte: 'remetenteId' | 'destinatarioId';
-  children?: React.ReactNode;
+  parte: 'remetenteId' | 'destinatarioId'
+  children?: React.ReactNode
 }) {
-  const pessoas = usePessoas();
-  const transportadores = usePessoas('transportador');
+  const pessoas = usePessoas()
+  const transportadores = usePessoas('transportador')
   return (
     <Cartao>
       <CabecalhoCartao
@@ -164,28 +164,28 @@ function CartaoDocumento({
         {children}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 // Entrada ----------------------------------------------------------------------------------------
 
 export function PaginaEntradaGranel() {
-  return <ComRascunho>{(r) => <EntradaGranel rascunho={r} />}</ComRascunho>;
+  return <ComRascunho>{(r) => <EntradaGranel rascunho={r} />}</ComRascunho>
 }
 
 interface ItemComposicao {
-  variedadeId: string;
-  safra: string;
-  organica: boolean;
-  percentual: string | null;
+  variedadeId: string
+  safra: string
+  organica: boolean
+  percentual: string | null
 }
 
 function EntradaGranel({ rascunho }: { rascunho: Rascunho | null }) {
-  const recipientes = useRecipientes();
-  const projetos = useProjetos();
-  const variedades = useVariedadesEmUso();
-  const clientes = usePessoas('cliente_vinificacao');
-  const envio = useEnvio('entrada_granel', rascunho);
+  const recipientes = useRecipientes()
+  const projetos = useProjetos()
+  const variedades = useVariedadesEmUso()
+  const clientes = usePessoas('cliente_vinificacao')
+  const envio = useEnvio('entrada_granel', rascunho)
   const [d, setD] = useState(() => ({
     executadoEm: agora(),
     projetoId: '',
@@ -205,15 +205,15 @@ function EntradaGranel({ rascunho }: { rascunho: Rascunho | null }) {
       },
     ],
     ...rascunho?.formulario,
-  }));
+  }))
   const set = (p: Partial<typeof d>) => {
-    envio.limpar();
-    setD({ ...d, ...p });
-  };
+    envio.limpar()
+    setD({ ...d, ...p })
+  }
   const setComp = (n: number, p: Partial<ItemComposicao>) =>
-    set({ composicao: d.composicao.map((x, j) => (j === n ? { ...x, ...p } : x)) });
-  const lotes = useLotesDoProjeto(d.projetoId);
-  const soma = d.composicao.reduce((t, c) => t + Number(c.percentual ?? 0), 0);
+    set({ composicao: d.composicao.map((x, j) => (j === n ? { ...x, ...p } : x)) })
+  const lotes = useLotesDoProjeto(d.projetoId)
+  const soma = d.composicao.reduce((t, c) => t + Number(c.percentual ?? 0), 0)
   const corpo = () => ({
     executadoEm: doCampo(d.executadoEm),
     responsavelId: d.responsavelId || null,
@@ -235,8 +235,8 @@ function EntradaGranel({ rascunho }: { rascunho: Rascunho | null }) {
       litros: x.litros ?? '',
       lote: x.lote,
     })),
-  });
-  const usados = new Set(d.destinos.map((x) => x.recipienteId));
+  })
+  const usados = new Set(d.destinos.map((x) => x.recipienteId))
   return (
     <Pagina titulo="Entrada de granel" trilha={['EnoTrace', 'Operações']}>
       <p className="text-sm text-muted-foreground">
@@ -400,9 +400,9 @@ function EntradaGranel({ rascunho }: { rascunho: Rascunho | null }) {
         <CabecalhoCartao titulo="Recipientes de destino" />
         <CorpoCartao className="flex flex-col gap-3">
           {d.destinos.map((x, n) => {
-            const r = recipientes.data?.find((y) => y.id === x.recipienteId);
+            const r = recipientes.data?.find((y) => y.id === x.recipienteId)
             const setDestino = (p: Partial<typeof x>) =>
-              set({ destinos: d.destinos.map((z, j) => (j === n ? { ...z, ...p } : z)) });
+              set({ destinos: d.destinos.map((z, j) => (j === n ? { ...z, ...p } : z)) })
             return (
               <div key={n} className="grid items-end gap-2 sm:grid-cols-[1fr_14rem_10rem_auto]">
                 <Campo rotulo="Recipiente" id={`eg-rec-${n}`}>
@@ -410,11 +410,11 @@ function EntradaGranel({ rascunho }: { rascunho: Rascunho | null }) {
                     id={`eg-rec-${n}`}
                     value={x.recipienteId}
                     onChange={(e) => {
-                      const rr = recipientes.data?.find((y) => y.id === e.target.value);
+                      const rr = recipientes.data?.find((y) => y.id === e.target.value)
                       setDestino({
                         recipienteId: e.target.value,
                         lote: rr?.lote ? { id: rr.lote.id } : { novo: 'A' },
-                      });
+                      })
                     }}
                   >
                     <option value="">Escolha</option>
@@ -459,7 +459,7 @@ function EntradaGranel({ rascunho }: { rascunho: Rascunho | null }) {
                   <Trash2 />
                 </Botao>
               </div>
-            );
+            )
           })}
           <div>
             <Botao
@@ -481,24 +481,24 @@ function EntradaGranel({ rascunho }: { rascunho: Rascunho | null }) {
       </Cartao>
       <Rodape envio={envio} corpo={corpo} formulario={() => d} />
     </Pagina>
-  );
+  )
 }
 
 // Saída ------------------------------------------------------------------------------------------
 
 export function PaginaSaidaGranel() {
-  return <ComRascunho>{(r) => <SaidaGranel rascunho={r} />}</ComRascunho>;
+  return <ComRascunho>{(r) => <SaidaGranel rascunho={r} />}</ComRascunho>
 }
 
 interface ItemSaida {
-  recipienteId: string;
-  litros: string | null;
-  esvaziar: boolean;
+  recipienteId: string
+  litros: string | null
+  esvaziar: boolean
 }
 
 function SaidaGranel({ rascunho }: { rascunho: Rascunho | null }) {
-  const recipientes = useRecipientes();
-  const envio = useEnvio('saida_granel', rascunho);
+  const recipientes = useRecipientes()
+  const envio = useEnvio('saida_granel', rascunho)
   const [d, setD] = useState(() => ({
     executadoEm: agora(),
     responsavelId: '',
@@ -508,21 +508,21 @@ function SaidaGranel({ rascunho }: { rascunho: Rascunho | null }) {
     documento: DOCUMENTO_VAZIO,
     itens: [{ recipienteId: recipienteDaUrl(), litros: null, esvaziar: false }] as ItemSaida[],
     ...rascunho?.formulario,
-  }));
+  }))
   const set = (p: Partial<typeof d>) => {
-    envio.limpar();
-    setD({ ...d, ...p });
-  };
+    envio.limpar()
+    setD({ ...d, ...p })
+  }
   const setItem = (n: number, p: Partial<ItemSaida>) =>
-    set({ itens: d.itens.map((x, j) => (j === n ? { ...x, ...p } : x)) });
+    set({ itens: d.itens.map((x, j) => (j === n ? { ...x, ...p } : x)) })
   const projetos = [
     ...new Set(
       d.itens
         .map((i) => recipientes.data?.find((r) => r.id === i.recipienteId)?.lote?.projetoId)
         .filter(Boolean),
     ),
-  ];
-  const projetoId = projetos.length === 1 ? projetos[0]! : '';
+  ]
+  const projetoId = projetos.length === 1 ? projetos[0]! : ''
   const corpo = () => ({
     executadoEm: doCampo(d.executadoEm),
     responsavelId: d.responsavelId || null,
@@ -531,8 +531,8 @@ function SaidaGranel({ rascunho }: { rascunho: Rascunho | null }) {
     tipoGranel: d.tipoGranel,
     ...documentoParaApi(d.documento),
     itens: d.itens.map((i) => ({ ...i, litros: i.esvaziar ? null : i.litros })),
-  });
-  const usados = new Set(d.itens.map((i) => i.recipienteId));
+  })
+  const usados = new Set(d.itens.map((i) => i.recipienteId))
   return (
     <Pagina titulo="Saída de granel" trilha={['EnoTrace', 'Operações']}>
       <p className="text-sm text-muted-foreground">
@@ -630,5 +630,5 @@ function SaidaGranel({ rascunho }: { rascunho: Rascunho | null }) {
       </Cartao>
       <Rodape envio={envio} corpo={corpo} formulario={() => ({ ...d, projetoId })} />
     </Pagina>
-  );
+  )
 }

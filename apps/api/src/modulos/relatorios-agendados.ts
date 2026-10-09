@@ -11,25 +11,25 @@ import {
   RELATORIOS_AGENDAVEIS,
   NOMES_CANAL,
   type RelatorioAgendavel,
-} from '@vinicycle/shared';
-import { and, eq, sql } from 'drizzle-orm';
-import type { FastifyBaseLogger, FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import { emContexto, type Db } from '../db/cliente';
-import * as s from '../db/schema';
-import { enfileirarEmail } from '../nucleo/email';
-import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros';
-import { pode } from '../nucleo/permissoes';
-import { comoUsuario, type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao';
-import { varrerAlertas, visiveis } from './alertas';
-import { enfileirarMensagem } from './mensagens';
-import { limites, relatorio as relatorioDoMes } from './fechamento';
+} from '@vinicycle/shared'
+import { and, eq, sql } from 'drizzle-orm'
+import type { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import { emContexto, type Db } from '../db/cliente'
+import * as s from '../db/schema'
+import { enfileirarEmail } from '../nucleo/email'
+import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros'
+import { pode } from '../nucleo/permissoes'
+import { comoUsuario, type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao'
+import { varrerAlertas, visiveis } from './alertas'
+import { enfileirarMensagem } from './mensagens'
+import { limites, relatorio as relatorioDoMes } from './fechamento'
 
-const TIPOS_ESTOQUE = ['estoque_minimo', 'validade', 'saldo_negativo'];
+const TIPOS_ESTOQUE = ['estoque_minimo', 'validade', 'saldo_negativo']
 
 /** Próximo envio depois de agora, às 7h do fuso do estabelecimento. */
 function proximoEnvio(frequencia: FrequenciaEnvio) {
-  const local = sql`(now() at time zone e.fuso)`;
+  const local = sql`(now() at time zone e.fuso)`
   const base =
     frequencia === 'diaria'
       ? sql`date_trunc('day', ${local}) + interval '1 day'`
@@ -37,17 +37,17 @@ function proximoEnvio(frequencia: FrequenciaEnvio) {
         ? sql`date_trunc('week', ${local}) + interval '7 days'`
         : frequencia === 'quinzenal'
           ? sql`date_trunc('week', ${local}) + interval '14 days'`
-          : sql`date_trunc('month', ${local}) + interval '1 month'`;
-  return sql`((${base} + interval '7 hours') at time zone e.fuso)`;
+          : sql`date_trunc('month', ${local}) + interval '1 month'`
+  return sql`((${base} + interval '7 hours') at time zone e.fuso)`
 }
 
 const esc = (t: string) =>
-  t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 interface Conteudo {
-  titulo: string;
-  linhas: string[];
-  vazio: boolean;
+  titulo: string
+  linhas: string[]
+  vazio: boolean
 }
 
 /** Monta o relatório com as permissões do usuário; nada se ele não vê mais a tela. */
@@ -56,21 +56,21 @@ async function montar(
   relatorio: RelatorioAgendavel,
   estab: string,
 ): Promise<Conteudo | { semPermissao: true }> {
-  const def = RELATORIOS_AGENDAVEIS[relatorio];
-  if (!pode(ctx.acesso, def.funcionalidade, 'visualizar')) return { semPermissao: true };
+  const def = RELATORIOS_AGENDAVEIS[relatorio]
+  if (!pode(ctx.acesso, def.funcionalidade, 'visualizar')) return { semPermissao: true }
   if (relatorio === 'alertas' || relatorio === 'estoque') {
-    await varrerAlertas(ctx);
+    await varrerAlertas(ctx)
     const todos = (await visiveis(ctx, 'aberto')).filter(
       (a) =>
         (!a.estabelecimentoId || a.estabelecimentoId === estab) &&
         (relatorio === 'alertas' || TIPOS_ESTOQUE.includes(a.tipo)),
-    );
-    const marca = { critico: '[crítico] ', atencao: '', info: '' } as Record<string, string>;
+    )
+    const marca = { critico: '[crítico] ', atencao: '', info: '' } as Record<string, string>
     return {
       titulo: def.nome,
       linhas: todos.map((a) => `${marca[a.gravidade] ?? ''}${a.mensagem}`),
       vazio: !todos.length,
-    };
+    }
   }
   if (relatorio === 'mes') {
     const [d] = (
@@ -78,11 +78,11 @@ async function montar(
         select extract(year from m)::int as ano, extract(month from m)::int as mes
         from (select date_trunc('month', now() at time zone fuso) - interval '1 month' as m
           from estabelecimento where id = ${estab}) x`)
-    ).rows;
-    const { inicio, fim } = await limites(ctx, estab, d!.ano, d!.mes);
-    const r = await relatorioDoMes(ctx, estab, inicio, fim);
-    const g = r.granel;
-    const L = (v: string) => `${formatarDecimal(v, 2)} L`;
+    ).rows
+    const { inicio, fim } = await limites(ctx, estab, d!.ano, d!.mes)
+    const r = await relatorioDoMes(ctx, estab, inicio, fim)
+    const g = r.granel
+    const L = (v: string) => `${formatarDecimal(v, 2)} L`
     return {
       titulo: `Relatório de ${String(d!.mes).padStart(2, '0')}/${d!.ano}`,
       linhas: [
@@ -93,15 +93,15 @@ async function montar(
         ),
       ],
       vazio: false,
-    };
+    }
   }
   // Painel: o vinho em cada recipiente.
   const p = await ctx.tx.execute<{
-    codigo: string;
-    capacidade: string;
-    litros: string;
-    lote: string | null;
-    projeto: string | null;
+    codigo: string
+    capacidade: string
+    litros: string
+    lote: string | null
+    projeto: string | null
   }>(sql`
     select r.codigo, r.capacidade_litros::text as capacidade, sum(m.litros)::text as litros,
       (array_agg(l.codigo order by l.codigo))[1] as lote, (array_agg(pr.nome order by l.codigo))[1] as projeto
@@ -109,8 +109,8 @@ async function montar(
       join lote l on l.id = m.lote_id join projeto pr on pr.id = l.projeto_id
     where m.estabelecimento_id = ${estab}
     group by r.id, r.codigo, r.capacidade_litros having sum(m.litros) > 0
-    order by r.codigo`);
-  const total = p.rows.reduce((t, x) => t + Number(x.litros), 0);
+    order by r.codigo`)
+  const total = p.rows.reduce((t, x) => t + Number(x.litros), 0)
   return {
     titulo: def.nome,
     linhas: [
@@ -121,33 +121,33 @@ async function montar(
       ),
     ],
     vazio: !p.rows.length,
-  };
+  }
 }
 
 /** Põe o e-mail do relatório na fila; devolve o aviso quando não sai. */
 async function enviar(
   ctx: ContextoEmpresa,
   a: {
-    id: string;
-    relatorio: RelatorioAgendavel;
-    estabelecimentoId: string;
-    canal?: 'email' | 'whatsapp' | 'sms';
+    id: string
+    relatorio: RelatorioAgendavel
+    estabelecimentoId: string
+    canal?: 'email' | 'whatsapp' | 'sms'
   },
   email: string,
   urlAplicacao: string,
 ): Promise<string | null> {
-  const c = await montar(ctx, a.relatorio, a.estabelecimentoId);
-  if ('semPermissao' in c) return 'Sem a permissão da tela deste relatório.';
+  const c = await montar(ctx, a.relatorio, a.estabelecimentoId)
+  if ('semPermissao' in c) return 'Sem a permissão da tela deste relatório.'
   const [e] = (
     await ctx.tx.execute<{ nome: string }>(sql`
       select coalesce(f.nome_fantasia, f.nome) as nome from estabelecimento es join ficha f on f.id = es.ficha_id
       where es.id = ${a.estabelecimentoId}`)
-  ).rows;
-  const link = `${urlAplicacao.replace(/\/$/, '')}${RELATORIOS_AGENDAVEIS[a.relatorio].link}`;
-  const corpo = c.vazio ? ['Nada a relatar.'] : c.linhas;
+  ).rows
+  const link = `${urlAplicacao.replace(/\/$/, '')}${RELATORIOS_AGENDAVEIS[a.relatorio].link}`
+  const corpo = c.vazio ? ['Nada a relatar.'] : c.linhas
   // WhatsApp ou SMS: um resumo curto com o link; sem franquia, telefone ou canal, vai por e-mail.
   if (a.canal && a.canal !== 'email') {
-    const texto = `ViniCycle · ${c.titulo} · ${e?.nome ?? ''}: ${corpo.slice(0, 5).join('; ')}${corpo.length > 5 ? ` e mais ${corpo.length - 5}` : ''}. ${link}`;
+    const texto = `ViniCycle · ${c.titulo} · ${e?.nome ?? ''}: ${corpo.slice(0, 5).join('; ')}${corpo.length > 5 ? ` e mais ${corpo.length - 5}` : ''}. ${link}`
     const r = await enfileirarMensagem(ctx.tx, {
       empresaId: ctx.empresaId,
       usuarioId: ctx.usuarioId,
@@ -156,17 +156,17 @@ async function enviar(
       modelo: `relatorio_${a.relatorio}`,
       origem: 'relatorio_agendado',
       origemId: a.id,
-    });
-    if (r === 'enfileirada') return null;
-    await enviarPorEmail(ctx, a, email, c.titulo, e?.nome ?? '', corpo, link);
+    })
+    if (r === 'enfileirada') return null
+    await enviarPorEmail(ctx, a, email, c.titulo, e?.nome ?? '', corpo, link)
     return {
       sem_integracao: `${NOMES_CANAL[a.canal]} ainda não está ativo na plataforma: enviado por e-mail.`,
       sem_telefone: `Sem telefone com ${NOMES_CANAL[a.canal]} no seu cadastro: enviado por e-mail.`,
       sem_franquia: `A franquia de ${NOMES_CANAL[a.canal]} da empresa acabou ou não foi contratada: enviado por e-mail.`,
-    }[r];
+    }[r]
   }
-  await enviarPorEmail(ctx, a, email, c.titulo, e?.nome ?? '', corpo, link);
-  return null;
+  await enviarPorEmail(ctx, a, email, c.titulo, e?.nome ?? '', corpo, link)
+  return null
 }
 
 async function enviarPorEmail(
@@ -178,8 +178,8 @@ async function enviarPorEmail(
   corpo: string[],
   link: string,
 ): Promise<void> {
-  const c = { titulo };
-  const e = { nome: estabelecimento };
+  const c = { titulo }
+  const e = { nome: estabelecimento }
   await enfileirarEmail(ctx.tx, {
     para: email,
     assunto: `ViniCycle · ${c.titulo} · ${e?.nome ?? ''}`,
@@ -189,7 +189,7 @@ async function enviarPorEmail(
     origem: 'relatorio_agendado',
     origemId: a.id,
     empresaId: ctx.empresaId,
-  });
+  })
 }
 
 /** Processa os envios vencidos uma vez; devolve quantos tentou. */
@@ -201,23 +201,23 @@ export async function processarAgendados(
   // A tarefa só lê quem está devido (política "tarefa"); o resto é no contexto de cada usuário.
   const devidos = await emContexto(db, { sistema: true }, (tx) =>
     tx.execute<{
-      id: string;
-      empresa_id: string;
-      usuario_id: string;
-      estabelecimento_id: string;
-      relatorio: RelatorioAgendavel;
-      frequencia: FrequenciaEnvio;
-      canal: 'email' | 'whatsapp' | 'sms';
+      id: string
+      empresa_id: string
+      usuario_id: string
+      estabelecimento_id: string
+      relatorio: RelatorioAgendavel
+      frequencia: FrequenciaEnvio
+      canal: 'email' | 'whatsapp' | 'sms'
     }>(sql`
       select id, empresa_id, usuario_id, estabelecimento_id, relatorio, frequencia, canal
       from relatorio_agendado where ativo and proximo_envio <= now()
       order by proximo_envio limit 50`),
-  );
+  )
   const reagendar = (aviso: string | null, id: string, frequencia: FrequenciaEnvio) => sql`
     update relatorio_agendado a set proximo_envio = ${proximoEnvio(frequencia)},
       ultimo_envio = case when ${aviso === null} then now() else a.ultimo_envio end,
       ultimo_aviso = ${aviso}
-    from estabelecimento e where e.id = a.estabelecimento_id and a.id = ${id}`;
+    from estabelecimento e where e.id = a.estabelecimento_id and a.id = ${id}`
   for (const a of devidos.rows) {
     try {
       const feito = await comoUsuario(
@@ -232,7 +232,7 @@ export async function processarAgendados(
           const [u] = await ctx.tx
             .select({ email: s.usuario.email })
             .from(s.usuario)
-            .where(eq(s.usuario.id, ctx.usuarioId));
+            .where(eq(s.usuario.id, ctx.usuarioId))
           const aviso = await enviar(
             ctx,
             {
@@ -243,20 +243,20 @@ export async function processarAgendados(
             },
             u!.email,
             urlAplicacao,
-          );
-          await ctx.tx.execute(reagendar(aviso, a.id, a.frequencia));
-          return true;
+          )
+          await ctx.tx.execute(reagendar(aviso, a.id, a.frequencia))
+          return true
         },
-      );
+      )
       if (!feito)
         await emContexto(db, { usuarioId: a.usuario_id, empresaId: a.empresa_id }, (tx) =>
           tx.execute(reagendar('Sem acesso à empresa ou ao estabelecimento.', a.id, a.frequencia)),
-        );
+        )
     } catch (e) {
-      log.error({ erro: e, agendado: a.id }, 'Falha no relatório agendado');
+      log.error({ erro: e, agendado: a.id }, 'Falha no relatório agendado')
     }
   }
-  return devidos.rows.length;
+  return devidos.rows.length
 }
 
 /** Tarefa de fundo: confere os envios devidos a cada poucos minutos. */
@@ -266,25 +266,25 @@ export function iniciarTarefaRelatorios(
   log: Pick<FastifyBaseLogger, 'error'>,
   intervaloMs = 5 * 60_000,
 ): () => void {
-  let parar = false;
-  let timer: NodeJS.Timeout | undefined;
+  let parar = false
+  let timer: NodeJS.Timeout | undefined
   const ciclo = async () => {
     try {
-      await processarAgendados(db, urlAplicacao, log);
+      await processarAgendados(db, urlAplicacao, log)
     } catch (e) {
-      log.error({ erro: e }, 'Falha ao processar os relatórios agendados');
+      log.error({ erro: e }, 'Falha ao processar os relatórios agendados')
     }
-    if (!parar) timer = setTimeout(ciclo, intervaloMs);
-  };
-  timer = setTimeout(ciclo, 30_000);
+    if (!parar) timer = setTimeout(ciclo, intervaloMs)
+  }
+  timer = setTimeout(ciclo, 30_000)
   return () => {
-    parar = true;
-    clearTimeout(timer);
-  };
+    parar = true
+    clearTimeout(timer)
+  }
 }
 
 export async function rotasRelatoriosAgendados(app: FastifyInstance): Promise<void> {
-  const { db, config } = app.deps;
+  const { db, config } = app.deps
 
   async function meu(ctx: ContextoEmpresa, id: string) {
     const [a] = await ctx.tx
@@ -296,32 +296,32 @@ export async function rotasRelatoriosAgendados(app: FastifyInstance): Promise<vo
           eq(s.relatorioAgendado.usuarioId, ctx.usuarioId),
           eq(s.relatorioAgendado.empresaId, ctx.empresaId),
         ),
-      );
-    if (!a) throw new ErroNaoEncontrado('Envio não encontrado.');
-    return a;
+      )
+    if (!a) throw new ErroNaoEncontrado('Envio não encontrado.')
+    return a
   }
 
   /** Os envios do usuário nesta empresa, e os relatórios que ele pode agendar. */
   app.get('/api/relatorios-agendados', async (req) =>
     naEmpresa(db, req, null, async (ctx) => {
       const r = await ctx.tx.execute<{
-        id: string;
-        relatorio: RelatorioAgendavel;
-        frequencia: FrequenciaEnvio;
-        estabelecimento_id: string;
-        estabelecimento: string;
-        proximo_envio: string;
-        ultimo_envio: string | null;
-        ultimo_aviso: string | null;
-        ativo: boolean;
-        canal: 'email' | 'whatsapp' | 'sms';
+        id: string
+        relatorio: RelatorioAgendavel
+        frequencia: FrequenciaEnvio
+        estabelecimento_id: string
+        estabelecimento: string
+        proximo_envio: string
+        ultimo_envio: string | null
+        ultimo_aviso: string | null
+        ativo: boolean
+        canal: 'email' | 'whatsapp' | 'sms'
       }>(sql`
         select a.id, a.relatorio, a.frequencia, a.canal, a.estabelecimento_id, a.proximo_envio::text as proximo_envio,
           a.ultimo_envio::text as ultimo_envio, a.ultimo_aviso, a.ativo,
           (select coalesce(f.nome_fantasia, f.nome) from estabelecimento es join ficha f on f.id = es.ficha_id where es.id = a.estabelecimento_id) as estabelecimento
         from relatorio_agendado a
         where a.usuario_id = ${ctx.usuarioId} and a.empresa_id = ${ctx.empresaId}
-        order by a.criado_em`);
+        order by a.criado_em`)
       return {
         disponiveis: CHAVES_RELATORIO_AGENDAVEL.filter((k) =>
           pode(ctx.acesso, RELATORIOS_AGENDAVEIS[k].funcionalidade, 'visualizar'),
@@ -339,9 +339,9 @@ export async function rotasRelatoriosAgendados(app: FastifyInstance): Promise<vo
           ativo: x.ativo,
           canal: x.canal,
         })),
-      };
+      }
     }),
-  );
+  )
 
   app.post('/api/relatorios-agendados', async (req) =>
     naEmpresa(db, req, null, async (ctx) => {
@@ -352,10 +352,10 @@ export async function rotasRelatoriosAgendados(app: FastifyInstance): Promise<vo
           estabelecimentoId: z.uuid(),
           canal: z.enum(CANAIS_MENSAGEM).default('email'),
         })
-        .parse(req.body);
-      ctx.exigir(RELATORIOS_AGENDAVEIS[d.relatorio].funcionalidade, 'visualizar');
+        .parse(req.body)
+      ctx.exigir(RELATORIOS_AGENDAVEIS[d.relatorio].funcionalidade, 'visualizar')
       if (!(await ctx.estabelecimentosPermitidos()).includes(d.estabelecimentoId))
-        throw new ErroRegra('Estabelecimento fora do seu acesso.', 'estabelecimento');
+        throw new ErroRegra('Estabelecimento fora do seu acesso.', 'estabelecimento')
       const [ja] = await ctx.tx
         .select({ id: s.relatorioAgendado.id })
         .from(s.relatorioAgendado)
@@ -365,58 +365,58 @@ export async function rotasRelatoriosAgendados(app: FastifyInstance): Promise<vo
             eq(s.relatorioAgendado.estabelecimentoId, d.estabelecimentoId),
             eq(s.relatorioAgendado.relatorio, d.relatorio),
           ),
-        );
+        )
       if (ja)
         throw new ErroRegra(
           'Você já recebe este relatório deste estabelecimento: mude a frequência.',
           'duplicado',
-        );
+        )
       const [r] = (
         await ctx.tx.execute<{ id: string }>(sql`
           insert into relatorio_agendado (empresa_id, usuario_id, estabelecimento_id, relatorio, frequencia, canal, proximo_envio, criado_por)
           select ${ctx.empresaId}, ${ctx.usuarioId}, e.id, ${d.relatorio}, ${d.frequencia}, ${d.canal}, ${proximoEnvio(d.frequencia)}, ${ctx.usuarioId}
           from estabelecimento e where e.id = ${d.estabelecimentoId}
           returning id`)
-      ).rows;
-      return { id: r!.id };
+      ).rows
+      return { id: r!.id }
     }),
-  );
+  )
 
   app.put<{ Params: { id: string } }>('/api/relatorios-agendados/:id', async (req) =>
     naEmpresa(db, req, null, async (ctx) => {
-      const a = await meu(ctx, z.uuid().parse(req.params.id));
+      const a = await meu(ctx, z.uuid().parse(req.params.id))
       const d = z
         .object({
           frequencia: z.enum(CHAVES_FREQUENCIA_ENVIO),
           ativo: z.boolean(),
           canal: z.enum(CANAIS_MENSAGEM).optional(),
         })
-        .parse(req.body);
+        .parse(req.body)
       await ctx.tx.execute(sql`
         update relatorio_agendado a set frequencia = ${d.frequencia}, ativo = ${d.ativo},
           canal = coalesce(${d.canal ?? null}, a.canal),
           proximo_envio = ${proximoEnvio(d.frequencia)}
-        from estabelecimento e where e.id = a.estabelecimento_id and a.id = ${a.id}`);
-      return { ok: true };
+        from estabelecimento e where e.id = a.estabelecimento_id and a.id = ${a.id}`)
+      return { ok: true }
     }),
-  );
+  )
 
   app.post<{ Params: { id: string } }>('/api/relatorios-agendados/:id/excluir', async (req) =>
     naEmpresa(db, req, null, async (ctx) => {
-      const a = await meu(ctx, z.uuid().parse(req.params.id));
-      await ctx.tx.delete(s.relatorioAgendado).where(eq(s.relatorioAgendado.id, a.id));
-      return { ok: true };
+      const a = await meu(ctx, z.uuid().parse(req.params.id))
+      await ctx.tx.delete(s.relatorioAgendado).where(eq(s.relatorioAgendado.id, a.id))
+      return { ok: true }
     }),
-  );
+  )
 
   /** Envia agora, para conferir (não muda o próximo envio). */
   app.post<{ Params: { id: string } }>('/api/relatorios-agendados/:id/enviar', async (req) =>
     naEmpresa(db, req, null, async (ctx) => {
-      const a = await meu(ctx, z.uuid().parse(req.params.id));
-      const aviso = await enviar(ctx, a, ctx.sessao.email, config.URL_APLICACAO);
-      if (aviso?.startsWith('Sem a permissão')) throw new ErroRegra(aviso, 'sem_permissao');
-      if (aviso) return { ok: true, para: ctx.sessao.email, aviso };
-      return { ok: true, para: ctx.sessao.email };
+      const a = await meu(ctx, z.uuid().parse(req.params.id))
+      const aviso = await enviar(ctx, a, ctx.sessao.email, config.URL_APLICACAO)
+      if (aviso?.startsWith('Sem a permissão')) throw new ErroRegra(aviso, 'sem_permissao')
+      if (aviso) return { ok: true, para: ctx.sessao.email, aviso }
+      return { ok: true, para: ctx.sessao.email }
     }),
-  );
+  )
 }

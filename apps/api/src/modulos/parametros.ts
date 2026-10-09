@@ -8,14 +8,14 @@ import {
   TIPOS_CODIGO,
   type TipoCodigo,
   type ValorParametro,
-} from '@vinicycle/shared';
-import { and, eq, isNull, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import * as s from '../db/schema';
-import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao';
+} from '@vinicycle/shared'
+import { and, eq, isNull, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import * as s from '../db/schema'
+import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao'
 
-const F = 'gestao.config.parametros';
+const F = 'gestao.config.parametros'
 
 /** Valor gravado (ou indefinido, se a empresa nunca alterou). */
 async function gravado(ctx: ContextoEmpresa, chave: ChaveParametro): Promise<unknown> {
@@ -23,12 +23,12 @@ async function gravado(ctx: ContextoEmpresa, chave: ChaveParametro): Promise<unk
     const linhas = await ctx.tx
       .select({ tipo: s.formatoCodigo.tipo, mascara: s.formatoCodigo.mascara })
       .from(s.formatoCodigo)
-      .where(eq(s.formatoCodigo.empresaId, ctx.empresaId));
-    if (!linhas.length) return undefined;
+      .where(eq(s.formatoCodigo.empresaId, ctx.empresaId))
+    if (!linhas.length) return undefined
     return {
       ...PARAMETROS.formatos_codigo.padrao,
       ...Object.fromEntries(linhas.map((l) => [l.tipo, l.mascara])),
-    };
+    }
   }
   const [p] = await ctx.tx
     .select({ valor: s.parametro.valor })
@@ -39,16 +39,16 @@ async function gravado(ctx: ContextoEmpresa, chave: ChaveParametro): Promise<unk
         isNull(s.parametro.estabelecimentoId),
         eq(s.parametro.chave, chave),
       ),
-    );
-  return p?.valor;
+    )
+  return p?.valor
 }
 
 function emVigor<C extends ChaveParametro>(chave: C, valor: unknown) {
-  const r = PARAMETROS[chave].esquema.safeParse(valor);
+  const r = PARAMETROS[chave].esquema.safeParse(valor)
   return {
     valor: (r.success ? r.data : PARAMETROS[chave].padrao) as ValorParametro<C>,
     padrao: !r.success,
-  };
+  }
 }
 
 /** Valor em vigor; um valor gravado que deixou de ser válido (registro mudou) cai no padrão. */
@@ -56,13 +56,13 @@ export async function lerParametro<C extends ChaveParametro>(
   ctx: ContextoEmpresa,
   chave: C,
 ): Promise<ValorParametro<C>> {
-  return emVigor(chave, await gravado(ctx, chave)).valor;
+  return emVigor(chave, await gravado(ctx, chave)).valor
 }
 
 async function gravar(ctx: ContextoEmpresa, chave: ChaveParametro, valor: object): Promise<void> {
   if (chave === 'formatos_codigo') {
     for (const tipo of Object.keys(TIPOS_CODIGO) as TipoCodigo[]) {
-      const mascara = (valor as Record<TipoCodigo, string>)[tipo];
+      const mascara = (valor as Record<TipoCodigo, string>)[tipo]
       await ctx.tx
         .insert(s.formatoCodigo)
         .values({
@@ -75,9 +75,9 @@ async function gravar(ctx: ContextoEmpresa, chave: ChaveParametro, valor: object
         .onConflictDoUpdate({
           target: [s.formatoCodigo.empresaId, s.formatoCodigo.tipo],
           set: { mascara, atualizadoEm: sql`now()`, atualizadoPor: ctx.usuarioId },
-        });
+        })
     }
-    return;
+    return
   }
   const alterado = await ctx.tx
     .update(s.parametro)
@@ -89,7 +89,7 @@ async function gravar(ctx: ContextoEmpresa, chave: ChaveParametro, valor: object
         eq(s.parametro.chave, chave),
       ),
     )
-    .returning({ id: s.parametro.id });
+    .returning({ id: s.parametro.id })
   if (!alterado.length) {
     await ctx.tx.insert(s.parametro).values({
       empresaId: ctx.empresaId,
@@ -97,37 +97,36 @@ async function gravar(ctx: ContextoEmpresa, chave: ChaveParametro, valor: object
       valor,
       criadoPor: ctx.usuarioId,
       atualizadoPor: ctx.usuarioId,
-    });
+    })
   }
 }
 
 export async function rotasParametros(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
 
   app.get('/api/parametros', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const todos: Record<string, unknown> = {};
-      for (const chave of CHAVES_PARAMETRO)
-        todos[chave] = emVigor(chave, await gravado(ctx, chave));
-      return todos;
+      const todos: Record<string, unknown> = {}
+      for (const chave of CHAVES_PARAMETRO) todos[chave] = emVigor(chave, await gravado(ctx, chave))
+      return todos
     }),
-  );
+  )
 
   app.put<{ Params: { chave: string } }>('/api/parametros/:chave', async (req) =>
     naEmpresa(db, req, [F, 'editar'], async (ctx) => {
-      const chave = z.enum(CHAVES_PARAMETRO).parse(req.params.chave);
-      const valor = PARAMETROS[chave].esquema.parse(req.body) as Record<string, unknown>;
-      if (chave === 'avisos_validade') (valor.dias as number[]).sort((a, b) => b - a);
-      const antes = emVigor(chave, await gravado(ctx, chave)).valor;
-      await gravar(ctx, chave, valor);
+      const chave = z.enum(CHAVES_PARAMETRO).parse(req.params.chave)
+      const valor = PARAMETROS[chave].esquema.parse(req.body) as Record<string, unknown>
+      if (chave === 'avisos_validade') (valor.dias as number[]).sort((a, b) => b - a)
+      const antes = emVigor(chave, await gravado(ctx, chave)).valor
+      await gravar(ctx, chave, valor)
       await ctx.auditar({
         acao: 'editar',
         entidade: 'parametro',
         registroId: null,
         antes: { [chave]: antes },
         depois: { [chave]: valor },
-      });
-      return { ok: true };
+      })
+      return { ok: true }
     }),
-  );
+  )
 }

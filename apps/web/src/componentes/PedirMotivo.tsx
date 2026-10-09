@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Botao } from './ui/botao';
-import { AreaTexto, Campo } from './ui/campos';
-import { Dialogo } from './ui/dialogo';
+import { useState } from 'react'
+import { Botao } from './ui/botao'
+import { AreaTexto, Campo } from './ui/campos'
+import { Dialogo } from './ui/dialogo'
 
 /** Inativar, cancelar e remover pedem motivo, que fica na auditoria (P14, P26). */
 export function PedirMotivo({
@@ -12,24 +12,24 @@ export function PedirMotivo({
   rotuloBotao = 'Confirmar',
   aoConfirmar,
 }: {
-  aberto: boolean;
-  aoMudar: (v: boolean) => void;
-  titulo: string;
-  descricao?: string;
-  rotuloBotao?: string;
-  aoConfirmar: (motivo: string) => Promise<unknown>;
+  aberto: boolean
+  aoMudar: (v: boolean) => void
+  titulo: string
+  descricao?: string
+  rotuloBotao?: string
+  aoConfirmar: (motivo: string) => Promise<unknown>
 }) {
-  const [motivo, setMotivo] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
+  const [motivo, setMotivo] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
   return (
     <Dialogo
       aberto={aberto}
       aoMudar={(v) => {
-        aoMudar(v);
+        aoMudar(v)
         if (!v) {
-          setMotivo('');
-          setErro(null);
+          setMotivo('')
+          setErro(null)
         }
       }}
       titulo={titulo}
@@ -43,16 +43,16 @@ export function PedirMotivo({
             variante="perigo"
             disabled={enviando}
             onClick={async () => {
-              if (motivo.trim().length < 3) return setErro('Informe o motivo.');
-              setEnviando(true);
+              if (motivo.trim().length < 3) return setErro('Informe o motivo.')
+              setEnviando(true)
               try {
-                await aoConfirmar(motivo.trim());
-                setMotivo('');
-                aoMudar(false);
+                await aoConfirmar(motivo.trim())
+                setMotivo('')
+                aoMudar(false)
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               } finally {
-                setEnviando(false);
+                setEnviando(false)
               }
             }}
           >
@@ -70,5 +70,5 @@ export function PedirMotivo({
         />
       </Campo>
     </Dialogo>
-  );
+  )
 }

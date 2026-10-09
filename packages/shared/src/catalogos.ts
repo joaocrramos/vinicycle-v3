@@ -1,9 +1,9 @@
 // Catálogos globais com itens próprios que a empresa edita (P8, P29): o que cada um tem, quem pode
 // alterar e as regras de validação, iguais na tela e na API.
-import { z } from 'zod';
-import { CORES_UVA, LISTAS, type Lista, LISTAS_OFICIAIS, TIPOS_UVA } from './dominios';
+import { z } from 'zod'
+import { CORES_UVA, LISTAS, type Lista, LISTAS_OFICIAIS, TIPOS_UVA } from './dominios'
 
-const nome = z.string().trim().min(1, 'Informe o nome').max(120);
+const nome = z.string().trim().min(1, 'Informe o nome').max(120)
 
 export const esquemasCatalogo = {
   tipo_recipiente: z.object({
@@ -31,31 +31,31 @@ export const esquemasCatalogo = {
     nome,
     ordem: z.number().int().min(0).max(10000).default(100),
   }),
-} as const;
+} as const
 
-export type Catalogo = Exclude<keyof typeof esquemasCatalogo, 'opcao'> | `opcao:${Lista}`;
+export type Catalogo = Exclude<keyof typeof esquemasCatalogo, 'opcao'> | `opcao:${Lista}`
 
 /** Quem altera cada catálogo (P27). As listas oficiais (cores, açúcar, conselhos) só a plataforma. */
 export function funcionalidadeDoCatalogo(catalogo: Catalogo): string {
-  if (catalogo === 'tipo_documento') return 'gestao.documentos';
+  if (catalogo === 'tipo_documento') return 'gestao.documentos'
   if (catalogo === 'opcao:cargo' || catalogo === 'opcao:categoria_fornecimento')
-    return 'gestao.pessoas';
-  return 'enotrace.cadastros';
+    return 'gestao.pessoas'
+  return 'enotrace.cadastros'
 }
 
 export function catalogoValido(valor: string): valor is Catalogo {
-  if (valor.startsWith('opcao:')) return valor.slice(6) in LISTAS;
-  return valor in esquemasCatalogo && valor !== 'opcao';
+  if (valor.startsWith('opcao:')) return valor.slice(6) in LISTAS
+  return valor in esquemasCatalogo && valor !== 'opcao'
 }
 
 export function listaOficial(catalogo: Catalogo): boolean {
-  return catalogo.startsWith('opcao:') && LISTAS_OFICIAIS.includes(catalogo.slice(6) as Lista);
+  return catalogo.startsWith('opcao:') && LISTAS_OFICIAIS.includes(catalogo.slice(6) as Lista)
 }
 
 export function esquemaDoCatalogo(catalogo: Catalogo) {
   return catalogo.startsWith('opcao:')
     ? esquemasCatalogo.opcao
-    : esquemasCatalogo[catalogo as keyof typeof esquemasCatalogo];
+    : esquemasCatalogo[catalogo as keyof typeof esquemasCatalogo]
 }
 
 /** Na Administração › Catálogos, a variedade global tem também o código oficial (SISDEVIN). */
@@ -70,7 +70,7 @@ export function esquemaDoCatalogoPlataforma(catalogo: Catalogo) {
           .default(null)
           .transform((v) => v || null),
       })
-    : esquemaDoCatalogo(catalogo);
+    : esquemaDoCatalogo(catalogo)
 }
 
 export const NOMES_CATALOGO: Record<Exclude<keyof typeof esquemasCatalogo, 'opcao'>, string> = {
@@ -78,10 +78,10 @@ export const NOMES_CATALOGO: Record<Exclude<keyof typeof esquemasCatalogo, 'opca
   tipo_insumo: 'Tipos de insumo',
   tipo_documento: 'Tipos de documento',
   variedade: 'Variedades',
-};
+}
 
 export function nomeDoCatalogo(catalogo: Catalogo): string {
   return catalogo.startsWith('opcao:')
     ? LISTAS[catalogo.slice(6) as Lista]
-    : NOMES_CATALOGO[catalogo as keyof typeof NOMES_CATALOGO];
+    : NOMES_CATALOGO[catalogo as keyof typeof NOMES_CATALOGO]
 }

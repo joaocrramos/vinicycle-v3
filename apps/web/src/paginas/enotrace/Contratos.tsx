@@ -1,6 +1,6 @@
 // EnoTrace › Terceiros › Contratos de terceirização (cantina.md, Vinificação para terceiros e em
 // terceiros; IN MAPA 72/2018, arts. 14, 25, 27, 28 e 30; 04, roteiro do ciclo 10, bloco 1).
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ATIVIDADES_CONTRATO,
   type AtividadeContrato,
@@ -11,27 +11,27 @@ import {
   SENTIDOS_CONTRATO,
   TIPOS_PERDA_TOLERADA,
   UNIDADES_PAGAMENTO_PRODUTO,
-} from '@vinicycle/shared';
-import { Plus, Trash2 } from 'lucide-react';
-import { type FormEvent, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
-import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha';
-import { Anexos } from '@/componentes/Anexos';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Historico } from '@/componentes/Historico';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarData } from '@/lib/utils';
+} from '@vinicycle/shared'
+import { Plus, Trash2 } from 'lucide-react'
+import { type FormEvent, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
+import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha'
+import { Anexos } from '@/componentes/Anexos'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Historico } from '@/componentes/Historico'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarData } from '@/lib/utils'
 
-type Sentido = keyof typeof SENTIDOS_CONTRATO;
+type Sentido = keyof typeof SENTIDOS_CONTRATO
 
 const SITUACOES: Record<string, { rotulo: string; tom: 'sucesso' | 'alerta' | 'erro' | 'neutro' }> =
   {
@@ -39,26 +39,26 @@ const SITUACOES: Record<string, { rotulo: string; tom: 'sucesso' | 'alerta' | 'e
     vencendo: { rotulo: 'Vencendo', tom: 'alerta' },
     vencido: { rotulo: 'Vencido', tom: 'erro' },
     futuro: { rotulo: 'Ainda não vigente', tom: 'neutro' },
-  };
+  }
 
 interface LinhaContrato {
-  id: string;
-  sentido: Sentido;
-  numero: string | null;
-  contraparte: string;
-  vigenciaInicio: string;
-  vigenciaFim: string | null;
-  situacaoVigencia: string;
-  marcas: string[];
-  ativo: boolean;
+  id: string
+  sentido: Sentido
+  numero: string | null
+  contraparte: string
+  vigenciaInicio: string
+  vigenciaFim: string | null
+  situacaoVigencia: string
+  marcas: string[]
+  ativo: boolean
 }
 
 export function ListaContratos() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [inativar, setInativar] = useState<LinhaContrato | null>(null);
-  const podeInativar = pode(s, 'enotrace.cadastros', 'inativar');
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [inativar, setInativar] = useState<LinhaContrato | null>(null)
+  const podeInativar = pode(s, 'enotrace.cadastros', 'inativar')
   return (
     <Pagina
       titulo="Contratos de terceirização"
@@ -137,10 +137,10 @@ export function ListaContratos() {
               aoReativar={
                 podeInativar
                   ? async () => {
-                      await api.post(`/api/contratos-terceirizacao/${c.id}/reativar`);
+                      await api.post(`/api/contratos-terceirizacao/${c.id}/reativar`)
                       await qc.invalidateQueries({
                         queryKey: ['lista', '/api/contratos-terceirizacao'],
-                      });
+                      })
                     }
                   : undefined
               }
@@ -155,17 +155,17 @@ export function ListaContratos() {
         descricao="Use quando o contrato for encerrado; os alertas dele deixam de aparecer."
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/contratos-terceirizacao/${inativar!.id}/inativar`, { motivo });
-          await qc.invalidateQueries({ queryKey: ['lista', '/api/contratos-terceirizacao'] });
+          await api.post(`/api/contratos-terceirizacao/${inativar!.id}/inativar`, { motivo })
+          await qc.invalidateQueries({ queryKey: ['lista', '/api/contratos-terceirizacao'] })
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 interface Opcao {
-  id: string;
-  nome: string;
+  id: string
+  nome: string
 }
 
 const VAZIO = {
@@ -197,11 +197,11 @@ const VAZIO = {
   produtos: [] as string[],
   observacoes: '',
   versao: undefined as number | undefined,
-};
-type Valores = typeof VAZIO;
+}
+type Valores = typeof VAZIO
 
 const alternar = <T,>(lista: T[], item: T) =>
-  lista.includes(item) ? lista.filter((x) => x !== item) : [...lista, item];
+  lista.includes(item) ? lista.filter((x) => x !== item) : [...lista, item]
 
 function FormularioContrato({
   inicial,
@@ -209,20 +209,20 @@ function FormularioContrato({
   somenteLeitura,
   textoMontado,
 }: {
-  inicial: Valores;
-  aoSalvar: (d: unknown) => Promise<void>;
-  somenteLeitura?: boolean;
-  textoMontado?: string;
+  inicial: Valores
+  aoSalvar: (d: unknown) => Promise<void>
+  somenteLeitura?: boolean
+  textoMontado?: string
 }) {
-  const { data: s } = useSessao();
-  const form = useFormulario(dadosContrato, inicial);
-  const v = form.valores as Valores;
-  const [salvo, setSalvo] = useState(false);
-  const papel = v.sentido === 'prestamos' ? 'cliente_vinificacao' : 'cantina_prestadora';
+  const { data: s } = useSessao()
+  const form = useFormulario(dadosContrato, inicial)
+  const v = form.valores as Valores
+  const [salvo, setSalvo] = useState(false)
+  const papel = v.sentido === 'prestamos' ? 'cliente_vinificacao' : 'cantina_prestadora'
   const contrapartes = useQuery({
     queryKey: ['pessoas-opcoes', papel],
     queryFn: () => api.get<Opcao[]>(`/api/pessoas/opcoes?papel=${papel}`),
-  });
+  })
   const marcas = useQuery({
     queryKey: ['marcas-opcoes'],
     queryFn: async () =>
@@ -231,7 +231,7 @@ function FormularioContrato({
           '/api/marcas?tamanho=0',
         )
       ).itens,
-  });
+  })
   const produtos = useQuery({
     queryKey: ['produtos-opcoes'],
     queryFn: async () =>
@@ -240,38 +240,37 @@ function FormularioContrato({
           '/api/produtos?tamanho=0',
         )
       ).itens,
-  });
+  })
   const documentos = useQuery({
     queryKey: ['documentos-opcoes'],
     queryFn: async () =>
       (await api.get<{ itens: Array<{ id: string; titulo: string }> }>('/api/documentos?tamanho=0'))
         .itens,
-  });
+  })
   // Marcas do dono certo: a contraparte quando prestamos; a própria empresa quando contratamos.
-  const dono = v.sentido === 'prestamos' ? v.contraparteId || '-' : null;
+  const dono = v.sentido === 'prestamos' ? v.contraparteId || '-' : null
   const marcasDoDono = (marcas.data ?? []).filter(
     (m) => m.donoId === dono && (m.ativo || v.marcas.includes(m.id)),
-  );
+  )
   const produtosDoDono = (produtos.data ?? []).filter((p) =>
     marcasDoDono.some((m) => m.id === p.marcaId),
-  );
+  )
   const omiteCantina =
-    v.formaTexto === 'responsabilidade_produzido' ||
-    v.formaTexto === 'responsabilidade_padronizado';
+    v.formaTexto === 'responsabilidade_produzido' || v.formaTexto === 'responsabilidade_padronizado'
   return (
     <form
       noValidate
       className="flex flex-col gap-5"
       onSubmit={async (ev: FormEvent) => {
-        ev.preventDefault();
-        setSalvo(false);
-        const d = form.validar();
-        if (!d) return;
+        ev.preventDefault()
+        setSalvo(false)
+        const d = form.validar()
+        if (!d) return
         try {
-          await aoSalvar(d);
-          setSalvo(true);
+          await aoSalvar(d)
+          setSalvo(true)
         } catch (e) {
-          form.erroDaApi(e);
+          form.erroDaApi(e)
         }
       }}
     >
@@ -286,10 +285,10 @@ function FormularioContrato({
                 id="sentido"
                 value={v.sentido}
                 onChange={(e) => {
-                  form.definir('sentido', e.target.value);
-                  form.definir('contraparteId', '');
-                  form.definir('marcas', []);
-                  form.definir('produtos', []);
+                  form.definir('sentido', e.target.value)
+                  form.definir('contraparteId', '')
+                  form.definir('marcas', [])
+                  form.definir('produtos', [])
                 }}
               >
                 {Object.entries(SENTIDOS_CONTRATO).map(([k, n]) => (
@@ -317,10 +316,10 @@ function FormularioContrato({
                 id="contraparteId"
                 value={v.contraparteId}
                 onChange={(e) => {
-                  form.definir('contraparteId', e.target.value);
+                  form.definir('contraparteId', e.target.value)
                   if (v.sentido === 'prestamos') {
-                    form.definir('marcas', []);
-                    form.definir('produtos', []);
+                    form.definir('marcas', [])
+                    form.definir('produtos', [])
                   }
                 }}
               >
@@ -775,58 +774,58 @@ function FormularioContrato({
         </div>
       )}
     </form>
-  );
+  )
 }
 
 export function NovoContrato() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
   return (
     <Pagina titulo="Novo contrato" trilha={['EnoTrace', 'Terceiros', 'Contratos']}>
       <FormularioContrato
         inicial={{ ...VAZIO, estabelecimentoId: s?.empresa?.estabelecimentoId ?? '' }}
         aoSalvar={async (d) => {
-          const r = await api.post<{ id: string }>('/api/contratos-terceirizacao', d);
-          navegar(`/enotrace/contratos/${r.id}`, { replace: true });
+          const r = await api.post<{ id: string }>('/api/contratos-terceirizacao', d)
+          navegar(`/enotrace/contratos/${r.id}`, { replace: true })
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 type ContratoCompleto = Valores & {
-  id: string;
-  contraparte: string;
-  situacaoVigencia: string;
-  ativo: boolean;
-  versao: number;
-  textoMontado: string;
-  textoFinal: string;
-  registroMapaEmpresa: string | null;
-  pendencias: Array<{ codigo: string; mensagem: string; fonte: string }>;
-  romaneios: number;
-  transferido: { litros: string; garrafas: number };
-};
+  id: string
+  contraparte: string
+  situacaoVigencia: string
+  ativo: boolean
+  versao: number
+  textoMontado: string
+  textoFinal: string
+  registroMapaEmpresa: string | null
+  pendencias: Array<{ codigo: string; mensagem: string; fonte: string }>
+  romaneios: number
+  transferido: { litros: string; garrafas: number }
+}
 
 export function FichaContrato() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [inativar, setInativar] = useState(false);
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [inativar, setInativar] = useState(false)
   const q = useQuery({
     queryKey: ['contrato', id],
     queryFn: () => api.get<ContratoCompleto>(`/api/contratos-terceirizacao/${id}`),
-  });
-  const podeEditar = pode(s, 'enotrace.cadastros', 'editar');
+  })
+  const podeEditar = pode(s, 'enotrace.cadastros', 'editar')
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const c = q.data;
-  const recarregar = () => qc.invalidateQueries({ queryKey: ['contrato', id] });
-  const situacao = SITUACOES[c.situacaoVigencia];
+    )
+  const c = q.data
+  const recarregar = () => qc.invalidateQueries({ queryKey: ['contrato', id] })
+  const situacao = SITUACOES[c.situacaoVigencia]
   return (
     <Pagina
       titulo={`Contrato com ${c.contraparte}`}
@@ -838,8 +837,8 @@ export function FichaContrato() {
             ativo={c.ativo}
             aoInativar={() => setInativar(true)}
             aoReativar={async () => {
-              await api.post(`/api/contratos-terceirizacao/${id}/reativar`);
-              await recarregar();
+              await api.post(`/api/contratos-terceirizacao/${id}/reativar`)
+              await recarregar()
             }}
           />
         )
@@ -908,8 +907,8 @@ export function FichaContrato() {
             textoMontado={c.textoMontado}
             somenteLeitura={!podeEditar}
             aoSalvar={async (d) => {
-              await api.put(`/api/contratos-terceirizacao/${id}`, d);
-              await recarregar();
+              await api.put(`/api/contratos-terceirizacao/${id}`, d)
+              await recarregar()
             }}
           />
         </ConteudoAba>
@@ -932,10 +931,10 @@ export function FichaContrato() {
         descricao="Use quando o contrato for encerrado; os alertas dele deixam de aparecer."
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/contratos-terceirizacao/${id}/inativar`, { motivo });
-          await recarregar();
+          await api.post(`/api/contratos-terceirizacao/${id}/inativar`, { motivo })
+          await recarregar()
         }}
       />
     </Pagina>
-  );
+  )
 }

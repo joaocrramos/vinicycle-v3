@@ -1,7 +1,7 @@
-import { X } from 'lucide-react';
-import { Dialog } from 'radix-ui';
-import type { ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import { X } from 'lucide-react'
+import { Dialog } from 'radix-ui'
+import type { ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 
 export function Dialogo({
   aberto,
@@ -12,13 +12,13 @@ export function Dialogo({
   rodape,
   largo,
 }: {
-  aberto: boolean;
-  aoMudar: (v: boolean) => void;
-  titulo: ReactNode;
-  descricao?: ReactNode;
-  children?: ReactNode;
-  rodape?: ReactNode;
-  largo?: boolean;
+  aberto: boolean
+  aoMudar: (v: boolean) => void
+  titulo: ReactNode
+  descricao?: ReactNode
+  children?: ReactNode
+  rodape?: ReactNode
+  largo?: boolean
 }) {
   return (
     <Dialog.Root open={aberto} onOpenChange={aoMudar}>
@@ -50,5 +50,5 @@ export function Dialogo({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
-  );
+  )
 }

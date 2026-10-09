@@ -1,22 +1,22 @@
 // Administração › Configurações da plataforma: prazos do teste e da régua de cobrança
 // (administracao.md, Período de teste; Inadimplência e bloqueio).
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Campo, Entrada } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { pode, useSessao } from '@/lib/sessao';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Campo, Entrada } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { pode, useSessao } from '@/lib/sessao'
 
 interface Prazos {
-  testeDias: number;
-  avisosTesteDias: number[];
-  toleranciaDias: number;
-  somenteLeituraDias: number;
-  faturaAntecedenciaDias: number;
-  avisosVencimentoDias: number[];
-  chamadoCategorias: string[];
+  testeDias: number
+  avisosTesteDias: number[]
+  toleranciaDias: number
+  somenteLeituraDias: number
+  faturaAntecedenciaDias: number
+  avisosVencimentoDias: number[]
+  chamadoCategorias: string[]
 }
 
 const lista = (t: string) =>
@@ -24,13 +24,13 @@ const lista = (t: string) =>
     .split(/[,;\s]+/)
     .filter(Boolean)
     .map(Number)
-    .filter((n) => Number.isInteger(n) && n >= 0);
+    .filter((n) => Number.isInteger(n) && n >= 0)
 
 export function PaginaConfiguracoesPlataforma() {
   const q = useQuery({
     queryKey: ['config-plataforma'],
     queryFn: () => api.get<Prazos>('/api/plataforma/configuracoes'),
-  });
+  })
   if (!q.data)
     return (
       <Pagina titulo="Configurações da plataforma" trilha={['Administração']}>
@@ -38,21 +38,21 @@ export function PaginaConfiguracoesPlataforma() {
           {q.isError ? (q.error as Error).message : 'Carregando…'}
         </p>
       </Pagina>
-    );
-  return <FormularioPrazos inicial={q.data} />;
+    )
+  return <FormularioPrazos inicial={q.data} />
 }
 
 function FormularioPrazos({ inicial }: { inicial: Prazos }) {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [v, setV] = useState<Prazos>(inicial);
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [v, setV] = useState<Prazos>(inicial)
   const [textos, setTextos] = useState({
     teste: inicial.avisosTesteDias.join(', '),
     vencimento: inicial.avisosVencimentoDias.join(', '),
     categorias: inicial.chamadoCategorias.join(', '),
-  });
-  const [mensagem, setMensagem] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null);
-  const podeEditar = pode(s, 'plataforma.configuracoes', 'editar');
+  })
+  const [mensagem, setMensagem] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null)
+  const podeEditar = pode(s, 'plataforma.configuracoes', 'editar')
   const numero = (campo: keyof Prazos, rotulo: string, ajuda?: string) => (
     <Campo rotulo={rotulo} id={`cfg-${campo}`} ajuda={ajuda}>
       <Entrada
@@ -64,7 +64,7 @@ function FormularioPrazos({ inicial }: { inicial: Prazos }) {
         onChange={(e) => setV({ ...v, [campo]: Number(e.target.value) || 0 })}
       />
     </Campo>
-  );
+  )
   return (
     <Pagina titulo="Configurações da plataforma" trilha={['Administração']}>
       {mensagem && <Aviso tom={mensagem.tom}>{mensagem.texto}</Aviso>}
@@ -128,11 +128,11 @@ function FormularioPrazos({ inicial }: { inicial: Prazos }) {
                         .split(',')
                         .map((x) => x.trim())
                         .filter(Boolean),
-                    });
-                    await qc.invalidateQueries({ queryKey: ['config-plataforma'] });
-                    setMensagem({ tom: 'sucesso', texto: 'Prazos salvos.' });
+                    })
+                    await qc.invalidateQueries({ queryKey: ['config-plataforma'] })
+                    setMensagem({ tom: 'sucesso', texto: 'Prazos salvos.' })
                   } catch (e) {
-                    setMensagem({ tom: 'erro', texto: (e as Error).message });
+                    setMensagem({ tom: 'erro', texto: (e as Error).message })
                   }
                 }}
               >
@@ -143,5 +143,5 @@ function FormularioPrazos({ inicial }: { inicial: Prazos }) {
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }

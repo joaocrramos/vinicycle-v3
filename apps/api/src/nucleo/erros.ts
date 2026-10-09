@@ -7,13 +7,13 @@ export class ErroAplicacao extends Error {
     mensagem: string,
     readonly detalhes?: unknown,
   ) {
-    super(mensagem);
+    super(mensagem)
   }
 }
 
 export class ErroNaoAutenticado extends ErroAplicacao {
   constructor(mensagem = 'Sessão encerrada. Entre novamente.') {
-    super(401, 'nao_autenticado', mensagem);
+    super(401, 'nao_autenticado', mensagem)
   }
 }
 
@@ -24,20 +24,20 @@ export class ErroPermissao extends ErroAplicacao {
     readonly acao: string,
     mensagem: string,
   ) {
-    super(403, 'sem_permissao', mensagem);
+    super(403, 'sem_permissao', mensagem)
   }
 }
 
 export class ErroNaoEncontrado extends ErroAplicacao {
   constructor(mensagem = 'Registro não encontrado.') {
-    super(404, 'nao_encontrado', mensagem);
+    super(404, 'nao_encontrado', mensagem)
   }
 }
 
 /** Regra de integridade ou de negócio que impede a ação (P29: bloqueia). */
 export class ErroRegra extends ErroAplicacao {
   constructor(mensagem: string, codigo = 'regra', detalhes?: unknown) {
-    super(422, codigo, mensagem, detalhes);
+    super(422, codigo, mensagem, detalhes)
   }
 }
 
@@ -46,6 +46,6 @@ export class ErroConflito extends ErroAplicacao {
   constructor(
     mensagem = 'Este registro foi alterado por outra pessoa. Recarregue e tente de novo.',
   ) {
-    super(409, 'conflito', mensagem);
+    super(409, 'conflito', mensagem)
   }
 }

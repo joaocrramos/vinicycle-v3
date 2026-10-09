@@ -1,6 +1,6 @@
 // Simulador de corte (cantina.md, Trasfega e corte; 04, roteiro do ciclo 9): proporções testadas
 // sem mexer no volume, salvas no projeto com data e autor. A aprovada vira o corte já preenchido.
-import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm'
 import {
   type AnyPgColumn,
   check,
@@ -11,22 +11,22 @@ import {
   pgTable,
   text,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, usuario } from './acesso';
-import { alteracao, criacao, dataHora, id } from './comum';
-import { empresa } from './plataforma';
-import { projeto } from './producao';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento, usuario } from './acesso'
+import { alteracao, criacao, dataHora, id } from './comum'
+import { empresa } from './plataforma'
+import { projeto } from './producao'
 
 function daEmpresa(
   coluna: AnyPgColumn,
   empresaId: AnyPgColumn,
   alvo: { id: AnyPgColumn; empresaId: AnyPgColumn },
 ) {
-  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] });
+  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] })
 }
 
-export const MODOS_SIMULACAO = ['percentual', 'litros'] as const;
-export const SITUACOES_SIMULACAO = ['rascunho', 'aprovada', 'descartada'] as const;
+export const MODOS_SIMULACAO = ['percentual', 'litros'] as const
+export const SITUACOES_SIMULACAO = ['rascunho', 'aprovada', 'descartada'] as const
 
 export const simulacaoCorte = pgTable(
   'simulacao_corte',
@@ -66,4 +66,4 @@ export const simulacaoCorte = pgTable(
       sql`modo <> 'percentual' or (volume_litros is not null and volume_litros > 0)`,
     ),
   ],
-);
+)

@@ -1,27 +1,27 @@
 // Telas fora da sessão: entrar, esqueci a senha, redefinir a senha, confirmar o e-mail novo (P10).
-import { entrar, esqueciSenha, redefinirSenha, SENHA_MINIMO } from '@vinicycle/shared';
-import { useQueryClient } from '@tanstack/react-query';
-import { type FormEvent, type ReactNode, useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Campo, Entrada } from '@/componentes/ui/campos';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { type EstadoSessao, useAtualizarSessao } from '@/lib/sessao';
+import { entrar, esqueciSenha, redefinirSenha, SENHA_MINIMO } from '@vinicycle/shared'
+import { useQueryClient } from '@tanstack/react-query'
+import { type FormEvent, type ReactNode, useEffect, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Campo, Entrada } from '@/componentes/ui/campos'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { type EstadoSessao, useAtualizarSessao } from '@/lib/sessao'
 
 export function TelaPublica({
   titulo,
   children,
   largo,
 }: {
-  titulo: string;
-  children: ReactNode;
-  largo?: boolean;
+  titulo: string
+  children: ReactNode
+  largo?: boolean
 }) {
   useEffect(() => {
-    document.title = `${titulo} · ViniCycle`;
-  }, [titulo]);
+    document.title = `${titulo} · ViniCycle`
+  }, [titulo])
   return (
     <div className="flex min-h-dvh flex-col items-center justify-center gap-6 px-4 py-10">
       <div className="flex items-center gap-2 text-xl font-semibold text-primary">
@@ -34,30 +34,30 @@ export function TelaPublica({
         </CorpoCartao>
       </Cartao>
     </div>
-  );
+  )
 }
 
 export function Entrar() {
-  const navegar = useNavigate();
-  const [params] = useSearchParams();
-  const atualizar = useAtualizarSessao();
-  const form = useFormulario(entrar, { email: '', senha: '' });
-  const [enviando, setEnviando] = useState(false);
+  const navegar = useNavigate()
+  const [params] = useSearchParams()
+  const atualizar = useAtualizarSessao()
+  const form = useFormulario(entrar, { email: '', senha: '' })
+  const [enviando, setEnviando] = useState(false)
 
   async function enviar(ev: FormEvent) {
-    ev.preventDefault();
-    const dados = form.validar();
-    if (!dados) return;
-    setEnviando(true);
+    ev.preventDefault()
+    const dados = form.validar()
+    if (!dados) return
+    setEnviando(true)
     try {
-      const s = await api.post<EstadoSessao>('/api/auth/entrar', dados);
-      atualizar(s);
-      const volta = params.get('volta');
-      navegar(volta?.startsWith('/') && !volta.startsWith('//') ? volta : '/');
+      const s = await api.post<EstadoSessao>('/api/auth/entrar', dados)
+      atualizar(s)
+      const volta = params.get('volta')
+      navegar(volta?.startsWith('/') && !volta.startsWith('//') ? volta : '/')
     } catch (e) {
-      form.erroDaApi(e);
+      form.erroDaApi(e)
     } finally {
-      setEnviando(false);
+      setEnviando(false)
     }
   }
 
@@ -98,12 +98,12 @@ export function Entrar() {
         </Link>
       </form>
     </TelaPublica>
-  );
+  )
 }
 
 export function EsqueciSenha() {
-  const form = useFormulario(esqueciSenha, { email: '' });
-  const [enviado, setEnviado] = useState(false);
+  const form = useFormulario(esqueciSenha, { email: '' })
+  const [enviado, setEnviado] = useState(false)
   return (
     <TelaPublica titulo="Esqueci minha senha">
       {enviado ? (
@@ -116,14 +116,14 @@ export function EsqueciSenha() {
           className="flex flex-col gap-4"
           noValidate
           onSubmit={async (ev) => {
-            ev.preventDefault();
-            const d = form.validar();
-            if (!d) return;
+            ev.preventDefault()
+            const d = form.validar()
+            if (!d) return
             try {
-              await api.post('/api/auth/senha/esqueci', d);
-              setEnviado(true);
+              await api.post('/api/auth/senha/esqueci', d)
+              setEnviado(true)
             } catch (e) {
-              form.erroDaApi(e);
+              form.erroDaApi(e)
             }
           }}
         >
@@ -149,14 +149,14 @@ export function EsqueciSenha() {
         Voltar para a entrada
       </Link>
     </TelaPublica>
-  );
+  )
 }
 
 export function RedefinirSenha() {
-  const [params] = useSearchParams();
-  const form = useFormulario(redefinirSenha, { token: params.get('token') ?? '', senha: '' });
-  const [confirmacao, setConfirmacao] = useState('');
-  const [pronto, setPronto] = useState(false);
+  const [params] = useSearchParams()
+  const form = useFormulario(redefinirSenha, { token: params.get('token') ?? '', senha: '' })
+  const [confirmacao, setConfirmacao] = useState('')
+  const [pronto, setPronto] = useState(false)
   return (
     <TelaPublica titulo="Definir nova senha">
       {pronto ? (
@@ -171,16 +171,15 @@ export function RedefinirSenha() {
           className="flex flex-col gap-4"
           noValidate
           onSubmit={async (ev) => {
-            ev.preventDefault();
-            const d = form.validar();
-            if (!d) return;
-            if (d.senha !== confirmacao)
-              return form.erroDaApi(new Error('As senhas não conferem.'));
+            ev.preventDefault()
+            const d = form.validar()
+            if (!d) return
+            if (d.senha !== confirmacao) return form.erroDaApi(new Error('As senhas não conferem.'))
             try {
-              await api.post('/api/auth/senha/redefinir', d);
-              setPronto(true);
+              await api.post('/api/auth/senha/redefinir', d)
+              setPronto(true)
             } catch (e) {
-              form.erroDaApi(e);
+              form.erroDaApi(e)
             }
           }}
         >
@@ -221,7 +220,7 @@ export function RedefinirSenha() {
         </form>
       )}
     </TelaPublica>
-  );
+  )
 }
 
 /**
@@ -229,10 +228,10 @@ export function RedefinirSenha() {
  * costumam abrir os links sozinhos.
  */
 export function ConfirmarEmail() {
-  const [params] = useSearchParams();
-  const qc = useQueryClient();
-  const [novo, setNovo] = useState<string | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
+  const [params] = useSearchParams()
+  const qc = useQueryClient()
+  const [novo, setNovo] = useState<string | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
   return (
     <TelaPublica titulo="Confirmar e-mail">
       {novo ? (
@@ -252,15 +251,15 @@ export function ConfirmarEmail() {
           </p>
           <Botao
             onClick={async () => {
-              setErro(null);
+              setErro(null)
               try {
                 const r = await api.post<{ email: string }>('/api/eu/email/confirmar', {
                   token: params.get('token') ?? '',
-                });
-                setNovo(r.email);
-                await qc.invalidateQueries();
+                })
+                setNovo(r.email)
+                await qc.invalidateQueries()
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               }
             }}
           >
@@ -269,5 +268,5 @@ export function ConfirmarEmail() {
         </>
       )}
     </TelaPublica>
-  );
+  )
 }

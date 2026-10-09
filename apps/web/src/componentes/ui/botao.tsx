@@ -1,7 +1,7 @@
-import { cva, type VariantProps } from 'class-variance-authority';
-import { Slot } from 'radix-ui';
-import type { ComponentProps } from 'react';
-import { cn } from '@/lib/utils';
+import { cva, type VariantProps } from 'class-variance-authority'
+import { Slot } from 'radix-ui'
+import type { ComponentProps } from 'react'
+import { cn } from '@/lib/utils'
 
 export const variantesBotao = cva(
   'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0 cursor-pointer',
@@ -22,7 +22,7 @@ export const variantesBotao = cva(
     },
     defaultVariants: { variante: 'primario', tamanho: 'normal' },
   },
-);
+)
 
 export function Botao({
   className,
@@ -32,12 +32,12 @@ export function Botao({
   type = 'button',
   ...props
 }: ComponentProps<'button'> & VariantProps<typeof variantesBotao> & { comoFilho?: boolean }) {
-  const C = comoFilho ? Slot.Root : 'button';
+  const C = comoFilho ? Slot.Root : 'button'
   return (
     <C
       type={comoFilho ? undefined : type}
       className={cn(variantesBotao({ variante, tamanho }), className)}
       {...props}
     />
-  );
+  )
 }

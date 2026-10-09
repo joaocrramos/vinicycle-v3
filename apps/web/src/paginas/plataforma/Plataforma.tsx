@@ -1,5 +1,5 @@
 // Administração da plataforma (administracao.md): segundo fator, clientes.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   DIAS_VENCIMENTO,
   type FormaPagamento,
@@ -14,30 +14,30 @@ import {
   PERIODICIDADES,
   SITUACOES_EMPRESA,
   type SituacaoEmpresa,
-} from '@vinicycle/shared';
-import { Plus } from 'lucide-react';
-import { type FormEvent, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
-import { PainelAssinatura } from '@/componentes/Assinatura';
+} from '@vinicycle/shared'
+import { Plus } from 'lucide-react'
+import { type FormEvent, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
+import { PainelAssinatura } from '@/componentes/Assinatura'
 import {
   DetalheFatura,
   type LinhaFatura,
   ListaFaturas,
   NovaFaturaAvulsa,
-} from '@/componentes/Faturas';
-import { CampoTelefone } from '@/componentes/campos-especiais';
-import { FICHA_VAZIA_PJ, FichaCadastral } from '@/componentes/FichaCadastral';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { type EstadoSessao, pode, useAtualizarSessao, useSessao } from '@/lib/sessao';
-import { formatarData, formatarDataHora } from '@/lib/utils';
-import { ConfigurarSegundoFator } from '../eu/Eu';
+} from '@/componentes/Faturas'
+import { CampoTelefone } from '@/componentes/campos-especiais'
+import { FICHA_VAZIA_PJ, FichaCadastral } from '@/componentes/FichaCadastral'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { type EstadoSessao, pode, useAtualizarSessao, useSessao } from '@/lib/sessao'
+import { formatarData, formatarDataHora } from '@/lib/utils'
+import { ConfigurarSegundoFator } from '../eu/Eu'
 
 const TOM: Record<SituacaoEmpresa, 'sucesso' | 'alerta' | 'erro' | 'neutro' | 'primario'> = {
   teste: 'primario',
@@ -45,14 +45,14 @@ const TOM: Record<SituacaoEmpresa, 'sucesso' | 'alerta' | 'erro' | 'neutro' | 'p
   somente_leitura: 'alerta',
   bloqueado: 'erro',
   inativo: 'neutro',
-};
+}
 
 /** A Administração exige o código do aplicativo autenticador (P21). */
 export function SegundoFator({ sessao }: { sessao: EstadoSessao }) {
-  const atualizar = useAtualizarSessao();
-  const [codigo, setCodigo] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
-  const recarregar = async () => atualizar(await api.get<EstadoSessao>('/api/auth/sessao'));
+  const atualizar = useAtualizarSessao()
+  const [codigo, setCodigo] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
+  const recarregar = async () => atualizar(await api.get<EstadoSessao>('/api/auth/sessao'))
   return (
     <Pagina titulo="Segundo fator">
       <Cartao>
@@ -68,12 +68,12 @@ export function SegundoFator({ sessao }: { sessao: EstadoSessao }) {
             <form
               className="flex flex-col gap-4"
               onSubmit={async (ev) => {
-                ev.preventDefault();
+                ev.preventDefault()
                 try {
-                  await api.post('/api/auth/segundo-fator/conferir', { codigo });
-                  await recarregar();
+                  await api.post('/api/auth/segundo-fator/conferir', { codigo })
+                  await recarregar()
                 } catch (e) {
-                  setErro((e as Error).message);
+                  setErro((e as Error).message)
                 }
               }}
             >
@@ -101,23 +101,23 @@ export function SegundoFator({ sessao }: { sessao: EstadoSessao }) {
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }
 
 interface LinhaCliente {
-  id: string;
-  nome: string;
-  nomeFantasia: string | null;
-  documento: string | null;
-  tipoPessoa: string;
-  situacao: SituacaoEmpresa;
-  criadoEm: string;
-  usuarios: number;
+  id: string
+  nome: string
+  nomeFantasia: string | null
+  documento: string | null
+  tipoPessoa: string
+  situacao: SituacaoEmpresa
+  criadoEm: string
+  usuarios: number
 }
 
 export function ListaClientes() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
   return (
     <Pagina
       titulo="Clientes"
@@ -195,24 +195,24 @@ export function ListaClientes() {
         ]}
       />
     </Pagina>
-  );
+  )
 }
 
 export function NovoCliente() {
-  const navegar = useNavigate();
+  const navegar = useNavigate()
   const planos = useQuery({
     queryKey: ['planos'],
     queryFn: () =>
       api.get<
         Array<{
-          id: string;
-          nome: string;
-          descricao: string | null;
-          precos: Partial<Record<Periodicidade, string>>;
-          formasPagamento: FormaPagamento[];
+          id: string
+          nome: string
+          descricao: string | null
+          precos: Partial<Record<Periodicidade, string>>
+          formasPagamento: FormaPagamento[]
         }>
       >('/api/plataforma/planos'),
-  });
+  })
   const form = useFormulario(novaEmpresa, {
     ficha: { ...FICHA_VAZIA_PJ },
     emailMaster: '',
@@ -225,24 +225,24 @@ export function NovoCliente() {
     contatoFinanceiroNome: '',
     contatoFinanceiroEmail: '',
     contatoFinanceiroTelefone: '',
-  });
-  const [enviando, setEnviando] = useState(false);
-  const v = form.valores as Record<string, unknown>;
-  const plano = planos.data?.find((p) => p.id === v.planoId);
-  const preco = plano?.precos[v.periodicidade as Periodicidade];
+  })
+  const [enviando, setEnviando] = useState(false)
+  const v = form.valores as Record<string, unknown>
+  const plano = planos.data?.find((p) => p.id === v.planoId)
+  const preco = plano?.precos[v.periodicidade as Periodicidade]
 
   async function enviar(ev: FormEvent) {
-    ev.preventDefault();
-    const d = form.validar();
-    if (!d) return;
-    setEnviando(true);
+    ev.preventDefault()
+    const d = form.validar()
+    if (!d) return
+    setEnviando(true)
     try {
-      const r = await api.post<{ id: string }>('/api/plataforma/empresas', d);
-      navegar(`/plataforma/clientes/${r.id}`, { replace: true });
+      const r = await api.post<{ id: string }>('/api/plataforma/empresas', d)
+      navegar(`/plataforma/clientes/${r.id}`, { replace: true })
     } catch (e) {
-      form.erroDaApi(e);
+      form.erroDaApi(e)
     } finally {
-      setEnviando(false);
+      setEnviando(false)
     }
   }
 
@@ -404,63 +404,63 @@ export function NovoCliente() {
         </div>
       </form>
     </Pagina>
-  );
+  )
 }
 
 interface FichaCliente {
-  id: string;
-  situacao: SituacaoEmpresa;
-  criadoEm: string;
+  id: string
+  situacao: SituacaoEmpresa
+  criadoEm: string
   ficha: {
-    nome: string;
-    nomeFantasia: string | null;
-    documento: string | null;
-    tipoPessoa: string;
-  };
+    nome: string
+    nomeFantasia: string | null
+    documento: string | null
+    tipoPessoa: string
+  }
   assinatura: {
-    plano: string;
-    periodicidade: string;
-    inicio: string;
-    emTeste: boolean;
-    fimTeste: string | null;
-  } | null;
+    plano: string
+    periodicidade: string
+    inicio: string
+    emTeste: boolean
+    fimTeste: string | null
+  } | null
   usuarios: Array<{
-    vinculoId: string;
-    usuarioId: string;
-    email: string;
-    nome: string;
-    perfil: string;
-    eMaster: boolean;
-    ativo: boolean;
-  }>;
+    vinculoId: string
+    usuarioId: string
+    email: string
+    nome: string
+    perfil: string
+    eMaster: boolean
+    ativo: boolean
+  }>
   convites: Array<{
-    id: string;
-    email: string;
-    perfil: string;
-    eMaster: boolean;
-    situacao: string;
-    expiraEm: string;
-    enviadoEm: string;
-  }>;
-  estabelecimentos: Array<{ id: string; nome: string; documento: string | null; ativo: boolean }>;
+    id: string
+    email: string
+    perfil: string
+    eMaster: boolean
+    situacao: string
+    expiraEm: string
+    enviadoEm: string
+  }>
+  estabelecimentos: Array<{ id: string; nome: string; documento: string | null; ativo: boolean }>
   historico: Array<{
-    id: string;
-    situacao: SituacaoEmpresa;
-    desde: string;
-    motivo: string | null;
-    origem: string;
-  }>;
+    id: string
+    situacao: SituacaoEmpresa
+    desde: string
+    motivo: string | null
+    origem: string
+  }>
 }
 
 interface BastaoCliente {
   pendente: null | {
-    escolhido: string;
-    escolhidoEmail: string;
-    perfilAnterior: string | null;
-    iniciadoPor: 'master' | 'suporte';
-    expiraEm: string;
-  };
-  perfis: Array<{ id: string; nome: string }>;
+    escolhido: string
+    escolhidoEmail: string
+    perfilAnterior: string | null
+    iniciadoPor: 'master' | 'suporte'
+    expiraEm: string
+  }
+  perfis: Array<{ id: string; nome: string }>
 }
 
 /**
@@ -468,22 +468,22 @@ interface BastaoCliente {
  * Exige motivo e comprovante (P15); o designado aceita pelo e-mail, em 48 horas.
  */
 function TrocaDoMaster({ empresaId }: { empresaId: string }) {
-  const qc = useQueryClient();
-  const { data: s } = useSessao();
+  const qc = useQueryClient()
+  const { data: s } = useSessao()
   const q = useQuery({
     queryKey: ['cliente-bastao', empresaId],
     queryFn: () => api.get<BastaoCliente>(`/api/plataforma/empresas/${empresaId}/bastao`),
-  });
-  const [aberto, setAberto] = useState(false);
-  const [email, setEmail] = useState('');
-  const [perfilAnteriorId, setPerfilAnteriorId] = useState('');
-  const [motivo, setMotivo] = useState('');
-  const [arquivo, setArquivo] = useState<File | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-  const podeTrocar = pode(s, 'plataforma.troca_master', 'criar');
-  if (!q.data) return null;
-  const p = q.data.pendente;
-  const recarregar = () => qc.invalidateQueries({ queryKey: ['cliente-bastao', empresaId] });
+  })
+  const [aberto, setAberto] = useState(false)
+  const [email, setEmail] = useState('')
+  const [perfilAnteriorId, setPerfilAnteriorId] = useState('')
+  const [motivo, setMotivo] = useState('')
+  const [arquivo, setArquivo] = useState<File | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const podeTrocar = pode(s, 'plataforma.troca_master', 'criar')
+  if (!q.data) return null
+  const p = q.data.pendente
+  const recarregar = () => qc.invalidateQueries({ queryKey: ['cliente-bastao', empresaId] })
   return (
     <Cartao>
       <CabecalhoCartao
@@ -509,10 +509,10 @@ function TrocaDoMaster({ empresaId }: { empresaId: string }) {
                   tamanho="pequeno"
                   onClick={async () => {
                     try {
-                      await api.post(`/api/plataforma/empresas/${empresaId}/bastao/cancelar`);
-                      await recarregar();
+                      await api.post(`/api/plataforma/empresas/${empresaId}/bastao/cancelar`)
+                      await recarregar()
                     } catch (e) {
-                      setErro((e as Error).message);
+                      setErro((e as Error).message)
                     }
                   }}
                 >
@@ -547,23 +547,23 @@ function TrocaDoMaster({ empresaId }: { empresaId: string }) {
             <Botao
               disabled={!email || motivo.trim().length < 10 || !arquivo}
               onClick={async () => {
-                setErro(null);
-                const dados = new FormData();
+                setErro(null)
+                const dados = new FormData()
                 // Os campos vão antes do arquivo: o servidor lê na ordem.
-                dados.set('email', email);
-                dados.set('perfilAnteriorId', perfilAnteriorId);
-                dados.set('motivo', motivo);
-                dados.set('comprovante', arquivo!);
+                dados.set('email', email)
+                dados.set('perfilAnteriorId', perfilAnteriorId)
+                dados.set('motivo', motivo)
+                dados.set('comprovante', arquivo!)
                 try {
-                  await api.post(`/api/plataforma/empresas/${empresaId}/bastao`, dados);
-                  setAberto(false);
-                  setEmail('');
-                  setMotivo('');
-                  setArquivo(null);
-                  await recarregar();
+                  await api.post(`/api/plataforma/empresas/${empresaId}/bastao`, dados)
+                  setAberto(false)
+                  setEmail('')
+                  setMotivo('')
+                  setArquivo(null)
+                  await recarregar()
                 } catch (e) {
-                  setErro((e as Error).message);
-                  setAberto(false);
+                  setErro((e as Error).message)
+                  setAberto(false)
                 }
               }}
             >
@@ -623,7 +623,7 @@ function TrocaDoMaster({ empresaId }: { empresaId: string }) {
         </div>
       </Dialogo>
     </Cartao>
-  );
+  )
 }
 
 /** Personificação (P28): assumir a visão do usuário, com motivo, por até 60 minutos. */
@@ -632,22 +632,22 @@ function Personificar({
   usuario,
   aoFechar,
 }: {
-  empresaId: string;
-  usuario: { usuarioId: string; nome: string };
-  aoFechar: () => void;
+  empresaId: string
+  usuario: { usuarioId: string; nome: string }
+  aoFechar: () => void
 }) {
-  const atualizar = useAtualizarSessao();
-  const navegar = useNavigate();
+  const atualizar = useAtualizarSessao()
+  const navegar = useNavigate()
   const chamados = useQuery({
     queryKey: ['chamados-cliente', empresaId],
     queryFn: () =>
       api.get<{ itens: Array<{ id: string; numero: number; assunto: string }> }>(
         `/api/plataforma/chamados?empresaId=${empresaId}&situacao=abertos&tamanho=20`,
       ),
-  });
-  const [motivo, setMotivo] = useState('');
-  const [chamadoId, setChamadoId] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
+  })
+  const [motivo, setMotivo] = useState('')
+  const [chamadoId, setChamadoId] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
   return (
     <Dialogo
       aberto
@@ -668,11 +668,11 @@ function Personificar({
                   usuarioId: usuario.usuarioId,
                   motivo,
                   chamadoId: chamadoId || null,
-                });
-                atualizar(await api.get<EstadoSessao>('/api/auth/sessao'));
-                navegar('/inicio');
+                })
+                atualizar(await api.get<EstadoSessao>('/api/auth/sessao'))
+                navegar('/inicio')
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               }
             }}
           >
@@ -688,9 +688,9 @@ function Personificar({
             id="pers-chamado"
             value={chamadoId}
             onChange={(e) => {
-              setChamadoId(e.target.value);
-              const c = chamados.data?.itens.find((x) => x.id === e.target.value);
-              if (c && !motivo) setMotivo(`Chamado ${c.numero}: ${c.assunto}`);
+              setChamadoId(e.target.value)
+              const c = chamados.data?.itens.find((x) => x.id === e.target.value)
+              if (c && !motivo) setMotivo(`Chamado ${c.numero}: ${c.assunto}`)
             }}
           >
             <option value="">Sem chamado</option>
@@ -706,7 +706,7 @@ function Personificar({
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function Personificacoes({ empresaId }: { empresaId: string }) {
@@ -715,17 +715,17 @@ function Personificacoes({ empresaId }: { empresaId: string }) {
     queryFn: () =>
       api.get<
         Array<{
-          id: string;
-          membro: string;
-          usuario: string;
-          motivo: string;
-          inicio: string;
-          fim: string | null;
-          formaEncerramento: string | null;
+          id: string
+          membro: string
+          usuario: string
+          motivo: string
+          inicio: string
+          fim: string | null
+          formaEncerramento: string | null
         }>
       >(`/api/plataforma/empresas/${empresaId}/personificacoes`),
-  });
-  if (!q.data?.length) return null;
+  })
+  if (!q.data?.length) return null
   return (
     <Cartao>
       <CabecalhoCartao titulo="Personificações" descricao="As 50 mais recentes." />
@@ -738,11 +738,11 @@ function Personificacoes({ empresaId }: { empresaId: string }) {
         ))}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 function FaturasDoCliente({ empresaId }: { empresaId: string }) {
-  const { data: s } = useSessao();
+  const { data: s } = useSessao()
   const q = useQuery({
     queryKey: ['faturas', 'plataforma', empresaId],
     queryFn: () =>
@@ -750,10 +750,10 @@ function FaturasDoCliente({ empresaId }: { empresaId: string }) {
         `/api/plataforma/faturas?empresaId=${empresaId}&tamanho=50&ordem=vencimento&direcao=desc`,
       ),
     enabled: pode(s, 'plataforma.faturas', 'visualizar'),
-  });
-  const [aberta, setAberta] = useState<string | null>(null);
-  const [avulsa, setAvulsa] = useState(false);
-  if (!pode(s, 'plataforma.faturas', 'visualizar')) return null;
+  })
+  const [aberta, setAberta] = useState<string | null>(null)
+  const [avulsa, setAvulsa] = useState(false)
+  if (!pode(s, 'plataforma.faturas', 'visualizar')) return null
   return (
     <Cartao>
       <CabecalhoCartao
@@ -781,33 +781,31 @@ function FaturasDoCliente({ empresaId }: { empresaId: string }) {
       )}
       {avulsa && <NovaFaturaAvulsa empresaId={empresaId} aoFechar={() => setAvulsa(false)} />}
     </Cartao>
-  );
+  )
 }
 
 export function Cliente() {
-  const { id = '' } = useParams();
-  const qc = useQueryClient();
-  const { data: s } = useSessao();
+  const { id = '' } = useParams()
+  const qc = useQueryClient()
+  const { data: s } = useSessao()
   const q = useQuery({
     queryKey: ['cliente', id],
     queryFn: () => api.get<FichaCliente>(`/api/plataforma/empresas/${id}`),
-  });
-  const [situacao, setSituacao] = useState<SituacaoEmpresa | null>(null);
-  const [motivo, setMotivo] = useState('');
-  const [mensagem, setMensagem] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null);
-  const [novoMaster, setNovoMaster] = useState('');
-  const [personificar, setPersonificar] = useState<{ usuarioId: string; nome: string } | null>(
-    null,
-  );
+  })
+  const [situacao, setSituacao] = useState<SituacaoEmpresa | null>(null)
+  const [motivo, setMotivo] = useState('')
+  const [mensagem, setMensagem] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null)
+  const [novoMaster, setNovoMaster] = useState('')
+  const [personificar, setPersonificar] = useState<{ usuarioId: string; nome: string } | null>(null)
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const c = q.data;
-  const temMaster = c.usuarios.some((u) => u.eMaster && u.ativo);
-  const podeEditar = pode(s, 'plataforma.clientes', 'editar');
+    )
+  const c = q.data
+  const temMaster = c.usuarios.some((u) => u.eMaster && u.ativo)
+  const podeEditar = pode(s, 'plataforma.clientes', 'editar')
 
   return (
     <Pagina titulo={c.ficha.nomeFantasia || c.ficha.nome} trilha={['Administração', 'Clientes']}>
@@ -899,12 +897,12 @@ export function Cliente() {
                       await api.post(
                         `/api/plataforma/empresas/${id}/convite-master`,
                         novoMaster ? { email: novoMaster } : {},
-                      );
-                      setMensagem({ tom: 'sucesso', texto: 'Convite do Master enviado.' });
-                      setNovoMaster('');
-                      await qc.invalidateQueries({ queryKey: ['cliente', id] });
+                      )
+                      setMensagem({ tom: 'sucesso', texto: 'Convite do Master enviado.' })
+                      setNovoMaster('')
+                      await qc.invalidateQueries({ queryKey: ['cliente', id] })
                     } catch (e) {
-                      setMensagem({ tom: 'erro', texto: (e as Error).message });
+                      setMensagem({ tom: 'erro', texto: (e as Error).message })
                     }
                   }}
                 >
@@ -973,13 +971,13 @@ export function Cliente() {
             <Botao
               onClick={async () => {
                 try {
-                  await api.post(`/api/plataforma/empresas/${id}/situacao`, { situacao, motivo });
-                  setSituacao(null);
-                  setMotivo('');
-                  await qc.invalidateQueries({ queryKey: ['cliente', id] });
+                  await api.post(`/api/plataforma/empresas/${id}/situacao`, { situacao, motivo })
+                  setSituacao(null)
+                  setMotivo('')
+                  await qc.invalidateQueries({ queryKey: ['cliente', id] })
                 } catch (e) {
-                  setMensagem({ tom: 'erro', texto: (e as Error).message });
-                  setSituacao(null);
+                  setMensagem({ tom: 'erro', texto: (e as Error).message })
+                  setSituacao(null)
                 }
               }}
             >
@@ -1012,5 +1010,5 @@ export function Cliente() {
         </div>
       </Dialogo>
     </Pagina>
-  );
+  )
 }

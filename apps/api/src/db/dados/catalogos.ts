@@ -22,10 +22,10 @@ export const UNIDADES = [
   ['atm', 'atmosfera', 'pressao', 1],
   ['bar', 'bar', 'pressao', 1],
   ['%', 'por cento', 'percentual', 2],
-] as const;
+] as const
 
 const LEI_VINHO =
-  'Lei 7.678/1988, arts. 8º a 15; IN MAPA 14/2018, alterada pela Portaria MAPA 723/2024';
+  'Lei 7.678/1988, arts. 8º a 15; IN MAPA 14/2018, alterada pela Portaria MAPA 723/2024'
 
 /** Classes oficiais (pesquisa/2026-10-declaracoes-vinicolas.md, seção 5). */
 export const CLASSES_PRODUTO = [
@@ -50,7 +50,7 @@ export const CLASSES_PRODUTO = [
   ],
   ['suco_uva', 'Suco de uva', 'derivado', false, 'Lei 7.678/1988; IN MAPA 14/2018', '2018-02-09'],
   ['mosto', 'Mosto de uva', 'derivado', false, 'Lei 7.678/1988; IN MAPA 14/2018', '2018-02-09'],
-] as const;
+] as const
 
 export const IGS = [
   {
@@ -63,7 +63,7 @@ export const IGS = [
     fonte:
       'INPI, reconhecimento em 01/11/2022; caderno de especificações técnicas (pesquisa/2026-10-declaracoes-vinicolas.md)',
   },
-];
+]
 
 export const TIPOS_RECIPIENTE = [
   // codigo, nome, pressurizado, é barrica (cantina.md, Recipientes)
@@ -76,7 +76,7 @@ export const TIPOS_RECIPIENTE = [
   ['ovo_concreto', 'Ovo de concreto', false, false],
   ['anfora', 'Ânfora', false, false],
   ['outro', 'Outro', false, false],
-] as const;
+] as const
 
 export const TIPOS_INSUMO = [
   // codigo, nome, unidades, apresentações
@@ -107,7 +107,7 @@ export const TIPOS_INSUMO = [
     ['g', 'kg', 'mL', 'L', 'un'],
     ['po', 'liquido', 'granulado', 'pastilha', 'gas', 'solido'],
   ],
-] as const;
+] as const
 
 export const TIPOS_DOCUMENTO = [
   // codigo, nome, tem vencimento (gestao.md, Documentos)
@@ -127,7 +127,7 @@ export const TIPOS_DOCUMENTO = [
   ['contrato', 'Contrato', true],
   ['manual_bpf', 'Manual de Boas Práticas', false],
   ['outro', 'Outro', false],
-] as const;
+] as const
 
 /** Parâmetros de análise (cantina.md, Laboratório; P3). Mínimo e máximo físicos, não legais. */
 export const PARAMETROS_ANALISE = [
@@ -147,7 +147,7 @@ export const PARAMETROS_ANALISE = [
   ['pressao', 'Pressão', 'atm', ['atm', 'bar'], 1, '0', '10'],
   ['acido_malico', 'Ácido málico', 'g/L', ['g/L'], 2, '0', '20'],
   ['metanol', 'Metanol', 'mg/L', ['mg/L'], 1, '0', '1000'],
-] as const;
+] as const
 
 /** Listas simples (03-modelo-de-dados.md, 1.11). Itens globais; a empresa acrescenta os seus. */
 export const OPCOES_LISTA: Record<string, Array<[string, string]>> = {
@@ -289,4 +289,4 @@ export const OPCOES_LISTA: Record<string, Array<[string, string]>> = {
     ['gas', 'Gás'],
     ['solido', 'Sólido'],
   ],
-};
+}

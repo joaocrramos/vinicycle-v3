@@ -1,59 +1,59 @@
 // EnoTrace › Parâmetros técnicos (cantina.md: Análises, Quilos → litros, Códigos, Recipientes).
 // Cada aba lê e grava a lista inteira de uma vez (PUT), como as preferências.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2 } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
-import { AcoesLinha } from '@/componentes/AcoesLinha';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useReferencia } from '@/lib/referencia';
-import { pode, useSessao } from '@/lib/sessao';
-import { useParametrosTratamento } from './operacoes/Tratamentos';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Plus, Trash2 } from 'lucide-react'
+import { type ReactNode, useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
+import { AcoesLinha } from '@/componentes/AcoesLinha'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useReferencia } from '@/lib/referencia'
+import { pode, useSessao } from '@/lib/sessao'
+import { useParametrosTratamento } from './operacoes/Tratamentos'
 
-type Mensagem = { tom: 'sucesso' | 'erro'; texto: string } | null;
+type Mensagem = { tom: 'sucesso' | 'erro'; texto: string } | null
 
 /** Estado local de uma lista vinda da API, com salvar e aviso. */
 function useEdicao<T>(url: string) {
-  const qc = useQueryClient();
-  const q = useQuery({ queryKey: ['parametros', url], queryFn: () => api.get<T[]>(url) });
-  const [rascunho, setRascunho] = useState<T[] | null>(null);
-  const [msg, setMsg] = useState<Mensagem>(null);
-  const itens = rascunho ?? q.data ?? [];
+  const qc = useQueryClient()
+  const q = useQuery({ queryKey: ['parametros', url], queryFn: () => api.get<T[]>(url) })
+  const [rascunho, setRascunho] = useState<T[] | null>(null)
+  const [msg, setMsg] = useState<Mensagem>(null)
+  const itens = rascunho ?? q.data ?? []
   return {
     carregando: !q.data,
     erroCarga: q.isError ? (q.error as Error).message : null,
     itens,
     alterado: rascunho !== null,
     definir: (novos: T[]) => {
-      setMsg(null);
-      setRascunho(novos);
+      setMsg(null)
+      setRascunho(novos)
     },
     alterar: (i: number, parcial: Partial<T>) => {
-      setMsg(null);
-      setRascunho(itens.map((x, j) => (j === i ? { ...x, ...parcial } : x)));
+      setMsg(null)
+      setRascunho(itens.map((x, j) => (j === i ? { ...x, ...parcial } : x)))
     },
     msg,
     salvar: async (corpo: unknown) => {
       try {
-        await api.put(url, corpo);
-        await qc.invalidateQueries({ queryKey: ['parametros', url] });
-        setRascunho(null);
-        setMsg({ tom: 'sucesso', texto: 'Parâmetros salvos.' });
+        await api.put(url, corpo)
+        await qc.invalidateQueries({ queryKey: ['parametros', url] })
+        setRascunho(null)
+        setMsg({ tom: 'sucesso', texto: 'Parâmetros salvos.' })
       } catch (e) {
-        setMsg({ tom: 'erro', texto: (e as Error).message });
+        setMsg({ tom: 'erro', texto: (e as Error).message })
       }
     },
     descartar: () => {
-      setRascunho(null);
-      setMsg(null);
+      setRascunho(null)
+      setMsg(null)
     },
-  };
+  }
 }
 
 function Moldura({
@@ -63,11 +63,11 @@ function Moldura({
   aoSalvar,
   children,
 }: {
-  descricao: ReactNode;
-  edicao: ReturnType<typeof useEdicao<unknown>>;
-  podeEditar: boolean;
-  aoSalvar: () => void;
-  children: ReactNode;
+  descricao: ReactNode
+  edicao: ReturnType<typeof useEdicao<unknown>>
+  podeEditar: boolean
+  aoSalvar: () => void
+  children: ReactNode
 }) {
   return (
     <Cartao>
@@ -94,25 +94,25 @@ function Moldura({
         )}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 // Análises -----------------------------------------------------------------------------------
 
 interface ParametroAnalise {
-  parametroId: string;
-  nome: string;
-  unidadePadrao: string;
-  unidadesAceitas: string[];
-  casas: number;
-  ativo: boolean;
-  unidadePreferida: string | null;
-  minimo: string | null;
-  maximo: string | null;
+  parametroId: string
+  nome: string
+  unidadePadrao: string
+  unidadesAceitas: string[]
+  casas: number
+  ativo: boolean
+  unidadePreferida: string | null
+  minimo: string | null
+  maximo: string | null
 }
 
 function AbaAnalises({ podeEditar }: { podeEditar: boolean }) {
-  const e = useEdicao<ParametroAnalise>('/api/cantina/parametros-analise');
+  const e = useEdicao<ParametroAnalise>('/api/cantina/parametros-analise')
   return (
     <Moldura
       edicao={e as never}
@@ -207,20 +207,20 @@ function AbaAnalises({ podeEditar }: { podeEditar: boolean }) {
         </table>
       </div>
     </Moldura>
-  );
+  )
 }
 
 // Rendimento ---------------------------------------------------------------------------------
 
 interface Rendimento {
-  variedadeId: string | null;
-  estilo: string | null;
-  litrosPorKg: string | null;
+  variedadeId: string | null
+  estilo: string | null
+  litrosPorKg: string | null
 }
 
 function AbaRendimentos({ podeEditar }: { podeEditar: boolean }) {
-  const e = useEdicao<Rendimento>('/api/cantina/rendimentos');
-  const { data: ref } = useReferencia();
+  const e = useEdicao<Rendimento>('/api/cantina/rendimentos')
+  const { data: ref } = useReferencia()
   const variedades = useQuery({
     queryKey: ['variedades-em-uso'],
     queryFn: async () =>
@@ -229,7 +229,7 @@ function AbaRendimentos({ podeEditar }: { podeEditar: boolean }) {
           '/api/catalogos/variedade?emUso=sim&tamanho=0',
         )
       ).itens,
-  });
+  })
   return (
     <Moldura
       edicao={e as never}
@@ -316,20 +316,20 @@ function AbaRendimentos({ podeEditar }: { podeEditar: boolean }) {
         </div>
       )}
     </Moldura>
-  );
+  )
 }
 
 // Ciclos -------------------------------------------------------------------------------------
 
 interface Ciclo {
-  numero: string;
-  nome: string;
+  numero: string
+  nome: string
 }
 
 function AbaCiclos({ podeEditar }: { podeEditar: boolean }) {
-  const e = useEdicao<Ciclo>('/api/cantina/ciclos');
+  const e = useEdicao<Ciclo>('/api/cantina/ciclos')
   const proximo = () =>
-    String(Math.max(0, ...e.itens.map((c) => Number(c.numero) || 0)) + 1).padStart(2, '0');
+    String(Math.max(0, ...e.itens.map((c) => Number(c.numero) || 0)) + 1).padStart(2, '0')
   return (
     <Moldura
       edicao={e as never}
@@ -382,18 +382,18 @@ function AbaCiclos({ podeEditar }: { podeEditar: boolean }) {
         </div>
       )}
     </Moldura>
-  );
+  )
 }
 
 // Higienização -------------------------------------------------------------------------------
 
 interface Periodicidade {
-  tipoRecipienteId: string;
-  intervaloDias: number | null;
+  tipoRecipienteId: string
+  intervaloDias: number | null
 }
 
 function AbaHigienizacao({ podeEditar }: { podeEditar: boolean }) {
-  const e = useEdicao<Periodicidade>('/api/cantina/higienizacao');
+  const e = useEdicao<Periodicidade>('/api/cantina/higienizacao')
   const tipos = useQuery({
     queryKey: ['tipos-recipiente'],
     queryFn: async () =>
@@ -402,17 +402,17 @@ function AbaHigienizacao({ podeEditar }: { podeEditar: boolean }) {
           '/api/catalogos/tipo_recipiente?tamanho=0',
         )
       ).itens,
-  });
+  })
   // Uma linha por tipo; vazio = sem periodicidade.
   const linhas = (tipos.data ?? []).map((t) => ({
     tipo: t,
     dias: e.itens.find((x) => x.tipoRecipienteId === t.id)?.intervaloDias ?? null,
-  }));
+  }))
   const definirDias = (tipoId: string, dias: number | null) =>
     e.definir([
       ...e.itens.filter((x) => x.tipoRecipienteId !== tipoId),
       ...(dias ? [{ tipoRecipienteId: tipoId, intervaloDias: dias }] : []),
-    ]);
+    ])
   return (
     <Moldura
       edicao={e as never}
@@ -432,8 +432,8 @@ function AbaHigienizacao({ podeEditar }: { podeEditar: boolean }) {
                 disabled={!podeEditar}
                 value={dias ?? ''}
                 onChange={(ev) => {
-                  const n = Number(ev.target.value.replace(/\D/g, ''));
-                  definirDias(tipo.id, n > 0 ? Math.min(n, 3650) : null);
+                  const n = Number(ev.target.value.replace(/\D/g, ''))
+                  definirDias(tipo.id, n > 0 ? Math.min(n, 3650) : null)
                 }}
               />
               <span className="text-sm text-muted-foreground">dias</span>
@@ -442,7 +442,7 @@ function AbaHigienizacao({ podeEditar }: { podeEditar: boolean }) {
         ))}
       </div>
     </Moldura>
-  );
+  )
 }
 
 const ABAS = {
@@ -451,34 +451,34 @@ const ABAS = {
   ciclos: 'Ciclos da safra',
   higienizacao: 'Higienização',
   tratamentos: 'Tratamentos',
-} as const;
+} as const
 
 /**
  * Parâmetros técnicos por tipo de tratamento (cantina.md, Tratamentos; P29): o que a tela do
  * tratamento pede, como "porosidade (µm)" na filtração ou "dias de frio" na estabilização.
  */
 function AbaTratamentos({ podeEditar }: { podeEditar: boolean }) {
-  const qc = useQueryClient();
-  const { data: ref } = useReferencia();
-  const q = useParametrosTratamento();
+  const qc = useQueryClient()
+  const { data: ref } = useReferencia()
+  const q = useParametrosTratamento()
   const [novo, setNovo] = useState({
     tipoTratamento: '',
     nome: '',
     unidade: '',
     obrigatorio: false,
-  });
-  const [msg, setMsg] = useState<Mensagem>(null);
-  const tipos = ref?.listas.tipo_tratamento ?? [];
-  const recarregar = () => qc.invalidateQueries({ queryKey: ['parametros-tratamento'] });
-  type Parametro = NonNullable<typeof q.data>[number];
+  })
+  const [msg, setMsg] = useState<Mensagem>(null)
+  const tipos = ref?.listas.tipo_tratamento ?? []
+  const recarregar = () => qc.invalidateQueries({ queryKey: ['parametros-tratamento'] })
+  type Parametro = NonNullable<typeof q.data>[number]
   const alterar = async (p: Parametro, mudanca: Partial<Parametro>) => {
     try {
-      await api.put(`/api/cantina/parametros-tratamento/${p.id}`, { ...p, ...mudanca });
-      await recarregar();
+      await api.put(`/api/cantina/parametros-tratamento/${p.id}`, { ...p, ...mudanca })
+      await recarregar()
     } catch (e) {
-      setMsg({ tom: 'erro', texto: (e as Error).message });
+      setMsg({ tom: 'erro', texto: (e as Error).message })
     }
-  };
+  }
   return (
     <Cartao>
       <CorpoCartao className="flex flex-col gap-4">
@@ -488,8 +488,8 @@ function AbaTratamentos({ podeEditar }: { podeEditar: boolean }) {
         </p>
         {msg && <Aviso tom={msg.tom}>{msg.texto}</Aviso>}
         {tipos.map((tipo) => {
-          const lista = (q.data ?? []).filter((p) => p.tipoTratamento === tipo.codigo);
-          if (!lista.length) return null;
+          const lista = (q.data ?? []).filter((p) => p.tipoTratamento === tipo.codigo)
+          if (!lista.length) return null
           return (
             <div key={tipo.codigo}>
               <p className="text-sm font-medium">{tipo.nome}</p>
@@ -521,7 +521,7 @@ function AbaTratamentos({ podeEditar }: { podeEditar: boolean }) {
                 ))}
               </ul>
             </div>
-          );
+          )
         })}
         {q.data && !q.data.length && (
           <p className="text-sm text-muted-foreground">Nenhum parâmetro configurado.</p>
@@ -565,16 +565,16 @@ function AbaTratamentos({ podeEditar }: { podeEditar: boolean }) {
             </div>
             <Botao
               onClick={async () => {
-                setMsg(null);
+                setMsg(null)
                 try {
                   await api.post('/api/cantina/parametros-tratamento', {
                     ...novo,
                     unidade: novo.unidade || null,
-                  });
-                  setNovo({ ...novo, nome: '', unidade: '', obrigatorio: false });
-                  await recarregar();
+                  })
+                  setNovo({ ...novo, nome: '', unidade: '', obrigatorio: false })
+                  await recarregar()
                 } catch (e) {
-                  setMsg({ tom: 'erro', texto: (e as Error).message });
+                  setMsg({ tom: 'erro', texto: (e as Error).message })
                 }
               }}
             >
@@ -584,14 +584,14 @@ function AbaTratamentos({ podeEditar }: { podeEditar: boolean }) {
         )}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 export function PaginaParametros() {
-  const { aba = 'analises' } = useParams();
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const podeEditar = pode(s, 'enotrace.cadastros', 'editar');
+  const { aba = 'analises' } = useParams()
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const podeEditar = pode(s, 'enotrace.cadastros', 'editar')
   return (
     <Pagina titulo="Parâmetros técnicos" trilha={['EnoTrace', 'Cadastros']}>
       <Abas
@@ -622,5 +622,5 @@ export function PaginaParametros() {
         </ConteudoAba>
       </Abas>
     </Pagina>
-  );
+  )
 }

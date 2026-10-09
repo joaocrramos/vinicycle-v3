@@ -1,6 +1,6 @@
 // Entidades transversais (03-modelo-de-dados.md, 1.13).
-import { CATEGORIAS_ANEXO } from '@vinicycle/shared';
-import { sql } from 'drizzle-orm';
+import { CATEGORIAS_ANEXO } from '@vinicycle/shared'
+import { sql } from 'drizzle-orm'
 import {
   bigint,
   check,
@@ -11,10 +11,10 @@ import {
   text,
   unique,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, usuario } from './acesso';
-import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum';
-import { empresa } from './plataforma';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento, usuario } from './acesso'
+import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum'
+import { empresa } from './plataforma'
 
 /**
  * Rastro de tudo (P14). Somente inclusão: o usuário da API só insere e lê. Gravado na mesma
@@ -49,7 +49,7 @@ export const auditoria = pgTable(
     index('auditoria_usuario_data').on(t.usuarioId, t.ocorridoEm),
     index('auditoria_data').on(t.ocorridoEm),
   ],
-);
+)
 
 /** Arquivos de qualquer registro (P15). O arquivo fica fora do banco. */
 export const anexo = pgTable(
@@ -78,7 +78,7 @@ export const anexo = pgTable(
     check('anexo_categoria', emLista('categoria', CATEGORIAS_ANEXO)),
     check('anexo_tamanho', sql`tamanho_bytes >= 0`),
   ],
-);
+)
 
 /**
  * Próximo número de cada série (P19). Incremento só na confirmação, com a linha travada.
@@ -98,7 +98,7 @@ export const sequencia = pgTable(
     unique('sequencia_serie').on(t.estabelecimentoId, t.tipo, t.periodo).nullsNotDistinct(),
     check('sequencia_empresa_estab', sql`(empresa_id is null) = (estabelecimento_id is null)`),
   ],
-);
+)
 
 /** Máscara de cada código, por empresa (P19). */
 export const formatoCodigo = pgTable(
@@ -114,7 +114,7 @@ export const formatoCodigo = pgTable(
     ...alteracao(),
   },
   (t) => [unique('formato_codigo_tipo').on(t.empresaId, t.tipo)],
-);
+)
 
 /** Última ordenação, filtros e tamanho de página, por usuário e por tabela (P4). */
 export const preferenciaListagem = pgTable(
@@ -136,4 +136,4 @@ export const preferenciaListagem = pgTable(
   (t) => [
     unique('preferencia_listagem_tabela').on(t.usuarioId, t.empresaId, t.tabela).nullsNotDistinct(),
   ],
-);
+)

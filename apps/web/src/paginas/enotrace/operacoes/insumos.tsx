@@ -1,24 +1,24 @@
 // Insumos aplicados numa operação (cantina.md, Adição de insumo): item e lote do estoque (ou o
 // insumo não estocado, com descrição), dose e unidade, volume tratado. O local do estoque de onde
 // saem só é pedido quando há mais de um.
-import { formatarDecimal, UNIDADES_DOSE, type UnidadeDose } from '@vinicycle/shared';
-import { Plus, Trash2 } from 'lucide-react';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Botao } from '@/componentes/ui/botao';
-import { CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { type ItemOpcao, useItens, useLocais, useLotes } from '../Estoque';
+import { formatarDecimal, UNIDADES_DOSE, type UnidadeDose } from '@vinicycle/shared'
+import { Plus, Trash2 } from 'lucide-react'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Botao } from '@/componentes/ui/botao'
+import { CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { type ItemOpcao, useItens, useLocais, useLotes } from '../Estoque'
 
 export interface InsumoLinha {
-  recipienteId: string;
+  recipienteId: string
   /** "" = insumo não estocado (descrição livre). */
-  itemId: string;
-  naoEstocado: boolean;
-  descricao: string;
-  loteItemId: string;
-  dose: string | null;
-  unidade: UnidadeDose;
-  volumeTratado: string | null;
+  itemId: string
+  naoEstocado: boolean
+  descricao: string
+  loteItemId: string
+  dose: string | null
+  unidade: UnidadeDose
+  volumeTratado: string | null
 }
 
 export const insumoVazio = (recipienteId = ''): InsumoLinha => ({
@@ -30,7 +30,7 @@ export const insumoVazio = (recipienteId = ''): InsumoLinha => ({
   dose: null,
   unidade: 'g/hL',
   volumeTratado: null,
-});
+})
 
 /** Corpo para a API (comumOperacao.insumos). */
 export const insumosParaApi = (lista: InsumoLinha[]) =>
@@ -44,7 +44,7 @@ export const insumosParaApi = (lista: InsumoLinha[]) =>
       dose: i.dose ?? '0',
       unidade: i.unidade,
       volumeTratado: i.volumeTratado,
-    }));
+    }))
 
 function Linha({
   i,
@@ -55,16 +55,16 @@ function Linha({
   set,
   remover,
 }: {
-  i: InsumoLinha;
-  n: number;
-  itens: ItemOpcao[];
-  recipientes: Array<{ id: string; codigo: string }>;
-  rotuloTodos?: string;
-  set: (p: Partial<InsumoLinha>) => void;
-  remover: () => void;
+  i: InsumoLinha
+  n: number
+  itens: ItemOpcao[]
+  recipientes: Array<{ id: string; codigo: string }>
+  rotuloTodos?: string
+  set: (p: Partial<InsumoLinha>) => void
+  remover: () => void
 }) {
-  const item = itens.find((x) => x.id === i.itemId);
-  const lotes = useLotes(item?.controlaLote ? i.itemId : '');
+  const item = itens.find((x) => x.id === i.itemId)
+  const lotes = useLotes(item?.controlaLote ? i.itemId : '')
   return (
     <div className="flex flex-col gap-2 border-b pb-3 last:border-0 last:pb-0">
       <div className="grid items-end gap-2 sm:grid-cols-[10rem_1fr_1fr_auto]">
@@ -176,7 +176,7 @@ function Linha({
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 /**
@@ -192,16 +192,16 @@ export function CartaoInsumos({
   setLocal,
   titulo = 'Insumos (opcional)',
 }: {
-  insumos: InsumoLinha[];
-  set: (l: InsumoLinha[]) => void;
-  recipientes: Array<{ id: string; codigo: string }>;
-  rotuloTodos?: string;
-  localEstoqueId: string;
-  setLocal: (id: string) => void;
-  titulo?: string;
+  insumos: InsumoLinha[]
+  set: (l: InsumoLinha[]) => void
+  recipientes: Array<{ id: string; codigo: string }>
+  rotuloTodos?: string
+  localEstoqueId: string
+  setLocal: (id: string) => void
+  titulo?: string
 }) {
-  const itens = useItens();
-  const locais = useLocais();
+  const itens = useItens()
+  const locais = useLocais()
   return (
     <Cartao>
       <CabecalhoCartao
@@ -248,5 +248,5 @@ export function CartaoInsumos({
         </div>
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }

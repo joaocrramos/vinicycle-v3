@@ -1,46 +1,46 @@
 // EnoTrace › Insumos e embalagens (ambiente-cliente.md, Cadastros; estoque comum). Os saldos
 // e movimentos chegam no ciclo 5; aqui fica o cadastro dos itens.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { dadosItemEstoque, formatarDecimal, NOMES_TIPO_ITEM } from '@vinicycle/shared';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router';
-import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha';
-import { Historico } from '@/componentes/Historico';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { useReferencia } from '@/lib/referencia';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { dadosItemEstoque, formatarDecimal, NOMES_TIPO_ITEM } from '@vinicycle/shared'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { useParams, useNavigate } from 'react-router'
+import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha'
+import { Historico } from '@/componentes/Historico'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { useReferencia } from '@/lib/referencia'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
 
-type Tipo = 'insumo' | 'embalagem' | 'selo' | 'produto_acabado';
+type Tipo = 'insumo' | 'embalagem' | 'selo' | 'produto_acabado'
 
 interface Linha {
-  id: string;
-  tipo: Tipo;
-  nome: string;
-  codigoInterno: string | null;
-  unidadeBase: string;
-  estoqueMinimo: string | null;
-  tipoInsumo: string | null;
-  nomeComercial: string | null;
-  marca: string | null;
-  fabricante: string | null;
-  ativo: boolean;
+  id: string
+  tipo: Tipo
+  nome: string
+  codigoInterno: string | null
+  unidadeBase: string
+  estoqueMinimo: string | null
+  tipoInsumo: string | null
+  nomeComercial: string | null
+  marca: string | null
+  fabricante: string | null
+  ativo: boolean
 }
 
 interface TipoInsumo {
-  id: string;
-  nome: string;
-  unidades: string[];
-  apresentacoes: string[];
+  id: string
+  nome: string
+  unidades: string[]
+  apresentacoes: string[]
 }
 
 const INSUMO_VAZIO = {
@@ -50,7 +50,7 @@ const INSUMO_VAZIO = {
   fabricanteId: '',
   apresentacao: '',
   teorSo2: null as string | null,
-};
+}
 
 const VAZIO = {
   tipo: 'insumo' as 'insumo' | 'embalagem' | 'selo' | 'outro',
@@ -66,36 +66,36 @@ const VAZIO = {
   // Só o insumo tem este bloco; na embalagem ele fica fora do envio.
   insumo: undefined as typeof INSUMO_VAZIO | undefined,
   versao: undefined as number | undefined,
-};
+}
 
 function Formulario({
   id,
   tipo,
   aoFechar,
 }: {
-  id: string | null;
-  tipo: 'insumo' | 'embalagem' | 'selo';
-  aoFechar: () => void;
+  id: string | null
+  tipo: 'insumo' | 'embalagem' | 'selo'
+  aoFechar: () => void
 }) {
-  const qc = useQueryClient();
-  const { data: s } = useSessao();
-  const { data: ref } = useReferencia();
+  const qc = useQueryClient()
+  const { data: s } = useSessao()
+  const { data: ref } = useReferencia()
   const atual = useQuery({
     queryKey: ['item', id],
     queryFn: () => api.get<Omit<typeof VAZIO, 'tipo'> & { tipo: Tipo }>(`/api/itens-estoque/${id}`),
     enabled: !!id,
-  });
+  })
   const tipos = useQuery({
     queryKey: ['tipos-insumo'],
     queryFn: async () =>
       (await api.get<{ itens: TipoInsumo[] }>('/api/catalogos/tipo_insumo?tamanho=0')).itens,
-  });
+  })
   const fabricantes = useQuery({
     queryKey: ['pessoas-opcoes', 'fabricante'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=fabricante'),
-  });
-  if (id && !atual.data) return null;
+  })
+  if (id && !atual.data) return null
   const inicial = atual.data
     ? {
         ...VAZIO,
@@ -108,7 +108,7 @@ function Formulario({
         unidadeBase: tipo === 'embalagem' || tipo === 'selo' ? 'un' : '',
         controlaNumeracao: tipo === 'selo',
         insumo: tipo === 'insumo' ? INSUMO_VAZIO : undefined,
-      };
+      }
   return (
     <Corpo
       id={id}
@@ -123,13 +123,13 @@ function Formulario({
       }
       fuso={fusoAtivo(s)}
       aoSalvar={async () => {
-        await qc.invalidateQueries({ queryKey: ['lista', '/api/itens-estoque'] });
-        await qc.invalidateQueries({ queryKey: ['item', id] });
-        aoFechar();
+        await qc.invalidateQueries({ queryKey: ['lista', '/api/itens-estoque'] })
+        await qc.invalidateQueries({ queryKey: ['item', id] })
+        aoFechar()
       }}
       aoFechar={aoFechar}
     />
-  );
+  )
 }
 
 function Corpo({
@@ -144,29 +144,29 @@ function Corpo({
   aoSalvar,
   aoFechar,
 }: {
-  id: string | null;
-  inicial: typeof VAZIO;
-  tipos: TipoInsumo[];
-  fabricantes: Array<{ id: string; nome: string }>;
-  unidades: Array<{ simbolo: string; nome: string; grandeza: string }>;
-  apresentacoes: Array<{ codigo: string; nome: string }>;
-  podeEditar: boolean;
-  fuso: string;
-  aoSalvar: () => Promise<void>;
-  aoFechar: () => void;
+  id: string | null
+  inicial: typeof VAZIO
+  tipos: TipoInsumo[]
+  fabricantes: Array<{ id: string; nome: string }>
+  unidades: Array<{ simbolo: string; nome: string; grandeza: string }>
+  apresentacoes: Array<{ codigo: string; nome: string }>
+  podeEditar: boolean
+  fuso: string
+  aoSalvar: () => Promise<void>
+  aoFechar: () => void
 }) {
-  const form = useFormulario(dadosItemEstoque, inicial);
-  const [aba, setAba] = useState<'dados' | 'historico'>('dados');
-  const v = form.valores as typeof VAZIO;
-  const tipoInsumo = tipos.find((t) => t.id === v.insumo?.tipoInsumoId);
+  const form = useFormulario(dadosItemEstoque, inicial)
+  const [aba, setAba] = useState<'dados' | 'historico'>('dados')
+  const v = form.valores as typeof VAZIO
+  const tipoInsumo = tipos.find((t) => t.id === v.insumo?.tipoInsumoId)
   const unidadesPermitidas =
     v.tipo === 'insumo' && tipoInsumo?.unidades.length
       ? unidades.filter((u) => tipoInsumo.unidades.includes(u.simbolo))
-      : unidades.filter((u) => ['massa', 'volume', 'contagem'].includes(u.grandeza));
+      : unidades.filter((u) => ['massa', 'volume', 'contagem'].includes(u.grandeza))
   const apresentacoesPermitidas = tipoInsumo?.apresentacoes.length
     ? apresentacoes.filter((a) => tipoInsumo.apresentacoes.includes(a.codigo))
-    : apresentacoes;
-  const casasUnidade = v.unidadeBase === 'un' ? 0 : 3;
+    : apresentacoes
+  const casasUnidade = v.unidadeBase === 'un' ? 0 : 3
   return (
     <Dialogo
       aberto
@@ -190,14 +190,14 @@ function Corpo({
             </Botao>
             <Botao
               onClick={async () => {
-                const d = form.validar();
-                if (!d) return;
+                const d = form.validar()
+                if (!d) return
                 try {
-                  if (id) await api.put(`/api/itens-estoque/${id}`, d);
-                  else await api.post('/api/itens-estoque', d);
-                  await aoSalvar();
+                  if (id) await api.put(`/api/itens-estoque/${id}`, d)
+                  else await api.post('/api/itens-estoque', d)
+                  await aoSalvar()
                 } catch (e) {
-                  form.erroDaApi(e);
+                  form.erroDaApi(e)
                 }
               }}
             >
@@ -242,10 +242,10 @@ function Corpo({
                   id="tipoInsumoId"
                   value={v.insumo?.tipoInsumoId}
                   onChange={(e) => {
-                    form.definir('insumo.tipoInsumoId', e.target.value);
-                    const t = tipos.find((x) => x.id === e.target.value);
+                    form.definir('insumo.tipoInsumoId', e.target.value)
+                    const t = tipos.find((x) => x.id === e.target.value)
                     if (t?.unidades.length && !t.unidades.includes(v.unidadeBase))
-                      form.definir('unidadeBase', t.unidades[0]);
+                      form.definir('unidadeBase', t.unidades[0])
                   }}
                 >
                   <option value="">Escolha</option>
@@ -410,14 +410,14 @@ function Corpo({
         </fieldset>
       )}
     </Dialogo>
-  );
+  )
 }
 
 export function PaginaItens() {
-  const { tipo = 'insumos' } = useParams();
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
+  const { tipo = 'insumos' } = useParams()
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
   const t: Tipo =
     tipo === 'embalagens'
       ? 'embalagem'
@@ -425,10 +425,10 @@ export function PaginaItens() {
         ? 'selo'
         : tipo === 'acabados'
           ? 'produto_acabado'
-          : 'insumo';
-  const [aberto, setAberto] = useState<string | 'novo' | null>(null);
-  const [inativar, setInativar] = useState<Linha | null>(null);
-  const podeInativar = pode(s, 'enotrace.cadastros', 'inativar');
+          : 'insumo'
+  const [aberto, setAberto] = useState<string | 'novo' | null>(null)
+  const [inativar, setInativar] = useState<Linha | null>(null)
+  const podeInativar = pode(s, 'enotrace.cadastros', 'inativar')
   return (
     <Pagina
       titulo={
@@ -559,10 +559,10 @@ export function PaginaItens() {
                     aoReativar={
                       podeInativar
                         ? async () => {
-                            await api.post(`/api/itens-estoque/${i.id}/reativar`);
+                            await api.post(`/api/itens-estoque/${i.id}/reativar`)
                             await qc.invalidateQueries({
                               queryKey: ['lista', '/api/itens-estoque'],
-                            });
+                            })
                           }
                         : undefined
                     }
@@ -589,10 +589,10 @@ export function PaginaItens() {
           ' deixa de ser oferecido em registros novos (P26).'
         }
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/itens-estoque/${inativar!.id}/inativar`, { motivo });
-          await qc.invalidateQueries({ queryKey: ['lista', '/api/itens-estoque'] });
+          await api.post(`/api/itens-estoque/${inativar!.id}/inativar`, { motivo })
+          await qc.invalidateQueries({ queryKey: ['lista', '/api/itens-estoque'] })
         }}
       />
     </Pagina>
-  );
+  )
 }

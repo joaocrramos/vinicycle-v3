@@ -21,12 +21,12 @@ export const RELATORIOS_AGENDAVEIS = {
     funcionalidade: 'enotrace.estoque',
     link: '/enotrace/estoque',
   },
-} as const;
-export type RelatorioAgendavel = keyof typeof RELATORIOS_AGENDAVEIS;
+} as const
+export type RelatorioAgendavel = keyof typeof RELATORIOS_AGENDAVEIS
 export const CHAVES_RELATORIO_AGENDAVEL = Object.keys(RELATORIOS_AGENDAVEIS) as [
   RelatorioAgendavel,
   ...RelatorioAgendavel[],
-];
+]
 
 /** Envio às 7h do fuso do estabelecimento: todo dia, às segundas, a cada duas segundas, no dia 1º. */
 export const FREQUENCIAS_ENVIO = {
@@ -34,9 +34,9 @@ export const FREQUENCIAS_ENVIO = {
   semanal: 'Toda segunda-feira',
   quinzenal: 'A cada duas semanas (segunda-feira)',
   mensal: 'Todo dia 1º',
-} as const;
-export type FrequenciaEnvio = keyof typeof FREQUENCIAS_ENVIO;
+} as const
+export type FrequenciaEnvio = keyof typeof FREQUENCIAS_ENVIO
 export const CHAVES_FREQUENCIA_ENVIO = Object.keys(FREQUENCIAS_ENVIO) as [
   FrequenciaEnvio,
   ...FrequenciaEnvio[],
-];
+]

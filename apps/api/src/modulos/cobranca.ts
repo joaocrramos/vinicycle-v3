@@ -16,30 +16,30 @@ import {
   somarDias,
   TIPOS_ANEXO_ACEITOS,
   vencimentoDoCiclo,
-} from '@vinicycle/shared';
-import { and, asc, desc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm';
-import type { FastifyBaseLogger, FastifyInstance } from 'fastify';
-import { createHash } from 'node:crypto';
-import { v7 as uuidv7 } from 'uuid';
-import { z } from 'zod';
-import { emContexto, type Db, type Tx } from '../db/cliente';
-import * as s from '../db/schema';
-import { chaveAnexo } from '../nucleo/armazenamento';
-import { ErroNaoEncontrado, ErroPermissao, ErroRegra } from '../nucleo/erros';
-import { buscaTexto, listar } from '../nucleo/listagem';
-import { naEmpresa, naPlataforma } from '../nucleo/requisicao';
+} from '@vinicycle/shared'
+import { and, asc, desc, eq, gte, inArray, isNull, lte, or, sql } from 'drizzle-orm'
+import type { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { createHash } from 'node:crypto'
+import { v7 as uuidv7 } from 'uuid'
+import { z } from 'zod'
+import { emContexto, type Db, type Tx } from '../db/cliente'
+import * as s from '../db/schema'
+import { chaveAnexo } from '../nucleo/armazenamento'
+import { ErroNaoEncontrado, ErroPermissao, ErroRegra } from '../nucleo/erros'
+import { buscaTexto, listar } from '../nucleo/listagem'
+import { naEmpresa, naPlataforma } from '../nucleo/requisicao'
 import {
   type Agente,
   type Assinatura,
   assinaturaVigente,
   comoPlataforma,
   reduzirItem,
-} from './assinaturas';
-import { hoje, precoDoAdicional, precoDoPlano } from './planos';
-import { pedirCancelamentoExterno } from './integracoes';
-import { aplicarRegua, processarRegua } from './regua';
+} from './assinaturas'
+import { hoje, precoDoAdicional, precoDoPlano } from './planos'
+import { pedirCancelamentoExterno } from './integracoes'
+import { aplicarRegua, processarRegua } from './regua'
 
-const fmt = (d: string | null) => (d ? d.split('-').reverse().join('/') : '');
+const fmt = (d: string | null) => (d ? d.split('-').reverse().join('/') : '')
 
 /** Como a assinatura fica a partir de `inicio`, com as mudanças agendadas até essa data. */
 export async function estadoNaRenovacao(tx: Tx, a: Assinatura, inicio: string) {
@@ -53,23 +53,23 @@ export async function estadoNaRenovacao(tx: Tx, a: Assinatura, inicio: string) {
         lte(s.assinaturaMudanca.efeitoEm, inicio),
       ),
     )
-    .orderBy(asc(s.assinaturaMudanca.criadoEm));
-  const mPlano = agendadas.filter((m) => m.tipo === 'plano').at(-1);
-  const mCiclo = agendadas.filter((m) => m.tipo === 'periodicidade').at(-1);
-  const mReajuste = agendadas.filter((m) => m.tipo === 'reajuste').at(-1);
-  const planoId = mPlano?.planoId ?? a.planoId;
-  const periodicidade = (mCiclo?.periodicidade ?? a.periodicidade) as Periodicidade;
-  let valorPlano = a.valorContratado;
+    .orderBy(asc(s.assinaturaMudanca.criadoEm))
+  const mPlano = agendadas.filter((m) => m.tipo === 'plano').at(-1)
+  const mCiclo = agendadas.filter((m) => m.tipo === 'periodicidade').at(-1)
+  const mReajuste = agendadas.filter((m) => m.tipo === 'reajuste').at(-1)
+  const planoId = mPlano?.planoId ?? a.planoId
+  const periodicidade = (mCiclo?.periodicidade ?? a.periodicidade) as Periodicidade
+  let valorPlano = a.valorContratado
   if (mReajuste?.valorNovo) {
-    valorPlano = mReajuste.valorNovo;
+    valorPlano = mReajuste.valorNovo
   } else if (mPlano || mCiclo || mReajuste) {
     // Contrato novo ou reajuste à tabela: o preço do dia da renovação. Sem preço, fica o que valia.
-    valorPlano = (await precoDoPlano(tx, planoId, periodicidade, inicio)) ?? a.valorContratado;
+    valorPlano = (await precoDoPlano(tx, planoId, periodicidade, inicio)) ?? a.valorContratado
   }
   const [plano] = await tx
     .select({ nome: s.plano.nome })
     .from(s.plano)
-    .where(eq(s.plano.id, planoId));
+    .where(eq(s.plano.id, planoId))
   const linhas = await tx
     .select({
       item: s.assinaturaItem,
@@ -84,18 +84,18 @@ export async function estadoNaRenovacao(tx: Tx, a: Assinatura, inicio: string) {
         or(isNull(s.assinaturaItem.fim), gte(s.assinaturaItem.fim, inicio)),
       ),
     )
-    .orderBy(asc(s.assinaturaItem.inicio));
-  const itens = [];
+    .orderBy(asc(s.assinaturaItem.inicio))
+  const itens = []
   for (const l of linhas) {
     const retirada = agendadas
       .filter((m) => m.tipo === 'adicional_retirada' && m.assinaturaItemId === l.item.id)
-      .reduce((t, m) => t + (m.quantidade ?? 0), 0);
-    const quantidade = l.item.quantidade - retirada;
+      .reduce((t, m) => t + (m.quantidade ?? 0), 0)
+    const quantidade = l.item.quantidade - retirada
     const valorUnitario = mCiclo
       ? ((await precoDoAdicional(tx, l.item.adicionalId, periodicidade, inicio)) ??
         l.item.valorUnitario)
-      : l.item.valorUnitario;
-    itens.push({ item: l.item, nome: l.nome, quantidade, retirada, valorUnitario });
+      : l.item.valorUnitario
+    itens.push({ item: l.item, nome: l.nome, quantidade, retirada, valorUnitario })
   }
   return {
     planoId,
@@ -105,22 +105,22 @@ export async function estadoNaRenovacao(tx: Tx, a: Assinatura, inicio: string) {
     itens: itens.filter((i) => i.quantidade > 0),
     todosItens: itens,
     agendadas,
-  };
+  }
 }
 
 /** Avança o ciclo enquanto a data passou do fim, aplicando o que estava agendado. */
 export async function renovar(tx: Tx, a: Assinatura, data: string): Promise<Assinatura> {
-  let atual = a;
+  let atual = a
   while (atual.cicloFim && atual.cicloFim < data) {
-    const inicio = somarDias(atual.cicloFim, 1);
-    const e = await estadoNaRenovacao(tx, atual, inicio);
+    const inicio = somarDias(atual.cicloFim, 1)
+    const e = await estadoNaRenovacao(tx, atual, inicio)
     for (const i of e.todosItens) {
-      if (i.retirada > 0) await reduzirItem(tx, i.item, i.retirada, atual.cicloFim, null);
+      if (i.retirada > 0) await reduzirItem(tx, i.item, i.retirada, atual.cicloFim, null)
       if (i.valorUnitario !== i.item.valorUnitario && i.quantidade > 0) {
         await tx
           .update(s.assinaturaItem)
           .set({ valorUnitario: i.valorUnitario, atualizadoEm: sql`now()` })
-          .where(eq(s.assinaturaItem.id, i.item.id));
+          .where(eq(s.assinaturaItem.id, i.item.id))
       }
     }
     if (e.agendadas.length) {
@@ -132,7 +132,7 @@ export async function renovar(tx: Tx, a: Assinatura, data: string): Promise<Assi
             s.assinaturaMudanca.id,
             e.agendadas.map((m) => m.id),
           ),
-        );
+        )
     }
     const [novo] = await tx
       .update(s.assinatura)
@@ -146,10 +146,10 @@ export async function renovar(tx: Tx, a: Assinatura, data: string): Promise<Assi
         versao: sql`${s.assinatura.versao} + 1`,
       })
       .where(eq(s.assinatura.id, atual.id))
-      .returning();
-    atual = novo!;
+      .returning()
+    atual = novo!
   }
-  return atual;
+  return atual
 }
 
 /** Recalcula a situação pela soma dos recebimentos não estornados e pelo vencimento. */
@@ -158,17 +158,17 @@ export async function atualizarSituacaoFatura(
   faturaId: string,
   data = hoje(),
 ): Promise<string> {
-  const [f] = await tx.select().from(s.fatura).where(eq(s.fatura.id, faturaId));
-  if (!f) throw new ErroNaoEncontrado('Fatura não encontrada.');
-  if (f.situacao === 'cancelada') return f.situacao;
+  const [f] = await tx.select().from(s.fatura).where(eq(s.fatura.id, faturaId))
+  if (!f) throw new ErroNaoEncontrado('Fatura não encontrada.')
+  if (f.situacao === 'cancelada') return f.situacao
   const [{ pago }] = (await tx
     .select({ pago: sql<string>`coalesce(sum(${s.recebimento.valor}), 0)::text` })
     .from(s.recebimento)
     .where(and(eq(s.recebimento.faturaId, f.id), isNull(s.recebimento.estornadoEm)))) as [
     { pago: string },
-  ];
-  const total = paraCentavos(f.total);
-  const recebido = paraCentavos(pago);
+  ]
+  const total = paraCentavos(f.total)
+  const recebido = paraCentavos(pago)
   const situacao =
     recebido >= total
       ? 'paga'
@@ -176,40 +176,40 @@ export async function atualizarSituacaoFatura(
         ? 'vencida'
         : recebido > 0
           ? 'parcial'
-          : 'aberta';
+          : 'aberta'
   if (situacao !== f.situacao) {
     await tx
       .update(s.fatura)
       .set({ situacao, atualizadoEm: sql`now()`, versao: sql`${s.fatura.versao} + 1` })
-      .where(eq(s.fatura.id, f.id));
+      .where(eq(s.fatura.id, f.id))
   }
-  return situacao;
+  return situacao
 }
 
 interface ItemNovo {
-  descricao: string;
-  origem: 'plano' | 'adicional' | 'proporcional' | 'desconto' | 'avulso';
-  quantidade: number;
-  valorUnitario: number;
+  descricao: string
+  origem: 'plano' | 'adicional' | 'proporcional' | 'desconto' | 'avulso'
+  quantidade: number
+  valorUnitario: number
 }
 
 async function gravarFatura(
   tx: Tx,
   dados: {
-    empresaId: string;
-    assinaturaId: string | null;
-    ciclo: { inicio: string; fim: string } | null;
-    emissao: string;
-    vencimento: string;
-    observacao?: string | null;
-    usuarioId: string | null;
+    empresaId: string
+    assinaturaId: string | null
+    ciclo: { inicio: string; fim: string } | null
+    emissao: string
+    vencimento: string
+    observacao?: string | null
+    usuarioId: string | null
   },
   itens: ItemNovo[],
 ): Promise<string> {
   const total = Math.max(
     0,
     itens.reduce((t, i) => t + i.quantidade * i.valorUnitario, 0),
-  );
+  )
   const [f] = await tx
     .insert(s.fatura)
     .values({
@@ -225,7 +225,7 @@ async function gravarFatura(
       criadoPor: dados.usuarioId,
       atualizadoPor: dados.usuarioId,
     })
-    .returning({ id: s.fatura.id });
+    .returning({ id: s.fatura.id })
   await tx.insert(s.faturaItem).values(
     itens.map((i, n) => ({
       faturaId: f!.id,
@@ -237,9 +237,9 @@ async function gravarFatura(
       valorUnitario: deCentavos(i.valorUnitario),
       valor: deCentavos(i.quantidade * i.valorUnitario),
     })),
-  );
-  await atualizarSituacaoFatura(tx, f!.id, dados.emissao);
-  return f!.id;
+  )
+  await atualizarSituacaoFatura(tx, f!.id, dados.emissao)
+  return f!.id
 }
 
 /**
@@ -262,15 +262,15 @@ export async function gerarFaturaDoCiclo(
         eq(s.fatura.cicloInicio, inicio),
         sql`${s.fatura.situacao} <> 'cancelada'`,
       ),
-    );
-  if (existe) return null;
+    )
+  if (existe) return null
   // No ciclo atual nada agendado se aplica (vale na renovação); no próximo, o que estiver agendado.
-  const e = await estadoNaRenovacao(tx, a, inicio);
+  const e = await estadoNaRenovacao(tx, a, inicio)
   const fim =
     inicio === a.cicloInicio
       ? a.cicloFim!
-      : fimDoCiclo(inicio, e.periodicidade, a.diaBase ?? undefined);
-  const periodo = `${fmt(inicio)} a ${fmt(fim)}`;
+      : fimDoCiclo(inicio, e.periodicidade, a.diaBase ?? undefined)
+  const periodo = `${fmt(inicio)} a ${fmt(fim)}`
   const itens: ItemNovo[] = [
     {
       descricao: `Plano ${e.planoNome}, ciclo ${NOMES_PERIODICIDADE[e.periodicidade].toLowerCase()} (${periodo})`,
@@ -284,8 +284,8 @@ export async function gerarFaturaDoCiclo(
       quantidade: i.quantidade,
       valorUnitario: paraCentavos(i.valorUnitario),
     })),
-  ];
-  const recorrente = itens.reduce((t, i) => t + i.quantidade * i.valorUnitario, 0);
+  ]
+  const recorrente = itens.reduce((t, i) => t + i.quantidade * i.valorUnitario, 0)
   const proporcionais = await tx
     .select({
       id: s.assinaturaMudanca.id,
@@ -307,7 +307,7 @@ export async function gerarFaturaDoCiclo(
         sql`${s.assinaturaMudanca.valorProporcional} > 0`,
       ),
     )
-    .orderBy(asc(s.assinaturaMudanca.criadoEm));
+    .orderBy(asc(s.assinaturaMudanca.criadoEm))
   for (const p of proporcionais) {
     itens.push({
       descricao:
@@ -317,7 +317,7 @@ export async function gerarFaturaDoCiclo(
       origem: 'proporcional',
       quantidade: 1,
       valorUnitario: paraCentavos(p.valor),
-    });
+    })
   }
   const descontos = await tx
     .select()
@@ -330,17 +330,17 @@ export async function gerarFaturaDoCiclo(
         or(isNull(s.desconto.fim), gte(s.desconto.fim, inicio)),
       ),
     )
-    .orderBy(asc(s.desconto.inicio));
+    .orderBy(asc(s.desconto.inicio))
   // O desconto vale sobre o plano e os adicionais do ciclo, e nunca deixa a fatura negativa.
-  let restante = recorrente;
+  let restante = recorrente
   for (const d of descontos) {
     const bruto =
       d.tipo === 'percentual'
         ? Math.round((recorrente * Number(d.valor)) / 100)
-        : paraCentavos(d.valor);
-    const valor = Math.min(bruto, restante);
-    if (valor <= 0) continue;
-    restante -= valor;
+        : paraCentavos(d.valor)
+    const valor = Math.min(bruto, restante)
+    if (valor <= 0) continue
+    restante -= valor
     itens.push({
       descricao:
         d.tipo === 'percentual'
@@ -349,7 +349,7 @@ export async function gerarFaturaDoCiclo(
       origem: 'desconto',
       quantidade: 1,
       valorUnitario: -valor,
-    });
+    })
   }
   const id = await gravarFatura(
     tx,
@@ -362,7 +362,7 @@ export async function gerarFaturaDoCiclo(
       usuarioId,
     },
     itens,
-  );
+  )
   if (proporcionais.length) {
     await tx
       .update(s.assinaturaMudanca)
@@ -372,9 +372,9 @@ export async function gerarFaturaDoCiclo(
           s.assinaturaMudanca.id,
           proporcionais.map((p) => p.id),
         ),
-      );
+      )
   }
-  return id;
+  return id
 }
 
 /**
@@ -387,8 +387,8 @@ export async function recalcularFaturaFutura(
   usuarioId: string | null,
   data = hoje(),
 ): Promise<void> {
-  if (!a.cicloFim) return;
-  const [atual] = await tx.select().from(s.assinatura).where(eq(s.assinatura.id, a.id));
+  if (!a.cicloFim) return
+  const [atual] = await tx.select().from(s.assinatura).where(eq(s.assinatura.id, a.id))
   const futuras = await tx
     .select({ id: s.fatura.id, cicloInicio: s.fatura.cicloInicio })
     .from(s.fatura)
@@ -399,7 +399,7 @@ export async function recalcularFaturaFutura(
         inArray(s.fatura.situacao, ['aberta', 'vencida']),
         sql`not exists (select 1 from recebimento r where r.fatura_id = fatura.id and r.estornado_em is null)`,
       ),
-    );
+    )
   for (const f of futuras) {
     await tx
       .update(s.fatura)
@@ -409,14 +409,14 @@ export async function recalcularFaturaFutura(
         canceladaPor: usuarioId,
         motivoCancelamento: 'Recalculada: a assinatura mudou.',
       })
-      .where(eq(s.fatura.id, f.id));
-    await pedirCancelamentoExterno(tx, f.id);
+      .where(eq(s.fatura.id, f.id))
+    await pedirCancelamentoExterno(tx, f.id)
     // Os proporcionais que ela cobrava voltam a ficar pendentes.
     await tx
       .update(s.assinaturaMudanca)
       .set({ faturaId: null })
-      .where(eq(s.assinaturaMudanca.faturaId, f.id));
-    await gerarFaturaDoCiclo(tx, atual!, f.cicloInicio!, data, usuarioId);
+      .where(eq(s.assinaturaMudanca.faturaId, f.id))
+    await gerarFaturaDoCiclo(tx, atual!, f.cicloInicio!, data, usuarioId)
   }
 }
 
@@ -427,13 +427,13 @@ export async function processarAssinatura(
   data: string,
   antecedenciaDias: number,
 ): Promise<number> {
-  if (a.emTeste || !a.cicloFim || a.situacao !== 'vigente') return 0;
-  const atual = await renovar(tx, a, data);
-  let n = 0;
-  if (await gerarFaturaDoCiclo(tx, atual, atual.cicloInicio!, data)) n++;
-  const proximo = somarDias(atual.cicloFim!, 1);
+  if (a.emTeste || !a.cicloFim || a.situacao !== 'vigente') return 0
+  const atual = await renovar(tx, a, data)
+  let n = 0
+  if (await gerarFaturaDoCiclo(tx, atual, atual.cicloInicio!, data)) n++
+  const proximo = somarDias(atual.cicloFim!, 1)
   if (somarDias(vencimentoDoCiclo(proximo, atual.diaVencimento), -antecedenciaDias) <= data) {
-    if (await gerarFaturaDoCiclo(tx, atual, proximo, data)) n++;
+    if (await gerarFaturaDoCiclo(tx, atual, proximo, data)) n++
   }
   // Faturas que venceram mudam de situação.
   const abertas = await tx
@@ -445,9 +445,9 @@ export async function processarAssinatura(
         inArray(s.fatura.situacao, ['aberta', 'parcial']),
         sql`${s.fatura.vencimento} < ${data}`,
       ),
-    );
-  for (const f of abertas) await atualizarSituacaoFatura(tx, f.id, data);
-  return n;
+    )
+  for (const f of abertas) await atualizarSituacaoFatura(tx, f.id, data)
+  return n
 }
 
 /** A tarefa de cobrança: cada assinatura na sua transação, para um erro não parar as outras. */
@@ -457,14 +457,14 @@ export async function processarCobranca(
   data = hoje(),
 ): Promise<number> {
   const assinaturas = await emContexto(db, { plataforma: true }, async (tx) => {
-    const [cfg] = await tx.select().from(s.configPlataforma);
+    const [cfg] = await tx.select().from(s.configPlataforma)
     const lista = await tx
       .select({ id: s.assinatura.id })
       .from(s.assinatura)
-      .where(and(eq(s.assinatura.situacao, 'vigente'), eq(s.assinatura.emTeste, false)));
-    return { antecedencia: cfg?.faturaAntecedenciaDias ?? 10, ids: lista.map((l) => l.id) };
-  });
-  let n = 0;
+      .where(and(eq(s.assinatura.situacao, 'vigente'), eq(s.assinatura.emTeste, false)))
+    return { antecedencia: cfg?.faturaAntecedenciaDias ?? 10, ids: lista.map((l) => l.id) }
+  })
+  let n = 0
   for (const id of assinaturas.ids) {
     try {
       n += await emContexto(db, { plataforma: true }, async (tx) => {
@@ -472,14 +472,14 @@ export async function processarCobranca(
           .select()
           .from(s.assinatura)
           .where(eq(s.assinatura.id, id))
-          .for('update');
-        return a ? processarAssinatura(tx, a, data, assinaturas.antecedencia) : 0;
-      });
+          .for('update')
+        return a ? processarAssinatura(tx, a, data, assinaturas.antecedencia) : 0
+      })
     } catch (e) {
-      log.error({ erro: e, assinatura: id }, 'Falha na cobrança da assinatura');
+      log.error({ erro: e, assinatura: id }, 'Falha na cobrança da assinatura')
     }
   }
-  return n;
+  return n
 }
 
 /** Tarefa de fundo: cobrança (renovação e faturas) e, em seguida, a régua. */
@@ -489,22 +489,22 @@ export function iniciarTarefaCobranca(
   log: Pick<FastifyBaseLogger, 'error'>,
   intervaloMs = 60 * 60_000,
 ): () => void {
-  let parar = false;
-  let timer: NodeJS.Timeout | undefined;
+  let parar = false
+  let timer: NodeJS.Timeout | undefined
   const ciclo = async () => {
     try {
-      await processarCobranca(db, log);
-      await processarRegua(db, url, log);
+      await processarCobranca(db, log)
+      await processarRegua(db, url, log)
     } catch (e) {
-      log.error({ erro: e }, 'Falha na tarefa de cobrança');
+      log.error({ erro: e }, 'Falha na tarefa de cobrança')
     }
-    if (!parar) timer = setTimeout(ciclo, intervaloMs);
-  };
-  timer = setTimeout(ciclo, 45_000);
+    if (!parar) timer = setTimeout(ciclo, intervaloMs)
+  }
+  timer = setTimeout(ciclo, 45_000)
   return () => {
-    parar = true;
-    clearTimeout(timer);
-  };
+    parar = true
+    clearTimeout(timer)
+  }
 }
 
 /**
@@ -512,25 +512,25 @@ export function iniciarTarefaCobranca(
  * a primeira fatura sai na hora. A empresa volta a ativa, mesmo que o teste já tenha bloqueado.
  */
 export async function contratar(c: Agente, a: Assinatura, data = hoje()): Promise<string | null> {
-  if (!a.emTeste) throw new ErroRegra('A assinatura já está contratada.', 'contratada');
-  const valor = await precoDoPlano(c.tx, a.planoId, a.periodicidade as Periodicidade, data);
+  if (!a.emTeste) throw new ErroRegra('A assinatura já está contratada.', 'contratada')
+  const valor = await precoDoPlano(c.tx, a.planoId, a.periodicidade as Periodicidade, data)
   if (valor === null) {
-    throw new ErroRegra('O plano não é vendido neste ciclo. Mude o plano ou o ciclo.', 'sem_preco');
+    throw new ErroRegra('O plano não é vendido neste ciclo. Mude o plano ou o ciclo.', 'sem_preco')
   }
   const itens = await c.tx
     .select()
     .from(s.assinaturaItem)
-    .where(and(eq(s.assinaturaItem.assinaturaId, a.id), isNull(s.assinaturaItem.fim)));
+    .where(and(eq(s.assinaturaItem.assinaturaId, a.id), isNull(s.assinaturaItem.fim)))
   for (const i of itens) {
-    const p = await precoDoAdicional(c.tx, i.adicionalId, a.periodicidade as Periodicidade, data);
+    const p = await precoDoAdicional(c.tx, i.adicionalId, a.periodicidade as Periodicidade, data)
     if (p !== null) {
       await c.tx
         .update(s.assinaturaItem)
         .set({ valorUnitario: p })
-        .where(eq(s.assinaturaItem.id, i.id));
+        .where(eq(s.assinaturaItem.id, i.id))
     }
   }
-  const dia = Number(data.slice(8, 10));
+  const dia = Number(data.slice(8, 10))
   const [nova] = await c.tx
     .update(s.assinatura)
     .set({
@@ -544,33 +544,33 @@ export async function contratar(c: Agente, a: Assinatura, data = hoje()): Promis
       versao: sql`${s.assinatura.versao} + 1`,
     })
     .where(eq(s.assinatura.id, a.id))
-    .returning();
+    .returning()
   const [e] = await c.tx
     .select({ situacao: s.empresa.situacao })
     .from(s.empresa)
-    .where(eq(s.empresa.id, a.empresaId));
+    .where(eq(s.empresa.id, a.empresaId))
   if (e && ['teste', 'bloqueado'].includes(e.situacao)) {
     await c.tx
       .update(s.empresa)
       .set({ situacao: 'ativo', atualizadoEm: sql`now()`, versao: sql`${s.empresa.versao} + 1` })
-      .where(eq(s.empresa.id, a.empresaId));
+      .where(eq(s.empresa.id, a.empresaId))
     await c.tx.insert(s.empresaSituacao).values({
       empresaId: a.empresaId,
       situacao: 'ativo',
       origem: 'contratacao',
       motivo: 'Assinatura contratada',
       criadoPor: c.usuarioId,
-    });
+    })
   }
-  const faturaId = await gerarFaturaDoCiclo(c.tx, nova!, data, data, c.usuarioId);
+  const faturaId = await gerarFaturaDoCiclo(c.tx, nova!, data, data, c.usuarioId)
   await c.auditar({
     acao: 'contratar',
     entidade: 'assinatura',
     registroId: a.id,
     empresaId: a.empresaId,
     depois: { valor, cicloInicio: data, faturaId },
-  });
-  return faturaId;
+  })
+  return faturaId
 }
 
 /** Fatura com itens e recebimentos, para a Administração e para o cliente. */
@@ -584,13 +584,13 @@ export async function lerFatura(tx: Tx, id: string, empresaId?: string) {
     .from(s.fatura)
     .innerJoin(s.empresa, eq(s.empresa.id, s.fatura.empresaId))
     .innerJoin(s.ficha, eq(s.ficha.id, s.empresa.fichaId))
-    .where(and(eq(s.fatura.id, id), empresaId ? eq(s.fatura.empresaId, empresaId) : undefined));
-  if (!f) throw new ErroNaoEncontrado('Fatura não encontrada.');
+    .where(and(eq(s.fatura.id, id), empresaId ? eq(s.fatura.empresaId, empresaId) : undefined))
+  if (!f) throw new ErroNaoEncontrado('Fatura não encontrada.')
   const itens = await tx
     .select()
     .from(s.faturaItem)
     .where(eq(s.faturaItem.faturaId, id))
-    .orderBy(s.faturaItem.ordem);
+    .orderBy(s.faturaItem.ordem)
   const recebimentos = await tx
     .select({
       id: s.recebimento.id,
@@ -608,10 +608,10 @@ export async function lerFatura(tx: Tx, id: string, empresaId?: string) {
     })
     .from(s.recebimento)
     .where(eq(s.recebimento.faturaId, id))
-    .orderBy(asc(s.recebimento.criadoEm));
+    .orderBy(asc(s.recebimento.criadoEm))
   const recebido = recebimentos
     .filter((r) => !r.estornadoEm)
-    .reduce((t, r) => t + paraCentavos(r.valor), 0);
+    .reduce((t, r) => t + paraCentavos(r.valor), 0)
   const [cobranca] = await tx
     .select({
       link: s.cobrancaExterna.link,
@@ -624,7 +624,7 @@ export async function lerFatura(tx: Tx, id: string, empresaId?: string) {
         eq(s.cobrancaExterna.faturaId, id),
         inArray(s.cobrancaExterna.situacao, ['ativa', 'paga']),
       ),
-    );
+    )
   const [nota] = await tx
     .select({
       numero: s.notaServico.numero,
@@ -632,7 +632,7 @@ export async function lerFatura(tx: Tx, id: string, empresaId?: string) {
       linkPdf: s.notaServico.linkPdf,
     })
     .from(s.notaServico)
-    .where(and(eq(s.notaServico.faturaId, id), sql`${s.notaServico.situacao} <> 'cancelada'`));
+    .where(and(eq(s.notaServico.faturaId, id), sql`${s.notaServico.situacao} <> 'cancelada'`))
   return {
     ...f.fatura,
     cliente: f.nomeFantasia || f.cliente,
@@ -649,7 +649,7 @@ export async function lerFatura(tx: Tx, id: string, empresaId?: string) {
     recebimentos,
     recebido: deCentavos(recebido),
     saldo: deCentavos(Math.max(0, paraCentavos(f.fatura.total) - recebido)),
-  };
+  }
 }
 
 const colunasLista = {
@@ -665,11 +665,11 @@ const colunasLista = {
   situacao: s.fatura.situacao,
   recebido: sql<string>`(select coalesce(sum(r.valor), 0) from recebimento r
     where r.fatura_id = fatura.id and r.estornado_em is null)::text`,
-};
+}
 
 export async function rotasCobranca(app: FastifyInstance): Promise<void> {
-  const { db, armazenamento, config } = app.deps;
-  const F = 'plataforma.faturas';
+  const { db, armazenamento, config } = app.deps
+  const F = 'plataforma.faturas'
   // Pagamento, estorno ou cancelamento: a situação da empresa acompanha na hora.
   const acompanhar = (tx: Tx, empresaId: string, usuarioId: string | null) =>
     aplicarRegua(tx, empresaId, {
@@ -677,7 +677,7 @@ export async function rotasCobranca(app: FastifyInstance): Promise<void> {
       url: config.URL_APLICACAO,
       lembretes: false,
       usuarioId,
-    });
+    })
 
   app.get('/api/plataforma/faturas', async (req) =>
     naPlataforma(db, req, [F, 'visualizar'], async ({ tx }) => {
@@ -686,19 +686,19 @@ export async function rotasCobranca(app: FastifyInstance): Promise<void> {
           situacao: z.enum(['aberta', 'paga', 'parcial', 'vencida', 'cancelada']).optional(),
           empresaId: z.uuid().optional(),
         })
-        .parse(req.query);
+        .parse(req.query)
       const filtro = and(
         buscaTexto(c.busca, [s.ficha.nome, s.ficha.nomeFantasia, sql`${s.fatura.numero}::text`]),
         c.situacao ? eq(s.fatura.situacao, c.situacao) : undefined,
         c.empresaId ? eq(s.fatura.empresaId, c.empresaId) : undefined,
-      );
+      )
       const base = () =>
         tx
           .select(colunasLista)
           .from(s.fatura)
           .innerJoin(s.empresa, eq(s.empresa.id, s.fatura.empresaId))
           .innerJoin(s.ficha, eq(s.ficha.id, s.empresa.fichaId))
-          .where(filtro);
+          .where(filtro)
       return listar({
         consulta: c,
         ordenaveis: {
@@ -723,20 +723,20 @@ export async function rotasCobranca(app: FastifyInstance): Promise<void> {
             .orderBy(...ordem)
             .limit(limite)
             .offset(deslocamento),
-      });
+      })
     }),
-  );
+  )
 
   app.get<{ Params: { id: string } }>('/api/plataforma/faturas/:id', async (req) =>
     naPlataforma(db, req, [F, 'visualizar'], async ({ tx }) =>
       lerFatura(tx, z.uuid().parse(req.params.id)),
     ),
-  );
+  )
 
   app.post<{ Params: { id: string } }>('/api/plataforma/empresas/:id/faturas', async (req) =>
     naPlataforma(db, req, [F, 'criar'], async ({ tx, usuarioId, auditar }) => {
-      const empresaId = z.uuid().parse(req.params.id);
-      const d = faturaAvulsaEntrada.parse(req.body);
+      const empresaId = z.uuid().parse(req.params.id)
+      const d = faturaAvulsaEntrada.parse(req.body)
       const id = await gravarFatura(
         tx,
         {
@@ -754,23 +754,23 @@ export async function rotasCobranca(app: FastifyInstance): Promise<void> {
           quantidade: i.quantidade,
           valorUnitario: paraCentavos(i.valorUnitario),
         })),
-      );
-      await auditar({ acao: 'criar', entidade: 'fatura', registroId: id, empresaId, depois: d });
-      return { id };
+      )
+      await auditar({ acao: 'criar', entidade: 'fatura', registroId: id, empresaId, depois: d })
+      return { id }
     }),
-  );
+  )
 
   app.post<{ Params: { id: string } }>('/api/plataforma/faturas/:id/cancelar', async (req) =>
     naPlataforma(db, req, [F, 'editar'], async ({ tx, usuarioId, auditar }) => {
-      const id = z.uuid().parse(req.params.id);
-      const m = motivo.parse(req.body).motivo;
-      const f = await lerFatura(tx, id);
-      if (f.situacao === 'cancelada') return { ok: true };
+      const id = z.uuid().parse(req.params.id)
+      const m = motivo.parse(req.body).motivo
+      const f = await lerFatura(tx, id)
+      if (f.situacao === 'cancelada') return { ok: true }
       if (paraCentavos(f.recebido) > 0) {
         throw new ErroRegra(
           'A fatura tem recebimentos. Estorne-os antes de cancelar.',
           'fatura_com_recebimento',
-        );
+        )
       }
       await tx
         .update(s.fatura)
@@ -782,58 +782,58 @@ export async function rotasCobranca(app: FastifyInstance): Promise<void> {
           atualizadoEm: sql`now()`,
           atualizadoPor: usuarioId,
         })
-        .where(eq(s.fatura.id, id));
+        .where(eq(s.fatura.id, id))
       // Proporcionais cobrados por ela voltam para a próxima fatura.
       await tx
         .update(s.assinaturaMudanca)
         .set({ faturaId: null })
-        .where(eq(s.assinaturaMudanca.faturaId, id));
-      await pedirCancelamentoExterno(tx, id);
+        .where(eq(s.assinaturaMudanca.faturaId, id))
+      await pedirCancelamentoExterno(tx, id)
       await auditar({
         acao: 'cancelar',
         entidade: 'fatura',
         registroId: id,
         empresaId: f.empresaId,
         motivo: m,
-      });
-      await acompanhar(tx, f.empresaId, usuarioId);
-      return { ok: true };
+      })
+      await acompanhar(tx, f.empresaId, usuarioId)
+      return { ok: true }
     }),
-  );
+  )
 
   // Baixa manual: data, valor, forma, referência e comprovante (P15).
   app.post<{ Params: { id: string } }>('/api/plataforma/faturas/:id/recebimentos', async (req) => {
-    const faturaId = z.uuid().parse(req.params.id);
-    let campos: Record<string, string>;
-    let arquivo: { nome: string; tipo: string; conteudo: Buffer } | null = null;
+    const faturaId = z.uuid().parse(req.params.id)
+    let campos: Record<string, string>
+    let arquivo: { nome: string; tipo: string; conteudo: Buffer } | null = null
     if (req.isMultipart()) {
       // O comprovante é opcional: lê todas as partes, com ou sem arquivo.
-      campos = {};
+      campos = {}
       for await (const parte of req.parts()) {
         if (parte.type === 'file') {
-          const conteudo = await parte.toBuffer();
-          if (!parte.filename || !conteudo.length) continue;
+          const conteudo = await parte.toBuffer()
+          if (!parte.filename || !conteudo.length) continue
           if (parte.file.truncated)
-            throw new ErroRegra('Arquivo acima do tamanho máximo (25 MB).', 'arquivo_grande');
+            throw new ErroRegra('Arquivo acima do tamanho máximo (25 MB).', 'arquivo_grande')
           if (!(TIPOS_ANEXO_ACEITOS as readonly string[]).includes(parte.mimetype))
-            throw new ErroRegra('Tipo de arquivo não aceito.', 'tipo_arquivo');
-          arquivo = { nome: parte.filename, tipo: parte.mimetype, conteudo };
+            throw new ErroRegra('Tipo de arquivo não aceito.', 'tipo_arquivo')
+          arquivo = { nome: parte.filename, tipo: parte.mimetype, conteudo }
         } else {
-          campos[parte.fieldname] = String(parte.value);
+          campos[parte.fieldname] = String(parte.value)
         }
       }
     } else {
-      campos = req.body as Record<string, string>;
+      campos = req.body as Record<string, string>
     }
-    const d = recebimentoEntrada.parse(campos);
+    const d = recebimentoEntrada.parse(campos)
     return naPlataforma(db, req, [F, 'editar'], async ({ tx, usuarioId, auditar }) => {
-      const f = await lerFatura(tx, faturaId);
-      if (f.situacao === 'cancelada') throw new ErroRegra('A fatura está cancelada.', 'cancelada');
+      const f = await lerFatura(tx, faturaId)
+      if (f.situacao === 'cancelada') throw new ErroRegra('A fatura está cancelada.', 'cancelada')
       if (paraCentavos(d.valor) > paraCentavos(f.saldo)) {
         throw new ErroRegra(
           `O valor passa do saldo da fatura (${formatarMoeda(paraCentavos(f.saldo))}).`,
           'valor',
-        );
+        )
       }
       const [r] = await tx
         .insert(s.recebimento)
@@ -847,17 +847,17 @@ export async function rotasCobranca(app: FastifyInstance): Promise<void> {
           origem: 'manual',
           criadoPor: usuarioId,
         })
-        .returning({ id: s.recebimento.id });
+        .returning({ id: s.recebimento.id })
       if (arquivo) {
-        const anexoId = uuidv7();
+        const anexoId = uuidv7()
         const caminho = chaveAnexo({
           empresaId: f.empresaId,
           estabelecimentoId: null,
           entidade: 'recebimento',
           registroId: r!.id,
           anexoId,
-        });
-        await armazenamento.gravar(caminho, arquivo.conteudo);
+        })
+        await armazenamento.gravar(caminho, arquivo.conteudo)
         await tx.insert(s.anexo).values({
           id: anexoId,
           empresaId: f.empresaId,
@@ -871,34 +871,34 @@ export async function rotasCobranca(app: FastifyInstance): Promise<void> {
           caminho,
           descricao: `Comprovante do recebimento da fatura ${f.numero}`,
           criadoPor: usuarioId,
-        });
+        })
       }
-      const situacao = await atualizarSituacaoFatura(tx, faturaId);
+      const situacao = await atualizarSituacaoFatura(tx, faturaId)
       // Paga por fora do provedor: a cobrança lá deixa de valer.
-      if (situacao === 'paga') await pedirCancelamentoExterno(tx, faturaId);
+      if (situacao === 'paga') await pedirCancelamentoExterno(tx, faturaId)
       await auditar({
         acao: 'receber',
         entidade: 'fatura',
         registroId: faturaId,
         empresaId: f.empresaId,
         depois: { ...d, situacao },
-      });
-      await acompanhar(tx, f.empresaId, usuarioId);
-      return { id: r!.id, situacao };
-    });
-  });
+      })
+      await acompanhar(tx, f.empresaId, usuarioId)
+      return { id: r!.id, situacao }
+    })
+  })
 
   app.post<{ Params: { id: string } }>('/api/plataforma/recebimentos/:id/estornar', async (req) =>
     naPlataforma(db, req, [F, 'estornar'], async ({ tx, usuarioId, auditar }) => {
-      const id = z.uuid().parse(req.params.id);
-      const m = motivo.parse(req.body).motivo;
+      const id = z.uuid().parse(req.params.id)
+      const m = motivo.parse(req.body).motivo
       const [r] = await tx
         .update(s.recebimento)
         .set({ estornadoEm: sql`now()`, estornadoPor: usuarioId, motivoEstorno: m })
         .where(and(eq(s.recebimento.id, id), isNull(s.recebimento.estornadoEm)))
-        .returning();
-      if (!r) throw new ErroNaoEncontrado('Recebimento não encontrado ou já estornado.');
-      const situacao = await atualizarSituacaoFatura(tx, r.faturaId);
+        .returning()
+      if (!r) throw new ErroNaoEncontrado('Recebimento não encontrado ou já estornado.')
+      const situacao = await atualizarSituacaoFatura(tx, r.faturaId)
       await auditar({
         acao: 'estornar_recebimento',
         entidade: 'fatura',
@@ -906,43 +906,43 @@ export async function rotasCobranca(app: FastifyInstance): Promise<void> {
         empresaId: r.empresaId,
         dados: { recebimentoId: id, valor: r.valor, situacao },
         motivo: m,
-      });
-      await acompanhar(tx, r.empresaId, usuarioId);
-      return { ok: true };
+      })
+      await acompanhar(tx, r.empresaId, usuarioId)
+      return { ok: true }
     }),
-  );
+  )
 
   app.get<{ Params: { id: string } }>('/api/plataforma/anexos/:id/arquivo', async (req, reply) => {
     const a = await naPlataforma(db, req, [F, 'visualizar'], async ({ tx }) => {
       const [a] = await tx
         .select()
         .from(s.anexo)
-        .where(eq(s.anexo.id, z.uuid().parse(req.params.id)));
-      if (!a || a.entidade !== 'recebimento') throw new ErroNaoEncontrado('Anexo não encontrado.');
-      return a;
-    });
+        .where(eq(s.anexo.id, z.uuid().parse(req.params.id)))
+      if (!a || a.entidade !== 'recebimento') throw new ErroNaoEncontrado('Anexo não encontrado.')
+      return a
+    })
     reply
       .header('Content-Type', a.tipoMime)
       .header(
         'Content-Disposition',
         `attachment; filename*=UTF-8''${encodeURIComponent(a.nomeOriginal)}`,
       )
-      .header('X-Content-Type-Options', 'nosniff');
-    return reply.send(await armazenamento.ler(a.caminho));
-  });
+      .header('X-Content-Type-Options', 'nosniff')
+    return reply.send(await armazenamento.ler(a.caminho))
+  })
 
   app.post<{ Params: { id: string } }>(
     '/api/plataforma/empresas/:id/assinatura/contratar',
     async (req) =>
       naPlataforma(db, req, ['plataforma.clientes', 'editar'], async (ctx) => {
-        const a = await assinaturaVigente(ctx.tx, z.uuid().parse(req.params.id));
+        const a = await assinaturaVigente(ctx.tx, z.uuid().parse(req.params.id))
         const faturaId = await contratar(
           { tx: ctx.tx, usuarioId: ctx.usuarioId, origem: 'plataforma', auditar: ctx.auditar },
           a,
-        );
-        return { faturaId };
+        )
+        return { faturaId }
       }),
-  );
+  )
 
   // ---- Cliente ----
 
@@ -957,30 +957,26 @@ export async function rotasCobranca(app: FastifyInstance): Promise<void> {
         .orderBy(desc(s.fatura.vencimento), desc(s.fatura.numero))
         .limit(200),
     ),
-  );
+  )
 
   app.get<{ Params: { id: string } }>('/api/faturas/:id', async (req) =>
     naEmpresa(db, req, ['gestao.assinatura', 'visualizar'], async (ctx) =>
       lerFatura(ctx.tx, z.uuid().parse(req.params.id), ctx.empresaId),
     ),
-  );
+  )
 
   app.post('/api/assinatura/contratar', async (req) =>
     naEmpresa(db, req, ['gestao.assinatura', 'visualizar'], async (ctx) => {
       if (!ctx.acesso.eMaster) {
-        throw new ErroPermissao(
-          'gestao.assinatura',
-          'editar',
-          'Só o Master contrata a assinatura.',
-        );
+        throw new ErroPermissao('gestao.assinatura', 'editar', 'Só o Master contrata a assinatura.')
       }
-      const a = await assinaturaVigente(ctx.tx, ctx.empresaId);
-      await comoPlataforma(ctx.tx, ctx.usuarioId, ctx.empresaId);
+      const a = await assinaturaVigente(ctx.tx, ctx.empresaId)
+      await comoPlataforma(ctx.tx, ctx.usuarioId, ctx.empresaId)
       const faturaId = await contratar(
         { tx: ctx.tx, usuarioId: ctx.usuarioId, origem: 'master', auditar: ctx.auditar },
         a,
-      );
-      return { faturaId };
+      )
+      return { faturaId }
     }),
-  );
+  )
 }

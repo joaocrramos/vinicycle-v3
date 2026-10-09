@@ -1,26 +1,26 @@
 // Link da passagem de bastão (administracao.md, Master e passagem de bastão): o escolhido aceita
 // ou recusa. Com a sessão dele aberta, basta um clique; senão, entra com a senha ou se cadastra.
-import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { EntrarOuCadastrar, type Termo } from '@/componentes/EntrarOuCadastrar';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso } from '@/componentes/ui/cartao';
-import { api } from '@/lib/api';
-import { type EstadoSessao, useAtualizarSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
-import { TelaPublica } from './publicas';
+import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { EntrarOuCadastrar, type Termo } from '@/componentes/EntrarOuCadastrar'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso } from '@/componentes/ui/cartao'
+import { api } from '@/lib/api'
+import { type EstadoSessao, useAtualizarSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
+import { TelaPublica } from './publicas'
 
 interface Pedido {
-  empresa: string;
+  empresa: string
   /** Vazio quando foi o suporte quem designou. */
-  quem: string | null;
-  email: string;
-  situacao: 'pendente' | 'aceita' | 'recusada' | 'cancelada' | 'expirada';
-  expiraEm: string;
-  usuarioExiste: boolean;
-  sessaoConfere: boolean;
-  termos: Termo[];
+  quem: string | null
+  email: string
+  situacao: 'pendente' | 'aceita' | 'recusada' | 'cancelada' | 'expirada'
+  expiraEm: string
+  usuarioExiste: boolean
+  sessaoConfere: boolean
+  termos: Termo[]
 }
 
 const SITUACOES: Record<Exclude<Pedido['situacao'], 'pendente'>, string> = {
@@ -28,40 +28,40 @@ const SITUACOES: Record<Exclude<Pedido['situacao'], 'pendente'>, string> = {
   recusada: 'Este pedido foi recusado.',
   cancelada: 'Este pedido foi cancelado.',
   expirada: 'O prazo para aceitar terminou. Peça ao Master um novo pedido.',
-};
+}
 
 export function PaginaBastao() {
-  const { token = '' } = useParams();
-  const navegar = useNavigate();
-  const atualizar = useAtualizarSessao();
-  const [recusado, setRecusado] = useState(false);
-  const [confirmarRecusa, setConfirmarRecusa] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
+  const { token = '' } = useParams()
+  const navegar = useNavigate()
+  const atualizar = useAtualizarSessao()
+  const [recusado, setRecusado] = useState(false)
+  const [confirmarRecusa, setConfirmarRecusa] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
   const q = useQuery({
     queryKey: ['bastao', token],
     queryFn: () => api.get<Pedido>(`/api/bastao/${token}`),
     retry: false,
-  });
-  const p = q.data;
+  })
+  const p = q.data
 
   const aceitar = async (corpo: unknown) => {
-    atualizar(await api.post<EstadoSessao>(`/api/bastao/${token}/aceitar`, corpo));
-    navegar('/');
-  };
+    atualizar(await api.post<EstadoSessao>(`/api/bastao/${token}/aceitar`, corpo))
+    navegar('/')
+  }
 
   const recusar = async () => {
-    setErro(null);
-    setEnviando(true);
+    setErro(null)
+    setEnviando(true)
     try {
-      await api.post(`/api/bastao/${token}/recusar`);
-      setRecusado(true);
+      await api.post(`/api/bastao/${token}/recusar`)
+      setRecusado(true)
     } catch (e) {
-      setErro((e as Error).message);
+      setErro((e as Error).message)
     } finally {
-      setEnviando(false);
+      setEnviando(false)
     }
-  };
+  }
 
   return (
     <TelaPublica
@@ -89,13 +89,13 @@ export function PaginaBastao() {
               <Botao
                 disabled={enviando}
                 onClick={async () => {
-                  setErro(null);
-                  setEnviando(true);
+                  setErro(null)
+                  setEnviando(true)
                   try {
-                    await aceitar({});
+                    await aceitar({})
                   } catch (e) {
-                    setErro((e as Error).message);
-                    setEnviando(false);
+                    setErro((e as Error).message)
+                    setEnviando(false)
                   }
                 }}
               >
@@ -135,7 +135,7 @@ export function PaginaBastao() {
         </div>
       )}
     </TelaPublica>
-  );
+  )
 }
 
 function Resumo({ p }: { p: Pedido }) {
@@ -159,5 +159,5 @@ function Resumo({ p }: { p: Pedido }) {
         aceitar. O pedido vale até {formatarDataHora(p.expiraEm)}.
       </p>
     </div>
-  );
+  )
 }

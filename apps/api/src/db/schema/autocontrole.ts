@@ -3,8 +3,8 @@
 // norma (packages/shared, MODELO_AUTOCONTROLE) é só o ponto de partida: tudo se altera (P29).
 // A evidência automática (higienização, temperatura) não é copiada: é lida das operações e análises,
 // e some sozinha se elas forem estornadas.
-import { CHAVES_EVIDENCIA_AUTOMATICA, CHAVES_UNIDADE_PERIODICIDADE } from '@vinicycle/shared';
-import { sql } from 'drizzle-orm';
+import { CHAVES_EVIDENCIA_AUTOMATICA, CHAVES_UNIDADE_PERIODICIDADE } from '@vinicycle/shared'
+import { sql } from 'drizzle-orm'
 import {
   type AnyPgColumn,
   check,
@@ -16,23 +16,23 @@ import {
   text,
   unique,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, usuario } from './acesso';
-import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum';
-import { empresa } from './plataforma';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento, usuario } from './acesso'
+import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum'
+import { empresa } from './plataforma'
 
 function daEmpresa(
   coluna: AnyPgColumn,
   empresaId: AnyPgColumn,
   alvo: { id: AnyPgColumn; empresaId: AnyPgColumn },
 ) {
-  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] });
+  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] })
 }
 
 const empresaId = () =>
   uuid('empresa_id')
     .notNull()
-    .references(() => empresa.id);
+    .references(() => empresa.id)
 
 export const autocontroleControle = pgTable(
   'autocontrole_controle',
@@ -74,7 +74,7 @@ export const autocontroleControle = pgTable(
       sql`evidencia_automatica is null or ${emLista('evidencia_automatica', CHAVES_EVIDENCIA_AUTOMATICA)}`,
     ),
   ],
-);
+)
 
 /** Evidência registrada à mão (com anexos); as automáticas vêm das operações e análises. */
 export const autocontroleEvidencia = pgTable(
@@ -97,4 +97,4 @@ export const autocontroleEvidencia = pgTable(
     unique('autocontrole_evidencia_id_empresa').on(t.id, t.empresaId),
     index('autocontrole_evidencia_controle').on(t.controleId, t.realizadaEm),
   ],
-);
+)

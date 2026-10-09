@@ -1,19 +1,19 @@
 // EnoTrace › Cadastros › Insumos e embalagens: itens do estoque do módulo (ambiente-cliente.md,
 // Estoque: um por módulo). O produto acabado não é cadastrado aqui: nasce com o formato do produto.
 // Os saldos e movimentos chegam no ciclo 5.
-import { consultaListagem, dadosItemEstoque } from '@vinicycle/shared';
-import { and, count, eq, isNull, or, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import * as s from '../db/schema';
-import { conferirVersao } from '../nucleo/entidades';
-import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros';
-import { rotasInativacao } from '../nucleo/inativacao';
-import { buscaTexto, listar } from '../nucleo/listagem';
-import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao';
+import { consultaListagem, dadosItemEstoque } from '@vinicycle/shared'
+import { and, count, eq, isNull, or, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import * as s from '../db/schema'
+import { conferirVersao } from '../nucleo/entidades'
+import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros'
+import { rotasInativacao } from '../nucleo/inativacao'
+import { buscaTexto, listar } from '../nucleo/listagem'
+import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao'
 
-const F = 'enotrace.cadastros';
-const MODULO = 'ENOTRACE';
+const F = 'enotrace.cadastros'
+const MODULO = 'ENOTRACE'
 
 async function carregar(ctx: ContextoEmpresa, id: string) {
   const [i] = await ctx.tx
@@ -25,9 +25,9 @@ async function carregar(ctx: ContextoEmpresa, id: string) {
         eq(s.itemEstoque.empresaId, ctx.empresaId),
         eq(s.itemEstoque.modulo, MODULO),
       ),
-    );
-  if (!i) throw new ErroNaoEncontrado('Item não encontrado.');
-  return i;
+    )
+  if (!i) throw new ErroNaoEncontrado('Item não encontrado.')
+  return i
 }
 
 /** Unidade existente; no insumo, unidade e apresentação permitidas pelo tipo (ambiente-cliente.md). */
@@ -35,9 +35,9 @@ async function conferir(ctx: ContextoEmpresa, d: z.output<typeof dadosItemEstoqu
   const [u] = await ctx.tx
     .select({ s: s.unidade.simbolo })
     .from(s.unidade)
-    .where(eq(s.unidade.simbolo, d.unidadeBase));
-  if (!u) throw new ErroRegra('Unidade inválida.', 'unidade');
-  if (d.tipo !== 'insumo' || !d.insumo) return;
+    .where(eq(s.unidade.simbolo, d.unidadeBase))
+  if (!u) throw new ErroRegra('Unidade inválida.', 'unidade')
+  if (d.tipo !== 'insumo' || !d.insumo) return
   const [tipo] = await ctx.tx
     .select()
     .from(s.tipoInsumo)
@@ -46,20 +46,20 @@ async function conferir(ctx: ContextoEmpresa, d: z.output<typeof dadosItemEstoqu
         eq(s.tipoInsumo.id, d.insumo.tipoInsumoId),
         or(isNull(s.tipoInsumo.empresaId), eq(s.tipoInsumo.empresaId, ctx.empresaId)),
       ),
-    );
-  if (!tipo) throw new ErroRegra('Tipo de insumo inválido.', 'tipo_insumo');
+    )
+  if (!tipo) throw new ErroRegra('Tipo de insumo inválido.', 'tipo_insumo')
   if (tipo.unidades.length && !tipo.unidades.includes(d.unidadeBase)) {
     throw new ErroRegra(
       `Para ${tipo.nome}, use uma destas unidades: ${tipo.unidades.join(', ')}.`,
       'unidade',
-    );
+    )
   }
   if (
     d.insumo.apresentacao &&
     tipo.apresentacoes.length &&
     !tipo.apresentacoes.includes(d.insumo.apresentacao)
   ) {
-    throw new ErroRegra(`Apresentação não prevista para ${tipo.nome}.`, 'apresentacao');
+    throw new ErroRegra(`Apresentação não prevista para ${tipo.nome}.`, 'apresentacao')
   }
   if (d.insumo.fabricanteId) {
     const [f] = await ctx.tx
@@ -72,12 +72,12 @@ async function conferir(ctx: ContextoEmpresa, d: z.output<typeof dadosItemEstoqu
           eq(s.pessoaPapel.papel, 'fabricante'),
           eq(s.pessoaPapel.ativo, true),
         ),
-      );
+      )
     if (!f)
       throw new ErroRegra(
         'O fabricante precisa ser uma pessoa com o papel de fabricante.',
         'fabricante',
-      );
+      )
   }
 }
 
@@ -93,7 +93,7 @@ const valoresItem = (d: z.output<typeof dadosItemEstoque>) => ({
   // O selo é sempre numerado; embalagem ou outro item pode ser (ex.: etiqueta numerada).
   controlaNumeracao: d.tipo === 'selo' || d.controlaNumeracao,
   observacoes: d.observacoes ?? null,
-});
+})
 
 const valoresInsumo = (d: z.output<typeof dadosItemEstoque>) =>
   d.tipo === 'insumo' && d.insumo
@@ -105,17 +105,17 @@ const valoresInsumo = (d: z.output<typeof dadosItemEstoque>) =>
         apresentacao: d.insumo.apresentacao ?? null,
         teorSo2: d.insumo.teorSo2 ?? null,
       }
-    : null;
+    : null
 
 function nomeRepetido(e: unknown): never {
   if ((e as { cause?: { constraint?: string } }).cause?.constraint === 'item_estoque_nome') {
-    throw new ErroRegra('Já existe um item com este nome.', 'nome_duplicado');
+    throw new ErroRegra('Já existe um item com este nome.', 'nome_duplicado')
   }
-  throw e;
+  throw e
 }
 
 export async function rotasItensEstoque(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
 
   app.get('/api/itens-estoque', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
@@ -125,7 +125,7 @@ export async function rotasItensEstoque(app: FastifyInstance): Promise<void> {
           tipoInsumo: z.uuid().optional(),
           situacao: z.enum(['ativos', 'inativos', 'todos']).default('ativos'),
         })
-        .parse(req.query);
+        .parse(req.query)
       const filtro = and(
         eq(s.itemEstoque.empresaId, ctx.empresaId),
         eq(s.itemEstoque.modulo, MODULO),
@@ -138,7 +138,7 @@ export async function rotasItensEstoque(app: FastifyInstance): Promise<void> {
           s.itemInsumo.nomeComercial,
           s.itemInsumo.marca,
         ]),
-      );
+      )
       return listar({
         consulta: q,
         ordenaveis: {
@@ -181,18 +181,15 @@ export async function rotasItensEstoque(app: FastifyInstance): Promise<void> {
             .orderBy(...ordem)
             .limit(limite)
             .offset(deslocamento),
-      });
+      })
     }),
-  );
+  )
 
   app.get<{ Params: { id: string } }>('/api/itens-estoque/:id', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const i = await carregar(ctx, z.uuid().parse(req.params.id));
-      const [insumo] = await ctx.tx
-        .select()
-        .from(s.itemInsumo)
-        .where(eq(s.itemInsumo.itemId, i.id));
-      const { empresaId: _e, criadoPor: _c, atualizadoPor: _a, ...resto } = i;
+      const i = await carregar(ctx, z.uuid().parse(req.params.id))
+      const [insumo] = await ctx.tx.select().from(s.itemInsumo).where(eq(s.itemInsumo.itemId, i.id))
+      const { empresaId: _e, criadoPor: _c, atualizadoPor: _a, ...resto } = i
       return {
         ...resto,
         insumo: insumo
@@ -205,14 +202,14 @@ export async function rotasItensEstoque(app: FastifyInstance): Promise<void> {
               teorSo2: insumo.teorSo2,
             }
           : undefined,
-      };
+      }
     }),
-  );
+  )
 
   app.post('/api/itens-estoque', async (req) =>
     naEmpresa(db, req, [F, 'criar'], async (ctx) => {
-      const d = dadosItemEstoque.parse(req.body);
-      await conferir(ctx, d);
+      const d = dadosItemEstoque.parse(req.body)
+      await conferir(ctx, d)
       const [i] = await ctx.tx
         .insert(s.itemEstoque)
         .values({
@@ -223,41 +220,41 @@ export async function rotasItensEstoque(app: FastifyInstance): Promise<void> {
           atualizadoPor: ctx.usuarioId,
         })
         .returning({ id: s.itemEstoque.id })
-        .catch(nomeRepetido);
-      const insumo = valoresInsumo(d);
+        .catch(nomeRepetido)
+      const insumo = valoresInsumo(d)
       if (insumo)
         await ctx.tx
           .insert(s.itemInsumo)
-          .values({ ...insumo, itemId: i!.id, empresaId: ctx.empresaId });
+          .values({ ...insumo, itemId: i!.id, empresaId: ctx.empresaId })
       await ctx.auditar({
         acao: 'criar',
         entidade: 'item_estoque',
         registroId: i!.id,
         depois: { ...valoresItem(d), insumo },
-      });
-      return { id: i!.id };
+      })
+      return { id: i!.id }
     }),
-  );
+  )
 
   app.put<{ Params: { id: string } }>('/api/itens-estoque/:id', async (req) =>
     naEmpresa(db, req, [F, 'editar'], async (ctx) => {
-      const id = z.uuid().parse(req.params.id);
-      const d = dadosItemEstoque.parse(req.body);
-      const atual = await carregar(ctx, id);
-      conferirVersao(atual.versao, d.versao);
+      const id = z.uuid().parse(req.params.id)
+      const d = dadosItemEstoque.parse(req.body)
+      const atual = await carregar(ctx, id)
+      conferirVersao(atual.versao, d.versao)
       if (atual.tipo === 'produto_acabado') {
         throw new ErroRegra(
           'O produto acabado é mantido pelo cadastro do produto (formatos).',
           'produto_acabado',
-        );
+        )
       }
       if (atual.tipo !== d.tipo)
-        throw new ErroRegra('O tipo do item não muda depois de cadastrado.', 'tipo_item');
-      await conferir(ctx, d);
+        throw new ErroRegra('O tipo do item não muda depois de cadastrado.', 'tipo_item')
+      await conferir(ctx, d)
       const [insumoAntes] = await ctx.tx
         .select()
         .from(s.itemInsumo)
-        .where(eq(s.itemInsumo.itemId, id));
+        .where(eq(s.itemInsumo.itemId, id))
       await ctx.tx
         .update(s.itemEstoque)
         .set({
@@ -267,37 +264,37 @@ export async function rotasItensEstoque(app: FastifyInstance): Promise<void> {
           versao: sql`${s.itemEstoque.versao} + 1`,
         })
         .where(eq(s.itemEstoque.id, id))
-        .catch(nomeRepetido);
-      const insumo = valoresInsumo(d);
+        .catch(nomeRepetido)
+      const insumo = valoresInsumo(d)
       if (insumo) {
         await ctx.tx
           .insert(s.itemInsumo)
           .values({ ...insumo, itemId: id, empresaId: ctx.empresaId })
-          .onConflictDoUpdate({ target: s.itemInsumo.itemId, set: insumo });
+          .onConflictDoUpdate({ target: s.itemInsumo.itemId, set: insumo })
       }
       const antesItem = Object.fromEntries(
         Object.keys(valoresItem(d)).map((k) => [k, atual[k as keyof typeof atual]]),
-      );
+      )
       const {
         itemId: _i,
         empresaId: _e,
         ...antesInsumo
-      } = insumoAntes ?? ({} as Record<string, unknown>);
+      } = insumoAntes ?? ({} as Record<string, unknown>)
       await ctx.auditar({
         acao: 'editar',
         entidade: 'item_estoque',
         registroId: id,
         antes: { ...antesItem, insumo: insumoAntes ? antesInsumo : null },
         depois: { ...valoresItem(d), insumo },
-      });
-      return { ok: true };
+      })
+      return { ok: true }
     }),
-  );
+  )
 
   rotasInativacao(app, {
     url: '/api/itens-estoque',
     tabela: s.itemEstoque,
     entidade: 'item_estoque',
     funcionalidade: F,
-  });
+  })
 }

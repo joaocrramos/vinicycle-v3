@@ -1,53 +1,53 @@
 // Catálogo global com itens próprios (P8): lista os globais e os da empresa; a empresa cria,
 // edita e inativa só os seus. Um componente para todos os catálogos simples. Na Administração
 // (`plataforma`), lista e mantém só os globais, inclusive as listas oficiais.
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query'
 import {
   type Catalogo as TipoCatalogo,
   esquemaDoCatalogo,
   esquemaDoCatalogoPlataforma,
   funcionalidadeDoCatalogo,
   listaOficial,
-} from '@vinicycle/shared';
-import { Lock, Plus } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { type Referencia, useReferencia } from '@/lib/referencia';
-import { pode, useSessao } from '@/lib/sessao';
-import { AcoesLinha, colunaAcoes } from './AcoesLinha';
-import { PedirMotivo } from './PedirMotivo';
-import { type Coluna, TabelaDados } from './TabelaDados';
-import { Botao } from './ui/botao';
-import { Aviso, Etiqueta } from './ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from './ui/campos';
-import { Dialogo } from './ui/dialogo';
+} from '@vinicycle/shared'
+import { Lock, Plus } from 'lucide-react'
+import { type ReactNode, useState } from 'react'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { type Referencia, useReferencia } from '@/lib/referencia'
+import { pode, useSessao } from '@/lib/sessao'
+import { AcoesLinha, colunaAcoes } from './AcoesLinha'
+import { PedirMotivo } from './PedirMotivo'
+import { type Coluna, TabelaDados } from './TabelaDados'
+import { Botao } from './ui/botao'
+import { Aviso, Etiqueta } from './ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from './ui/campos'
+import { Dialogo } from './ui/dialogo'
 
 export type ItemCatalogo = {
-  id: string;
-  nome: string;
-  global: boolean;
-  ativo: boolean;
-  versao: number;
-  emUso: boolean;
-} & Record<string, unknown>;
+  id: string
+  nome: string
+  global: boolean
+  ativo: boolean
+  versao: number
+  emUso: boolean
+} & Record<string, unknown>
 
 export interface CampoCatalogo {
-  nome: string;
-  rotulo: string;
-  tipo: 'booleano' | 'selecao' | 'multipla' | 'numeros' | 'textos' | 'numero' | 'texto';
-  opcoes?: (ref: Referencia | undefined) => Array<{ valor: string; nome: string }>;
-  ajuda?: string;
-  padrao?: unknown;
+  nome: string
+  rotulo: string
+  tipo: 'booleano' | 'selecao' | 'multipla' | 'numeros' | 'textos' | 'numero' | 'texto'
+  opcoes?: (ref: Referencia | undefined) => Array<{ valor: string; nome: string }>
+  ajuda?: string
+  padrao?: unknown
 }
 
 export interface ConfigCatalogo {
-  catalogo: TipoCatalogo;
-  campos: CampoCatalogo[];
-  colunas?: Coluna<ItemCatalogo>[];
-  filtrosExtras?: (f: Record<string, string>, definir: (k: string, v: string) => void) => ReactNode;
-  acoesLinha?: (item: ItemCatalogo, recarregar: () => void) => ReactNode;
-  descricao?: string;
+  catalogo: TipoCatalogo
+  campos: CampoCatalogo[]
+  colunas?: Coluna<ItemCatalogo>[]
+  filtrosExtras?: (f: Record<string, string>, definir: (k: string, v: string) => void) => ReactNode
+  acoesLinha?: (item: ItemCatalogo, recarregar: () => void) => ReactNode
+  descricao?: string
 }
 
 function Formulario({
@@ -57,15 +57,15 @@ function Formulario({
   item,
   aoFechar,
 }: {
-  config: ConfigCatalogo;
-  url: string;
-  plataforma: boolean;
-  item: ItemCatalogo | null;
-  aoFechar: () => void;
+  config: ConfigCatalogo
+  url: string
+  plataforma: boolean
+  item: ItemCatalogo | null
+  aoFechar: () => void
 }) {
-  const qc = useQueryClient();
-  const { data: ref } = useReferencia();
-  const inicial: Record<string, unknown> = { nome: item?.nome ?? '' };
+  const qc = useQueryClient()
+  const { data: ref } = useReferencia()
+  const inicial: Record<string, unknown> = { nome: item?.nome ?? '' }
   for (const c of config.campos)
     inicial[c.nome] =
       item?.[c.nome] ??
@@ -74,25 +74,25 @@ function Formulario({
         ? false
         : c.tipo === 'multipla' || c.tipo === 'numeros' || c.tipo === 'textos'
           ? []
-          : '');
+          : '')
   const form = useFormulario(
     plataforma ? esquemaDoCatalogoPlataforma(config.catalogo) : esquemaDoCatalogo(config.catalogo),
     inicial,
-  );
-  const v = form.valores as Record<string, unknown>;
-  const somenteLeitura = !!item?.global;
+  )
+  const v = form.valores as Record<string, unknown>
+  const somenteLeitura = !!item?.global
 
   async function salvar() {
-    const d = form.validar();
-    if (!d) return;
+    const d = form.validar()
+    if (!d) return
     try {
-      if (item) await api.put(`${url}/${item.id}`, { ...d, versao: item.versao });
-      else await api.post(url, d);
-      await qc.invalidateQueries({ queryKey: ['lista', url] });
-      await qc.invalidateQueries({ queryKey: ['referencia'] });
-      aoFechar();
+      if (item) await api.put(`${url}/${item.id}`, { ...d, versao: item.versao })
+      else await api.post(url, d)
+      await qc.invalidateQueries({ queryKey: ['lista', url] })
+      await qc.invalidateQueries({ queryKey: ['referencia'] })
+      aoFechar()
     } catch (e) {
-      form.erroDaApi(e);
+      form.erroDaApi(e)
     }
   }
 
@@ -125,8 +125,8 @@ function Formulario({
           />
         </Campo>
         {config.campos.map((c) => {
-          const id = `cat-${c.nome}`;
-          const valor = v[c.nome];
+          const id = `cat-${c.nome}`
+          const valor = v[c.nome]
           if (c.tipo === 'booleano') {
             return (
               <Caixa
@@ -135,7 +135,7 @@ function Formulario({
                 checked={!!valor}
                 onChange={(e) => form.definir(c.nome, e.target.checked)}
               />
-            );
+            )
           }
           if (c.tipo === 'selecao') {
             return (
@@ -159,10 +159,10 @@ function Formulario({
                   ))}
                 </Selecao>
               </Campo>
-            );
+            )
           }
           if (c.tipo === 'multipla') {
-            const lista = (valor as string[]) ?? [];
+            const lista = (valor as string[]) ?? []
             return (
               <fieldset key={c.nome}>
                 <legend className="mb-2 text-sm font-medium">{c.rotulo}</legend>
@@ -187,7 +187,7 @@ function Formulario({
                   <p className="mt-1 text-xs text-destructive">{form.erro(c.nome)}</p>
                 )}
               </fieldset>
-            );
+            )
           }
           if (c.tipo === 'texto') {
             return (
@@ -204,7 +204,7 @@ function Formulario({
                   onChange={(e) => form.definir(c.nome, e.target.value)}
                 />
               </Campo>
-            );
+            )
           }
           if (c.tipo === 'numero') {
             return (
@@ -225,10 +225,10 @@ function Formulario({
                   }
                 />
               </Campo>
-            );
+            )
           }
           // Listas de números ou textos, separadas por vírgula.
-          const texto = ((valor as unknown[]) ?? []).join(', ');
+          const texto = ((valor as unknown[]) ?? []).join(', ')
           return (
             <Campo
               key={c.nome}
@@ -244,42 +244,42 @@ function Formulario({
                   const partes = e.target.value
                     .split(',')
                     .map((x) => x.trim())
-                    .filter(Boolean);
+                    .filter(Boolean)
                   form.definir(
                     c.nome,
                     c.tipo === 'numeros'
                       ? partes.map(Number).filter((n) => !Number.isNaN(n))
                       : partes,
-                  );
-                  form.tocar(c.nome);
+                  )
+                  form.tocar(c.nome)
                 }}
               />
             </Campo>
-          );
+          )
         })}
       </fieldset>
     </Dialogo>
-  );
+  )
 }
 
 export function Catalogo({
   config,
   plataforma = false,
 }: {
-  config: ConfigCatalogo;
-  plataforma?: boolean;
+  config: ConfigCatalogo
+  plataforma?: boolean
 }) {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [editando, setEditando] = useState<ItemCatalogo | 'novo' | null>(null);
-  const [inativar, setInativar] = useState<ItemCatalogo | null>(null);
-  const func = plataforma ? 'plataforma.catalogos' : funcionalidadeDoCatalogo(config.catalogo);
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [editando, setEditando] = useState<ItemCatalogo | 'novo' | null>(null)
+  const [inativar, setInativar] = useState<ItemCatalogo | null>(null)
+  const func = plataforma ? 'plataforma.catalogos' : funcionalidadeDoCatalogo(config.catalogo)
   // Na Administração, a lista oficial também se altera.
-  const oficial = !plataforma && listaOficial(config.catalogo);
+  const oficial = !plataforma && listaOficial(config.catalogo)
   const url = plataforma
     ? `/api/plataforma/catalogos/${config.catalogo}`
-    : `/api/catalogos/${config.catalogo}`;
-  const recarregar = () => void qc.invalidateQueries({ queryKey: ['lista', url] });
+    : `/api/catalogos/${config.catalogo}`
+  const recarregar = () => void qc.invalidateQueries({ queryKey: ['lista', url] })
 
   return (
     <div className="flex flex-col gap-3">
@@ -387,8 +387,8 @@ export function Catalogo({
             exportar: (i) => (i.ativo ? 'Ativo' : 'Inativo'),
           },
           colunaAcoes<ItemCatalogo>((i) => {
-            const proprio = !i.global;
-            const podeInativar = proprio && pode(s, func, 'inativar');
+            const proprio = !i.global
+            const podeInativar = proprio && pode(s, func, 'inativar')
             return (
               <AcoesLinha
                 ativo={i.ativo}
@@ -397,15 +397,15 @@ export function Catalogo({
                 aoReativar={
                   podeInativar
                     ? async () => {
-                        await api.post(`${url}/${i.id}/reativar`);
-                        recarregar();
+                        await api.post(`${url}/${i.id}/reativar`)
+                        recarregar()
                       }
                     : undefined
                 }
               >
                 {config.acoesLinha?.(i, recarregar)}
               </AcoesLinha>
-            );
+            )
           }),
         ]}
       />
@@ -425,10 +425,10 @@ export function Catalogo({
         descricao={`O item deixa de ser oferecido em registros novos${plataforma ? ' em todas as empresas' : ''}; os registros antigos continuam com ele (P26).`}
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`${url}/${inativar!.id}/inativar`, { motivo });
-          recarregar();
+          await api.post(`${url}/${inativar!.id}/inativar`, { motivo })
+          recarregar()
         }}
       />
     </div>
-  );
+  )
 }

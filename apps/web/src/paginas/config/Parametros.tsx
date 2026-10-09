@@ -1,6 +1,6 @@
 // Configurações › Parâmetros (gestao.md, Configurações): os valores simples aqui, e o caminho para
 // os parâmetros que têm tela própria.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   type ChaveParametro,
   ESTRATEGIAS_BAIXA,
@@ -12,19 +12,19 @@ import {
   TIPOS_CODIGO,
   type TipoCodigo,
   type ValorParametro,
-} from '@vinicycle/shared';
-import { Plus, Trash2 } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Link } from 'react-router';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { pode, useSessao } from '@/lib/sessao';
+} from '@vinicycle/shared'
+import { Plus, Trash2 } from 'lucide-react'
+import { type ReactNode, useState } from 'react'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Link } from 'react-router'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { pode, useSessao } from '@/lib/sessao'
 
-type Parametros = { [C in ChaveParametro]: { valor: ValorParametro<C>; padrao: boolean } };
+type Parametros = { [C in ChaveParametro]: { valor: ValorParametro<C>; padrao: boolean } }
 
 /** Cartão de um parâmetro: rascunho local, salvar e aviso. */
 function CartaoParametro<C extends ChaveParametro>({
@@ -36,19 +36,19 @@ function CartaoParametro<C extends ChaveParametro>({
   invalido,
   children,
 }: {
-  chave: C;
-  titulo: string;
-  descricao: ReactNode;
-  atual: ValorParametro<C>;
-  podeEditar: boolean;
+  chave: C
+  titulo: string
+  descricao: ReactNode
+  atual: ValorParametro<C>
+  podeEditar: boolean
   /** Rascunho com erro: o botão Salvar fica desligado. */
-  invalido?: (valor: ValorParametro<C>) => boolean;
-  children: (valor: ValorParametro<C>, mudar: (v: ValorParametro<C>) => void) => ReactNode;
+  invalido?: (valor: ValorParametro<C>) => boolean
+  children: (valor: ValorParametro<C>, mudar: (v: ValorParametro<C>) => void) => ReactNode
 }) {
-  const qc = useQueryClient();
-  const [rascunho, setRascunho] = useState<ValorParametro<C> | null>(null);
-  const [msg, setMsg] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null);
-  const valor = rascunho ?? atual;
+  const qc = useQueryClient()
+  const [rascunho, setRascunho] = useState<ValorParametro<C> | null>(null)
+  const [msg, setMsg] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null)
+  const valor = rascunho ?? atual
   return (
     <Cartao>
       <CabecalhoCartao titulo={titulo} descricao={descricao} />
@@ -56,8 +56,8 @@ function CartaoParametro<C extends ChaveParametro>({
         {msg && <Aviso tom={msg.tom}>{msg.texto}</Aviso>}
         <fieldset disabled={!podeEditar} className="flex flex-col gap-4">
           {children(valor, (v) => {
-            setMsg(null);
-            setRascunho(v);
+            setMsg(null)
+            setRascunho(v)
           })}
         </fieldset>
         {podeEditar && (
@@ -66,12 +66,12 @@ function CartaoParametro<C extends ChaveParametro>({
               disabled={!rascunho || invalido?.(rascunho)}
               onClick={async () => {
                 try {
-                  await api.put(`/api/parametros/${chave}`, valor);
-                  await qc.invalidateQueries({ queryKey: ['parametros-gestao'] });
-                  setRascunho(null);
-                  setMsg({ tom: 'sucesso', texto: 'Parâmetro salvo.' });
+                  await api.put(`/api/parametros/${chave}`, valor)
+                  await qc.invalidateQueries({ queryKey: ['parametros-gestao'] })
+                  setRascunho(null)
+                  setMsg({ tom: 'sucesso', texto: 'Parâmetro salvo.' })
                 } catch (e) {
-                  setMsg({ tom: 'erro', texto: (e as Error).message });
+                  setMsg({ tom: 'erro', texto: (e as Error).message })
                 }
               }}
             >
@@ -81,8 +81,8 @@ function CartaoParametro<C extends ChaveParametro>({
               <Botao
                 variante="secundario"
                 onClick={() => {
-                  setRascunho(null);
-                  setMsg(null);
+                  setRascunho(null)
+                  setMsg(null)
                 }}
               >
                 Descartar alterações
@@ -92,18 +92,18 @@ function CartaoParametro<C extends ChaveParametro>({
         )}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 function FormatosCodigo({
   atual,
   podeEditar,
 }: {
-  atual: ValorParametro<'formatos_codigo'>;
-  podeEditar: boolean;
+  atual: ValorParametro<'formatos_codigo'>
+  podeEditar: boolean
 }) {
-  const tipos = Object.keys(TIPOS_CODIGO) as TipoCodigo[];
-  const ano = new Date().getFullYear();
+  const tipos = Object.keys(TIPOS_CODIGO) as TipoCodigo[]
+  const ano = new Date().getFullYear()
   return (
     <CartaoParametro
       chave="formatos_codigo"
@@ -125,7 +125,7 @@ function FormatosCodigo({
       {(valor, mudar) => (
         <div className="grid gap-4 sm:grid-cols-2">
           {tipos.map((k) => {
-            const erro = erroDoFormatoCodigo(valor[k]);
+            const erro = erroDoFormatoCodigo(valor[k])
             return (
               <Campo
                 key={k}
@@ -141,22 +141,22 @@ function FormatosCodigo({
                   onChange={(e) => mudar({ ...valor, [k]: e.target.value })}
                 />
               </Campo>
-            );
+            )
           })}
         </div>
       )}
     </CartaoParametro>
-  );
+  )
 }
 
-const repetidos = (dias: number[]) => new Set(dias).size !== dias.length;
+const repetidos = (dias: number[]) => new Set(dias).size !== dias.length
 
 function AvisosValidade({
   atual,
   podeEditar,
 }: {
-  atual: ValorParametro<'avisos_validade'>;
-  podeEditar: boolean;
+  atual: ValorParametro<'avisos_validade'>
+  podeEditar: boolean
 }) {
   return (
     <CartaoParametro
@@ -189,8 +189,8 @@ function AvisosValidade({
                   inputMode="numeric"
                   value={d || ''}
                   onChange={(e) => {
-                    const n = Math.min(Number(e.target.value.replace(/\D/g, '')) || 0, 365);
-                    mudar({ dias: dias.map((x, j) => (j === i ? n : x)) });
+                    const n = Math.min(Number(e.target.value.replace(/\D/g, '')) || 0, 365)
+                    mudar({ dias: dias.map((x, j) => (j === i ? n : x)) })
                   }}
                 />
                 <span className="text-sm text-muted-foreground">dias</span>
@@ -220,7 +220,7 @@ function AvisosValidade({
         </>
       )}
     </CartaoParametro>
-  );
+  )
 }
 
 const OUTROS: Array<{ nome: string; para: string; onde: string }> = [
@@ -241,22 +241,22 @@ const OUTROS: Array<{ nome: string; para: string; onde: string }> = [
     para: '/enotrace/catalogos',
     onde: 'EnoTrace',
   },
-];
+]
 
 export function PaginaParametrosGestao() {
-  const { data: s } = useSessao();
-  const podeEditar = pode(s, 'gestao.config.parametros', 'editar');
+  const { data: s } = useSessao()
+  const podeEditar = pode(s, 'gestao.config.parametros', 'editar')
   const q = useQuery({
     queryKey: ['parametros-gestao'],
     queryFn: () => api.get<Parametros>('/api/parametros'),
-  });
+  })
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const p = q.data;
+    )
+  const p = q.data
   return (
     <Pagina titulo="Parâmetros" trilha={['Configurações']}>
       <p className="text-sm text-muted-foreground">
@@ -478,5 +478,5 @@ export function PaginaParametrosGestao() {
         </ul>
       </Cartao>
     </Pagina>
-  );
+  )
 }

@@ -10,22 +10,22 @@ import {
   porVariedade,
   TIPOS_MOVIMENTO,
   TIPOS_OPERACAO,
-} from '@vinicycle/shared';
-import { and, asc, eq, inArray, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import * as s from '../../db/schema';
-import { ErroNaoEncontrado } from '../../nucleo/erros';
-import { fonteDaRegra, regrasVigentes } from '../../nucleo/regras';
-import { type ContextoEmpresa, naEmpresa } from '../../nucleo/requisicao';
-import { partesAtuais } from './motor';
+} from '@vinicycle/shared'
+import { and, asc, eq, inArray, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import * as s from '../../db/schema'
+import { ErroNaoEncontrado } from '../../nucleo/erros'
+import { fonteDaRegra, regrasVigentes } from '../../nucleo/regras'
+import { type ContextoEmpresa, naEmpresa } from '../../nucleo/requisicao'
+import { partesAtuais } from './motor'
 
 export interface Parte {
-  loteId: string;
-  recipienteId: string;
-  recipiente: string;
-  cl: number;
-  composicao: Composicao;
+  loteId: string
+  recipienteId: string
+  recipiente: string
+  cl: number
+  composicao: Composicao
 }
 
 /** Partes com saldo (o lote em cada recipiente) e a composição vigente de cada uma (5.1). */
@@ -54,23 +54,23 @@ export async function partesComSaldo(
       ),
     )
     .groupBy(s.movimentoVolume.recipienteId, s.recipiente.codigo, s.movimentoVolume.loteId)
-    .having(sql`sum(${s.movimentoVolume.litros}) > 0`);
-  const partes = await partesAtuais(ctx, [...new Set(saldos.map((x) => x.recipienteId))]);
+    .having(sql`sum(${s.movimentoVolume.litros}) > 0`)
+  const partes = await partesAtuais(ctx, [...new Set(saldos.map((x) => x.recipienteId))])
   return saldos.map((x) => {
-    const p = partes.get(x.recipienteId);
+    const p = partes.get(x.recipienteId)
     return {
       loteId: x.loteId,
       recipienteId: x.recipienteId,
       recipiente: x.recipiente,
       cl: paraCentilitros(x.total),
       composicao: p && p.loteId === x.loteId ? p.composicao : COMPOSICAO_VAZIA,
-    };
-  });
+    }
+  })
 }
 
 /** Composição ponderada pelos litros das partes (5.4): a do lote, a do projeto. */
 export const composicaoDas = (partes: Parte[]) =>
-  misturar(partes.map((p) => ({ centilitros: p.cl, composicao: p.composicao })));
+  misturar(partes.map((p) => ({ centilitros: p.cl, composicao: p.composicao })))
 
 /**
  * O que o rótulo pode declarar (cantina.md, Composição e rótulo): varietal pela regra mais
@@ -88,16 +88,16 @@ export async function rotulo(
       s.indicacaoGeografica,
       eq(s.indicacaoGeografica.id, s.estabelecimentoIg.indicacaoGeograficaId),
     )
-    .where(eq(s.estabelecimentoIg.estabelecimentoId, estabelecimentoId));
-  const data = new Date().toISOString().slice(0, 10);
+    .where(eq(s.estabelecimentoIg.estabelecimentoId, estabelecimentoId))
+  const data = new Date().toISOString().slice(0, 10)
   const varietais = await regrasVigentes(ctx.tx, 'varietal_minimo', {
     data,
     igs: igs.map((i) => i.codigo),
-  });
-  const [safra] = await regrasVigentes(ctx.tx, 'safra_minima', { data });
+  })
+  const [safra] = await regrasVigentes(ctx.tx, 'safra_minima', { data })
   const ids = [
     ...new Set(composicao.componentes.flatMap((c) => (c.variedadeId ? [c.variedadeId] : []))),
-  ];
+  ]
   const nomes = new Map(
     ids.length
       ? (
@@ -107,7 +107,7 @@ export async function rotulo(
             .where(inArray(s.variedade.id, ids))
         ).map((v) => [v.id, v.nome])
       : [],
-  );
+  )
   return {
     varietal: varietais.map((r) => ({
       abrangencia:
@@ -133,26 +133,26 @@ export async function rotulo(
           })),
         }
       : null,
-  };
+  }
 }
 
 export async function rotasConsultas(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
 
   // Conteúdo do recipiente e o livro, com o saldo acumulado (seção 4).
   app.get<{ Params: { id: string } }>('/api/recipientes/:id/conteudo', async (req) =>
     naEmpresa(db, req, ['enotrace.cadastros', 'visualizar'], async (ctx) => {
-      const id = z.uuid().parse(req.params.id);
+      const id = z.uuid().parse(req.params.id)
       const [r] = await ctx.tx
         .select({
           estab: s.recipiente.estabelecimentoId,
           capacidade: s.recipiente.capacidadeLitros,
         })
         .from(s.recipiente)
-        .where(and(eq(s.recipiente.id, id), eq(s.recipiente.empresaId, ctx.empresaId)));
+        .where(and(eq(s.recipiente.id, id), eq(s.recipiente.empresaId, ctx.empresaId)))
       if (!r || !(await ctx.estabelecimentosPermitidos()).includes(r.estab))
-        throw new ErroNaoEncontrado('Recipiente não encontrado.');
-      const [parte] = await partesComSaldo(ctx, { recipienteIds: [id] });
+        throw new ErroNaoEncontrado('Recipiente não encontrado.')
+      const [parte] = await partesComSaldo(ctx, { recipienteIds: [id] })
       const lote = parte
         ? (
             await ctx.tx
@@ -166,7 +166,7 @@ export async function rotasConsultas(app: FastifyInstance): Promise<void> {
               .from(s.lote)
               .where(eq(s.lote.id, parte.loteId))
           )[0]
-        : null;
+        : null
       const movimentos = await ctx.tx
         .select({
           executadoEm: s.movimentoVolume.executadoEm,
@@ -190,7 +190,7 @@ export async function rotasConsultas(app: FastifyInstance): Promise<void> {
           asc(s.movimentoVolume.executadoEm),
           asc(s.movimentoVolume.lancadoEm),
           asc(s.movimentoVolume.id),
-        );
+        )
       return {
         volume: parte ? (parte.cl / 100).toFixed(2) : '0.00',
         capacidade: r.capacidade,
@@ -203,14 +203,14 @@ export async function rotasConsultas(app: FastifyInstance): Promise<void> {
             nomeOperacao: TIPOS_OPERACAO[m.tipoOperacao as keyof typeof TIPOS_OPERACAO],
           }))
           .reverse(),
-      };
+      }
     }),
-  );
+  )
 
   // Ficha do lote: partes, composição, genealogia, etapas, uva de origem e o rótulo.
   app.get<{ Params: { id: string } }>('/api/lotes/:id', async (req) =>
     naEmpresa(db, req, ['enotrace.projetos', 'visualizar'], async (ctx) => {
-      const id = z.uuid().parse(req.params.id);
+      const id = z.uuid().parse(req.params.id)
       const [l] = await ctx.tx
         .select({
           id: s.lote.id,
@@ -231,19 +231,19 @@ export async function rotasConsultas(app: FastifyInstance): Promise<void> {
           criadoEm: s.lote.criadoEm,
         })
         .from(s.lote)
-        .where(and(eq(s.lote.id, id), eq(s.lote.empresaId, ctx.empresaId)));
+        .where(and(eq(s.lote.id, id), eq(s.lote.empresaId, ctx.empresaId)))
       if (!l || !(await ctx.estabelecimentosPermitidos()).includes(l.estab))
-        throw new ErroNaoEncontrado('Lote não encontrado.');
-      const partes = await partesComSaldo(ctx, { loteIds: [id] });
-      const composicao = composicaoDas(partes);
+        throw new ErroNaoEncontrado('Lote não encontrado.')
+      const partes = await partesComSaldo(ctx, { loteIds: [id] })
+      const composicao = composicaoDas(partes)
       const genealogia = await ctx.tx.execute<{
-        sentido: 'origem' | 'destino';
-        loteId: string;
-        codigo: string;
-        litros: string;
-        tipo: string;
-        operacao: string;
-        operacaoId: string;
+        sentido: 'origem' | 'destino'
+        loteId: string
+        codigo: string
+        litros: string
+        tipo: string
+        operacao: string
+        operacaoId: string
       }>(sql`
         select 'origem' as sentido, o.id as "loteId", o.codigo, g.litros, g.tipo, op.codigo as operacao, op.id as "operacaoId"
           from genealogia g join lote o on o.id = g.origem_lote_id join operacao op on op.id = g.operacao_id
@@ -251,20 +251,20 @@ export async function rotasConsultas(app: FastifyInstance): Promise<void> {
         union all
         select 'destino', d.id, d.codigo, g.litros, g.tipo, op.codigo, op.id
           from genealogia g join lote d on d.id = g.destino_lote_id join operacao op on op.id = g.operacao_id
-          where g.origem_lote_id = ${id} and not g.estornada`);
+          where g.origem_lote_id = ${id} and not g.estornada`)
       const uva = await ctx.tx.execute<{
-        romaneio: string;
-        romaneioId: string;
-        variedade: string;
-        kg: string;
-        fornecedor: string | null;
+        romaneio: string
+        romaneioId: string
+        variedade: string
+        kg: string
+        fornecedor: string | null
       }>(sql`
         select r.codigo as romaneio, r.id as "romaneioId", v.nome as variedade, -sum(m.kg) as kg,
           (select f.nome from pessoa p join ficha f on f.id = p.ficha_id where p.id = r.fornecedor_id) as fornecedor
         from movimento_uva m join romaneio_item i on i.id = m.item_id join romaneio r on r.id = i.romaneio_id
           join variedade v on v.id = i.variedade_id
         where m.lote_id = ${id}
-        group by r.codigo, r.id, v.nome, r.fornecedor_id having sum(m.kg) <> 0 order by r.codigo`);
+        group by r.codigo, r.id, v.nome, r.fornecedor_id having sum(m.kg) <> 0 order by r.codigo`)
       const etapas = await ctx.tx
         .select({
           etapa: s.loteEtapa.etapa,
@@ -275,8 +275,8 @@ export async function rotasConsultas(app: FastifyInstance): Promise<void> {
         })
         .from(s.loteEtapa)
         .where(eq(s.loteEtapa.loteId, id))
-        .orderBy(asc(s.loteEtapa.desde));
-      const { estab, ...resto } = l;
+        .orderBy(asc(s.loteEtapa.desde))
+      const { estab, ...resto } = l
       return {
         ...resto,
         volume: (partes.reduce((t, p) => t + p.cl, 0) / 100).toFixed(2),
@@ -291,23 +291,23 @@ export async function rotasConsultas(app: FastifyInstance): Promise<void> {
         uva: uva.rows,
         etapas,
         rotulo: await rotulo(ctx, estab, composicao),
-      };
+      }
     }),
-  );
+  )
 
   // Composição real do projeto: a dos seus lotes, ponderada (cantina.md, Dados do projeto).
   app.get<{ Params: { id: string } }>('/api/projetos/:id/composicao', async (req) =>
     naEmpresa(db, req, ['enotrace.projetos', 'visualizar'], async (ctx) => {
-      const id = z.uuid().parse(req.params.id);
+      const id = z.uuid().parse(req.params.id)
       const [p] = await ctx.tx
         .select({ estab: s.projeto.estabelecimentoId })
         .from(s.projeto)
-        .where(and(eq(s.projeto.id, id), eq(s.projeto.empresaId, ctx.empresaId)));
+        .where(and(eq(s.projeto.id, id), eq(s.projeto.empresaId, ctx.empresaId)))
       if (!p || !(await ctx.estabelecimentosPermitidos()).includes(p.estab))
-        throw new ErroNaoEncontrado('Projeto não encontrado.');
-      const partes = await partesComSaldo(ctx, { projetoId: id });
-      const composicao = composicaoDas(partes);
-      return { composicao, rotulo: await rotulo(ctx, p.estab, composicao) };
+        throw new ErroNaoEncontrado('Projeto não encontrado.')
+      const partes = await partesComSaldo(ctx, { projetoId: id })
+      const composicao = composicaoDas(partes)
+      return { composicao, rotulo: await rotulo(ctx, p.estab, composicao) }
     }),
-  );
+  )
 }

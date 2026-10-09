@@ -1,38 +1,38 @@
 // Configurações › Perfis e permissões (P27): a grade em matriz telas × ações. O Master aparece
 // bloqueado, porque tem acesso a tudo.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ACOES, type Acao, dadosPerfil, MODULOS, NOMES_ACOES } from '@vinicycle/shared';
-import { Lock, Plus } from 'lucide-react';
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
-import { AcoesLinha } from '@/componentes/AcoesLinha';
-import { Historico } from '@/componentes/Historico';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, Cartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { fusoAtivo, useSessao } from '@/lib/sessao';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { ACOES, type Acao, dadosPerfil, MODULOS, NOMES_ACOES } from '@vinicycle/shared'
+import { Lock, Plus } from 'lucide-react'
+import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router'
+import { AcoesLinha } from '@/componentes/AcoesLinha'
+import { Historico } from '@/componentes/Historico'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, Cartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { fusoAtivo, useSessao } from '@/lib/sessao'
 
 interface Perfil {
-  id: string;
-  nome: string;
-  descricao: string | null;
-  eMaster: boolean;
-  modelo: boolean;
-  ativo: boolean;
-  versao: number;
-  usuarios: number;
+  id: string
+  nome: string
+  descricao: string | null
+  eMaster: boolean
+  modelo: boolean
+  ativo: boolean
+  versao: number
+  usuarios: number
 }
 
 function NovoPerfil({ perfis, aoFechar }: { perfis: Perfil[]; aoFechar: () => void }) {
-  const navegar = useNavigate();
-  const qc = useQueryClient();
-  const form = useFormulario(dadosPerfil, { nome: '', descricao: '', copiarDe: undefined });
+  const navegar = useNavigate()
+  const qc = useQueryClient()
+  const form = useFormulario(dadosPerfil, { nome: '', descricao: '', copiarDe: undefined })
   return (
     <Dialogo
       aberto
@@ -45,14 +45,14 @@ function NovoPerfil({ perfis, aoFechar }: { perfis: Perfil[]; aoFechar: () => vo
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                const r = await api.post<{ id: string }>('/api/perfis', d);
-                await qc.invalidateQueries({ queryKey: ['perfis'] });
-                navegar(`/config/perfis/${r.id}`);
+                const r = await api.post<{ id: string }>('/api/perfis', d)
+                await qc.invalidateQueries({ queryKey: ['perfis'] })
+                navegar(`/config/perfis/${r.id}`)
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -100,13 +100,13 @@ function NovoPerfil({ perfis, aoFechar }: { perfis: Perfil[]; aoFechar: () => vo
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function ListaPerfis() {
-  const navegar = useNavigate();
-  const [novo, setNovo] = useState(false);
-  const q = useQuery({ queryKey: ['perfis'], queryFn: () => api.get<Perfil[]>('/api/perfis') });
+  const navegar = useNavigate()
+  const [novo, setNovo] = useState(false)
+  const q = useQuery({ queryKey: ['perfis'], queryFn: () => api.get<Perfil[]>('/api/perfis') })
   return (
     <Pagina
       titulo="Perfis e permissões"
@@ -150,84 +150,84 @@ export function ListaPerfis() {
       </Cartao>
       {novo && q.data && <NovoPerfil perfis={q.data} aoFechar={() => setNovo(false)} />}
     </Pagina>
-  );
+  )
 }
 
 interface Funcionalidade {
-  codigo: string;
-  nome: string;
-  modulo: string;
-  acoes: Acao[];
+  codigo: string
+  nome: string
+  modulo: string
+  acoes: Acao[]
 }
 
 export function GradePerfil() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
   const perfil = useQuery({
     queryKey: ['perfil', id],
     queryFn: () => api.get<Perfil & { permissoes: string[] }>(`/api/perfis/${id}`),
-  });
+  })
   const funcs = useQuery({
     queryKey: ['funcionalidades'],
     queryFn: () => api.get<Funcionalidade[]>('/api/perfis/funcionalidades'),
-  });
-  const [marcadas, setMarcadas] = useState<Set<string> | null>(null);
-  const [nome, setNome] = useState<string | null>(null);
-  const [mensagem, setMensagem] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null);
-  const [inativar, setInativar] = useState(false);
+  })
+  const [marcadas, setMarcadas] = useState<Set<string> | null>(null)
+  const [nome, setNome] = useState<string | null>(null)
+  const [mensagem, setMensagem] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null)
+  const [inativar, setInativar] = useState(false)
 
   if (!perfil.data || !funcs.data)
-    return <p className="text-sm text-muted-foreground">Carregando…</p>;
-  const p = perfil.data;
-  const atual = marcadas ?? new Set(p.permissoes);
-  const acoesUsadas = ACOES.filter((a) => funcs.data.some((f) => f.acoes.includes(a)));
+    return <p className="text-sm text-muted-foreground">Carregando…</p>
+  const p = perfil.data
+  const atual = marcadas ?? new Set(p.permissoes)
+  const acoesUsadas = ACOES.filter((a) => funcs.data.some((f) => f.acoes.includes(a)))
   const alternar = (chave: string) => {
-    const novo = new Set(atual);
-    if (novo.has(chave)) novo.delete(chave);
-    else novo.add(chave);
-    setMarcadas(novo);
-  };
-  const alterado = marcadas !== null || (nome !== null && nome !== p.nome);
+    const novo = new Set(atual)
+    if (novo.has(chave)) novo.delete(chave)
+    else novo.add(chave)
+    setMarcadas(novo)
+  }
+  const alterado = marcadas !== null || (nome !== null && nome !== p.nome)
   const recarregar = async () => {
-    await qc.invalidateQueries({ queryKey: ['perfil', id] });
-    await qc.invalidateQueries({ queryKey: ['perfis'] });
-    await qc.invalidateQueries({ queryKey: ['historico', 'perfil', id] });
-  };
+    await qc.invalidateQueries({ queryKey: ['perfil', id] })
+    await qc.invalidateQueries({ queryKey: ['perfis'] })
+    await qc.invalidateQueries({ queryKey: ['historico', 'perfil', id] })
+  }
 
   async function salvar() {
-    setMensagem(null);
+    setMensagem(null)
     try {
-      let versao = p.versao;
+      let versao = p.versao
       if (nome !== null && nome !== p.nome) {
-        await api.put(`/api/perfis/${id}`, { nome, descricao: p.descricao, versao });
-        versao += 1;
+        await api.put(`/api/perfis/${id}`, { nome, descricao: p.descricao, versao })
+        versao += 1
       }
       if (marcadas) {
         await api.put(`/api/perfis/${id}/grade`, {
           versao,
           permissoes: [...marcadas].map((x) => {
-            const [funcionalidade, acao] = x.split(':');
-            return { funcionalidade, acao };
+            const [funcionalidade, acao] = x.split(':')
+            return { funcionalidade, acao }
           }),
-        });
+        })
       }
-      setMarcadas(null);
-      setNome(null);
+      setMarcadas(null)
+      setNome(null)
       setMensagem({
         tom: 'sucesso',
         texto: 'Perfil salvo. A mudança já vale para quem usa este perfil.',
-      });
-      await recarregar();
+      })
+      await recarregar()
     } catch (e) {
-      setMensagem({ tom: 'erro', texto: (e as Error).message });
+      setMensagem({ tom: 'erro', texto: (e as Error).message })
     }
   }
 
   const porModulo = MODULOS.map((m) => ({
     ...m,
     funcs: funcs.data.filter((f) => f.modulo === m.codigo),
-  })).filter((m) => m.funcs.length);
+  })).filter((m) => m.funcs.length)
 
   return (
     <Pagina
@@ -241,8 +241,8 @@ export function GradePerfil() {
               ativo={p.ativo}
               aoInativar={() => setInativar(true)}
               aoReativar={async () => {
-                await api.post(`/api/perfis/${id}/reativar`);
-                await recarregar();
+                await api.post(`/api/perfis/${id}/reativar`)
+                await recarregar()
               }}
             />
             <Botao disabled={!alterado} onClick={() => void salvar()}>
@@ -308,7 +308,7 @@ export function GradePerfil() {
                         {f.nome.replace('Configurações: ', 'Config.: ')}
                       </th>
                       {acoesUsadas.map((a) => {
-                        const chave = `${f.codigo}:${a}`;
+                        const chave = `${f.codigo}:${a}`
                         return (
                           <td key={a} className="px-2 py-1.5 text-center">
                             {f.acoes.includes(a) ? (
@@ -322,7 +322,7 @@ export function GradePerfil() {
                               />
                             ) : null}
                           </td>
-                        );
+                        )
                       })}
                     </tr>
                   ))}
@@ -342,10 +342,10 @@ export function GradePerfil() {
         descricao="Só é possível quando nenhum usuário ou convite usa o perfil."
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/perfis/${id}/inativar`, { motivo });
-          await recarregar();
+          await api.post(`/api/perfis/${id}/inativar`, { motivo })
+          await recarregar()
         }}
       />
     </Pagina>
-  );
+  )
 }

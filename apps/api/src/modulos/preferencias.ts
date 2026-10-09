@@ -1,19 +1,19 @@
 // Última ordenação, filtros e tamanho de página, por usuário e por tabela (P4).
-import { preferenciaListagem } from '@vinicycle/shared';
-import { and, eq, isNull, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import * as s from '../db/schema';
-import { doUsuario } from '../nucleo/requisicao';
+import { preferenciaListagem } from '@vinicycle/shared'
+import { and, eq, isNull, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { z } from 'zod'
+import * as s from '../db/schema'
+import { doUsuario } from '../nucleo/requisicao'
 
-const tabela = z.string().regex(/^[a-z0-9_.-]{1,60}$/);
+const tabela = z.string().regex(/^[a-z0-9_.-]{1,60}$/)
 
 export async function rotasPreferencias(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
 
   app.get<{ Params: { tabela: string } }>('/api/preferencias-listagem/:tabela', async (req) =>
     doUsuario(db, req, async ({ tx, usuarioId, sessao }) => {
-      const t = tabela.parse(req.params.tabela);
+      const t = tabela.parse(req.params.tabela)
       const [p] = await tx
         .select()
         .from(s.preferenciaListagem)
@@ -25,24 +25,24 @@ export async function rotasPreferencias(app: FastifyInstance): Promise<void> {
               ? eq(s.preferenciaListagem.empresaId, sessao.empresaId)
               : isNull(s.preferenciaListagem.empresaId),
           ),
-        );
+        )
       return p
         ? { ordem: p.ordem, direcao: p.direcao, tamanho: p.tamanho, filtros: p.filtros }
-        : null;
+        : null
     }),
-  );
+  )
 
   app.put<{ Params: { tabela: string } }>('/api/preferencias-listagem/:tabela', async (req) =>
     doUsuario(db, req, async ({ tx, usuarioId, sessao }) => {
-      const t = tabela.parse(req.params.tabela);
-      const d = preferenciaListagem.parse(req.body);
+      const t = tabela.parse(req.params.tabela)
+      const d = preferenciaListagem.parse(req.body)
       const valores = {
         ordem: d.ordem,
         direcao: d.direcao,
         tamanho: d.tamanho,
         filtros: d.filtros,
         atualizadoEm: sql`now()`,
-      };
+      }
       await tx
         .insert(s.preferenciaListagem)
         .values({ usuarioId, empresaId: sessao.empresaId, tabela: t, ...valores })
@@ -53,8 +53,8 @@ export async function rotasPreferencias(app: FastifyInstance): Promise<void> {
             s.preferenciaListagem.tabela,
           ],
           set: valores,
-        });
-      return { ok: true };
+        })
+      return { ok: true }
     }),
-  );
+  )
 }

@@ -1,6 +1,6 @@
 // Ajuda e suporte (administracao.md, Suporte): os chamados do cliente (menu do avatar) e a página
 // pública para quem não consegue entrar.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   chamadoPublico,
   NOMES_PRIORIDADE,
@@ -10,58 +10,58 @@ import {
   type PrioridadeChamado,
   type SituacaoChamado,
   TOM_SITUACAO_CHAMADO,
-} from '@vinicycle/shared';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
-import { TelaPublica } from './publicas';
+} from '@vinicycle/shared'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
+import { TelaPublica } from './publicas'
 
 interface LinhaChamado {
-  id: string;
-  numero: number;
-  assunto: string;
-  categoria: string;
-  prioridade: PrioridadeChamado;
-  situacao: SituacaoChamado;
-  solicitante: string;
-  criadoEm: string;
-  atualizadoEm: string;
+  id: string
+  numero: number
+  assunto: string
+  categoria: string
+  prioridade: PrioridadeChamado
+  situacao: SituacaoChamado
+  solicitante: string
+  criadoEm: string
+  atualizadoEm: string
 }
 
 export interface Conversa {
-  id: string;
-  numero: number;
-  assunto: string;
-  categoria: string;
-  prioridade: PrioridadeChamado;
-  situacao: SituacaoChamado;
-  solicitanteNome: string;
-  solicitanteEmail: string;
-  criadoEm: string;
+  id: string
+  numero: number
+  assunto: string
+  categoria: string
+  prioridade: PrioridadeChamado
+  situacao: SituacaoChamado
+  solicitanteNome: string
+  solicitanteEmail: string
+  criadoEm: string
   mensagens: Array<{
-    id: string;
-    autorTipo: 'cliente' | 'equipe';
-    autor: string | null;
-    texto: string;
-    interna: boolean;
-    criadoEm: string;
-  }>;
-  anexos: Array<{ id: string; nomeOriginal: string; criadoEm: string }>;
+    id: string
+    autorTipo: 'cliente' | 'equipe'
+    autor: string | null
+    texto: string
+    interna: boolean
+    criadoEm: string
+  }>
+  anexos: Array<{ id: string; nomeOriginal: string; criadoEm: string }>
 }
 
 export function EtiquetaSituacaoChamado({ situacao }: { situacao: SituacaoChamado }) {
   return (
     <Etiqueta tom={TOM_SITUACAO_CHAMADO[situacao]}>{NOMES_SITUACAO_CHAMADO[situacao]}</Etiqueta>
-  );
+  )
 }
 
 export function Mensagens({ c }: { c: Conversa }) {
@@ -90,27 +90,27 @@ export function Mensagens({ c }: { c: Conversa }) {
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 function NovoChamado({
   aoFechar,
   aoCriar,
 }: {
-  aoFechar: () => void;
-  aoCriar: (id: string) => void;
+  aoFechar: () => void
+  aoCriar: (id: string) => void
 }) {
   const categorias = useQuery({
     queryKey: ['chamado-categorias'],
     queryFn: () => api.get<string[]>('/api/chamados/categorias'),
-  });
+  })
   const form = useFormulario(novoChamado, {
     assunto: '',
     categoria: '',
     prioridade: 'normal',
     descricao: '',
-  });
-  const v = form.valores;
+  })
+  const v = form.valores
   return (
     <Dialogo
       aberto
@@ -125,13 +125,13 @@ function NovoChamado({
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                const r = await api.post<{ id: string }>('/api/chamados', d);
-                aoCriar(r.id);
+                const r = await api.post<{ id: string }>('/api/chamados', d)
+                aoCriar(r.id)
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -202,24 +202,24 @@ function NovoChamado({
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function DetalheChamado({ id, aoFechar }: { id: string; aoFechar: () => void }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const q = useQuery({
     queryKey: ['chamado', id],
     queryFn: () => api.get<Conversa>(`/api/chamados/${id}`),
-  });
-  const [texto, setTexto] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
+  })
+  const [texto, setTexto] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
   const recarregar = () =>
     Promise.all([
       qc.invalidateQueries({ queryKey: ['chamado', id] }),
       qc.invalidateQueries({ queryKey: ['chamados'] }),
-    ]);
-  const c = q.data;
-  const fechado = c?.situacao === 'fechado';
+    ])
+  const c = q.data
+  const fechado = c?.situacao === 'fechado'
   return (
     <Dialogo
       aberto
@@ -237,8 +237,8 @@ function DetalheChamado({ id, aoFechar }: { id: string; aoFechar: () => void }) 
           <Botao
             variante="secundario"
             onClick={async () => {
-              await api.post(`/api/chamados/${id}/fechar`, {});
-              await recarregar();
+              await api.post(`/api/chamados/${id}/fechar`, {})
+              await recarregar()
             }}
           >
             Fechar o chamado
@@ -286,11 +286,11 @@ function DetalheChamado({ id, aoFechar }: { id: string; aoFechar: () => void }) 
                   disabled={!texto.trim()}
                   onClick={async () => {
                     try {
-                      await api.post(`/api/chamados/${id}/mensagens`, { texto });
-                      setTexto('');
-                      await recarregar();
+                      await api.post(`/api/chamados/${id}/mensagens`, { texto })
+                      setTexto('')
+                      await recarregar()
                     } catch (e) {
-                      setErro((e as Error).message);
+                      setErro((e as Error).message)
                     }
                   }}
                 >
@@ -303,15 +303,15 @@ function DetalheChamado({ id, aoFechar }: { id: string; aoFechar: () => void }) 
                     className="sr-only"
                     accept="application/pdf,image/*,.xlsx,.csv,.xml,.zip,.docx"
                     onChange={async (e) => {
-                      const arquivo = e.target.files?.[0];
-                      if (!arquivo) return;
-                      const dados = new FormData();
-                      dados.set('arquivo', arquivo);
+                      const arquivo = e.target.files?.[0]
+                      if (!arquivo) return
+                      const dados = new FormData()
+                      dados.set('arquivo', arquivo)
                       try {
-                        await api.post(`/api/chamados/${id}/anexos`, dados);
-                        await recarregar();
+                        await api.post(`/api/chamados/${id}/anexos`, dados)
+                        await recarregar()
                       } catch (x) {
-                        setErro((x as Error).message);
+                        setErro((x as Error).message)
                       }
                     }}
                   />
@@ -322,19 +322,19 @@ function DetalheChamado({ id, aoFechar }: { id: string; aoFechar: () => void }) 
         </div>
       )}
     </Dialogo>
-  );
+  )
 }
 
 export function PaginaChamados() {
-  const { data: s } = useSessao();
-  const [params, setParams] = useSearchParams();
+  const { data: s } = useSessao()
+  const [params, setParams] = useSearchParams()
   const q = useQuery({
     queryKey: ['chamados'],
     queryFn: () => api.get<LinhaChamado[]>('/api/chamados'),
-  });
-  const [novo, setNovo] = useState(false);
-  const aberto = params.get('chamado');
-  const abrir = (id: string | null) => setParams(id ? { chamado: id } : {}, { replace: true });
+  })
+  const [novo, setNovo] = useState(false)
+  const aberto = params.get('chamado')
+  const abrir = (id: string | null) => setParams(id ? { chamado: id } : {}, { replace: true })
   return (
     <Pagina
       titulo="Ajuda e suporte"
@@ -374,15 +374,15 @@ export function PaginaChamados() {
         <NovoChamado
           aoFechar={() => setNovo(false)}
           aoCriar={(id) => {
-            setNovo(false);
-            void q.refetch();
-            abrir(id);
+            setNovo(false)
+            void q.refetch()
+            abrir(id)
           }}
         />
       )}
       {aberto && <DetalheChamado id={aberto} aoFechar={() => abrir(null)} />}
     </Pagina>
-  );
+  )
 }
 
 /** Página pública (sem entrar): quem não consegue acessar o sistema. */
@@ -393,9 +393,9 @@ export function SuportePublico() {
     cnpj: '',
     assunto: '',
     descricao: '',
-  });
-  const [numero, setNumero] = useState<number | null>(null);
-  const v = form.valores;
+  })
+  const [numero, setNumero] = useState<number | null>(null)
+  const v = form.valores
   const campo = (k: 'nome' | 'email' | 'cnpj' | 'assunto', rotulo: string, ajuda?: string) => (
     <Campo rotulo={rotulo} id={`pub-${k}`} erro={form.erro(k)} ajuda={ajuda} obrigatorio>
       <Entrada
@@ -406,7 +406,7 @@ export function SuportePublico() {
         onBlur={() => form.tocar(k)}
       />
     </Campo>
-  );
+  )
   return (
     <TelaPublica titulo="Falar com o suporte" largo>
       {numero ? (
@@ -423,14 +423,14 @@ export function SuportePublico() {
           className="grid gap-4 sm:grid-cols-2"
           noValidate
           onSubmit={async (ev) => {
-            ev.preventDefault();
-            const d = form.validar();
-            if (!d) return;
+            ev.preventDefault()
+            const d = form.validar()
+            if (!d) return
             try {
-              const r = await api.post<{ numero: number }>('/api/suporte/publico', d);
-              setNumero(r.numero);
+              const r = await api.post<{ numero: number }>('/api/suporte/publico', d)
+              setNumero(r.numero)
             } catch (e) {
-              form.erroDaApi(e);
+              form.erroDaApi(e)
             }
           }}
         >
@@ -470,5 +470,5 @@ export function SuportePublico() {
         </form>
       )}
     </TelaPublica>
-  );
+  )
 }

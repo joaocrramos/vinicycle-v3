@@ -1,8 +1,8 @@
 // Catálogos da plataforma e catálogos globais com itens próprios (P8, P16;
 // 03-modelo-de-dados.md, 1.11 e 2.1). Nos catálogos "Glob+", empresa vazia = item global, mantido
 // pela plataforma; a empresa cria os seus e nunca altera um global.
-import { CORES_UVA, TIPOS_UVA } from '@vinicycle/shared';
-import { sql } from 'drizzle-orm';
+import { CORES_UVA, TIPOS_UVA } from '@vinicycle/shared'
+import { sql } from 'drizzle-orm'
 import {
   boolean,
   check,
@@ -15,9 +15,9 @@ import {
   unique,
   uniqueIndex,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum';
-import { empresa } from './plataforma';
+} from 'drizzle-orm/pg-core'
+import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum'
+import { empresa } from './plataforma'
 
 /** Colunas comuns dos catálogos Glob+. */
 const globMais = () => ({
@@ -28,7 +28,7 @@ const globMais = () => ({
   ...criacao(),
   ...alteracao(),
   ...inativacao(),
-});
+})
 
 /** Nome único dentro do mesmo escopo (global ou da empresa); código único entre os globais. */
 const unicidadeGlobMais = (tabela: string, t: { empresaId: unknown; codigo: unknown }) => [
@@ -40,7 +40,7 @@ const unicidadeGlobMais = (tabela: string, t: { empresaId: unknown; codigo: unkn
     sql`lower(nome)`,
   ),
   check(`${tabela}_codigo_so_global`, sql`empresa_id is null or codigo is null`),
-];
+]
 
 /** Papéis de pessoa. Só a plataforma cria (gestao.md, Pessoas). */
 export const papel = pgTable('papel', {
@@ -48,7 +48,7 @@ export const papel = pgTable('papel', {
   codigo: text('codigo').notNull().unique(),
   nome: text('nome').notNull(),
   ordem: integer('ordem').notNull(),
-});
+})
 
 /** Catálogo único de unidades (P17), com as casas decimais da grandeza (P3). */
 export const unidade = pgTable('unidade', {
@@ -58,7 +58,7 @@ export const unidade = pgTable('unidade', {
   grandeza: text('grandeza').notNull(),
   casas: integer('casas').notNull(),
   ordem: integer('ordem').notNull(),
-});
+})
 
 /** Classificação oficial de produtos, versionada (P16). */
 export const classeProduto = pgTable(
@@ -78,7 +78,7 @@ export const classeProduto = pgTable(
     unique('classe_produto_versao').on(t.codigo, t.vigenteDesde),
     check('classe_produto_categoria', emLista('categoria', ['vinho', 'espumante', 'derivado'])),
   ],
-);
+)
 
 /** Indicações geográficas (IP, DO). As regras de cada IG são regras versionadas (P16). */
 export const indicacaoGeografica = pgTable(
@@ -97,7 +97,7 @@ export const indicacaoGeografica = pgTable(
     ativo: boolean('ativo').notNull().default(true),
   },
   () => [check('indicacao_geografica_tipo', emLista('tipo', ['IP', 'DO']))],
-);
+)
 
 /** Variedades: o catálogo oficial e as variedades próprias de cada empresa. */
 export const variedade = pgTable(
@@ -127,7 +127,7 @@ export const variedade = pgTable(
     check('variedade_cor', emLista('cor', CORES_UVA)),
     check('variedade_propria_sem_codigo', sql`empresa_id is null or codigo_oficial is null`),
   ],
-);
+)
 
 export const tipoRecipiente = pgTable(
   'tipo_recipiente',
@@ -139,7 +139,7 @@ export const tipoRecipiente = pgTable(
     eBarrica: boolean('e_barrica').notNull().default(false),
   },
   (t) => unicidadeGlobMais('tipo_recipiente', t),
-);
+)
 
 export const tipoInsumo = pgTable(
   'tipo_insumo',
@@ -158,7 +158,7 @@ export const tipoInsumo = pgTable(
       .default(sql`'{}'`),
   },
   (t) => unicidadeGlobMais('tipo_insumo', t),
-);
+)
 
 export const tipoDocumento = pgTable(
   'tipo_documento',
@@ -173,7 +173,7 @@ export const tipoDocumento = pgTable(
       .default(sql`'{60,30,7}'`),
   },
   (t) => unicidadeGlobMais('tipo_documento', t),
-);
+)
 
 /** Parâmetros de análise. O valor é guardado na unidade padrão (cantina.md, Laboratório). */
 export const parametroAnalise = pgTable(
@@ -195,7 +195,7 @@ export const parametroAnalise = pgTable(
     ordem: integer('ordem').notNull().default(100),
   },
   (t) => unicidadeGlobMais('parametro_analise', t),
-);
+)
 
 /** Listas simples configuráveis (03-modelo-de-dados.md, 1.11). */
 export const opcaoLista = pgTable(
@@ -224,4 +224,4 @@ export const opcaoLista = pgTable(
       sql`lower(nome)`,
     ),
   ],
-);
+)

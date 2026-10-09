@@ -1,19 +1,19 @@
 // EnoTrace › Carga inicial (cantina.md, Carga inicial; P23): o saldo de abertura por planilha CSV,
 // com modelo para baixar, conferência linha a linha antes de gravar (tudo ou nada), histórico das
 // cargas com o arquivo e estorno.
-import { Undo2 } from 'lucide-react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
-import { Link } from 'react-router';
-import { BotaoIcone } from '@/componentes/AcoesLinha';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
+import { Undo2 } from 'lucide-react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
+import { Link } from 'react-router'
+import { BotaoIcone } from '@/componentes/AcoesLinha'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
 
 const TIPOS = {
   saldo_granel: {
@@ -31,13 +31,13 @@ const TIPOS = {
     ajuda:
       'Item pelo nome (cadastrado em Insumos e embalagens), local de estoque, lote e validade (quando houver) e a quantidade na unidade do item.',
   },
-} as const;
-type Tipo = keyof typeof TIPOS;
+} as const
+type Tipo = keyof typeof TIPOS
 
 interface Resultado {
-  linhas: number;
-  erros: Array<{ linha: number; mensagem: string }>;
-  resumo: Record<string, number>;
+  linhas: number
+  erros: Array<{ linha: number; mensagem: string }>
+  resumo: Record<string, number>
 }
 
 const NOMES_RESUMO: Record<string, string> = {
@@ -47,68 +47,68 @@ const NOMES_RESUMO: Record<string, string> = {
   litros: 'litros',
   linhas: 'linhas',
   garrafas: 'garrafas',
-};
+}
 
-const dataPadrao = () => `${new Date().getFullYear() - 1}-12-31T23:59`;
+const dataPadrao = () => `${new Date().getFullYear() - 1}-12-31T23:59`
 
 export function PaginaCargaInicial() {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const [tipo, setTipo] = useState<Tipo>('saldo_granel');
-  const [data, setData] = useState(dataPadrao);
-  const [arquivo, setArquivo] = useState<File | null>(null);
-  const [resultado, setResultado] = useState<Resultado | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-  const [aplicada, setAplicada] = useState<string | null>(null);
-  const [estornando, setEstornando] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const [tipo, setTipo] = useState<Tipo>('saldo_granel')
+  const [data, setData] = useState(dataPadrao)
+  const [arquivo, setArquivo] = useState<File | null>(null)
+  const [resultado, setResultado] = useState<Resultado | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const [aplicada, setAplicada] = useState<string | null>(null)
+  const [estornando, setEstornando] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
   const historico = useQuery({
     queryKey: ['carga-inicial'],
     queryFn: () =>
       api.get<
         Array<{
-          id: string;
-          tipo: Tipo;
-          dataSaldo: string;
-          nomeArquivo: string;
-          linhas: number;
-          situacao: 'aplicada' | 'estornada';
-          operacaoId: string | null;
-          criadoEm: string;
-          motivoEstorno: string | null;
+          id: string
+          tipo: Tipo
+          dataSaldo: string
+          nomeArquivo: string
+          linhas: number
+          situacao: 'aplicada' | 'estornada'
+          operacaoId: string | null
+          criadoEm: string
+          motivoEstorno: string | null
         }>
       >('/api/carga-inicial'),
-  });
+  })
   const limpar = () => {
-    setResultado(null);
-    setErro(null);
-    setAplicada(null);
-  };
+    setResultado(null)
+    setErro(null)
+    setAplicada(null)
+  }
   async function enviar(aplicar: boolean) {
-    if (!arquivo) return;
-    setErro(null);
-    setEnviando(true);
-    const dados = new FormData();
-    dados.set('arquivo', arquivo);
-    const url = `/api/carga-inicial${aplicar ? '' : '/validar'}?tipo=${tipo}&data=${encodeURIComponent(new Date(data).toISOString())}`;
+    if (!arquivo) return
+    setErro(null)
+    setEnviando(true)
+    const dados = new FormData()
+    dados.set('arquivo', arquivo)
+    const url = `/api/carga-inicial${aplicar ? '' : '/validar'}?tipo=${tipo}&data=${encodeURIComponent(new Date(data).toISOString())}`
     try {
-      const r = await api.post<Resultado>(url, dados);
-      setResultado(r);
+      const r = await api.post<Resultado>(url, dados)
+      setResultado(r)
       if (aplicar) {
-        setAplicada(`Carga aplicada: ${r.linhas} linhas.`);
-        setArquivo(null);
-        await qc.invalidateQueries({ queryKey: ['carga-inicial'] });
+        setAplicada(`Carga aplicada: ${r.linhas} linhas.`)
+        setArquivo(null)
+        await qc.invalidateQueries({ queryKey: ['carga-inicial'] })
       }
     } catch (e) {
-      const detalhes = e instanceof ErroApi ? (e.detalhes as { erros?: Resultado['erros'] }) : null;
-      if (detalhes?.erros) setResultado({ linhas: 0, erros: detalhes.erros, resumo: {} });
-      setErro((e as Error).message);
+      const detalhes = e instanceof ErroApi ? (e.detalhes as { erros?: Resultado['erros'] }) : null
+      if (detalhes?.erros) setResultado({ linhas: 0, erros: detalhes.erros, resumo: {} })
+      setErro((e as Error).message)
     } finally {
-      setEnviando(false);
+      setEnviando(false)
     }
   }
-  const semErros = !!resultado && !resultado.erros.length;
+  const semErros = !!resultado && !resultado.erros.length
   return (
     <Pagina titulo="Carga inicial" trilha={['Configurações', 'Conta e dados']}>
       <p className="text-sm text-muted-foreground">
@@ -125,8 +125,8 @@ export function PaginaCargaInicial() {
                 id="ci-tipo"
                 value={tipo}
                 onChange={(e) => {
-                  setTipo(e.target.value as Tipo);
-                  limpar();
+                  setTipo(e.target.value as Tipo)
+                  limpar()
                 }}
               >
                 {Object.entries(TIPOS).map(([k, v]) => (
@@ -142,8 +142,8 @@ export function PaginaCargaInicial() {
                 type="datetime-local"
                 value={data}
                 onChange={(e) => {
-                  setData(e.target.value);
-                  limpar();
+                  setData(e.target.value)
+                  limpar()
                 }}
               />
             </Campo>
@@ -160,9 +160,9 @@ export function PaginaCargaInicial() {
                 accept=".csv,text/csv"
                 className="sr-only"
                 onChange={(e) => {
-                  setArquivo(e.target.files?.[0] ?? null);
-                  e.target.value = '';
-                  limpar();
+                  setArquivo(e.target.files?.[0] ?? null)
+                  e.target.value = ''
+                  limpar()
                 }}
               />
             </label>
@@ -253,11 +253,11 @@ export function PaginaCargaInicial() {
         descricao="Desfaz a carga inteira. Se já houver movimento depois dela nos mesmos recipientes ou itens, estorne-os antes."
         rotuloBotao="Estornar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/carga-inicial/${estornando}/estorno`, { motivo });
-          setEstornando(null);
-          await qc.invalidateQueries({ queryKey: ['carga-inicial'] });
+          await api.post(`/api/carga-inicial/${estornando}/estorno`, { motivo })
+          setEstornando(null)
+          await qc.invalidateQueries({ queryKey: ['carga-inicial'] })
         }}
       />
     </Pagina>
-  );
+  )
 }

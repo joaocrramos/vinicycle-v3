@@ -1,13 +1,13 @@
 // Importação de planilha (P23; 03-modelo-de-dados.md, 3, Importação e carga inicial): cada carga
 // fica registrada (arquivo, quem, quando, linhas) e os registros gerados apontam para ela; tudo ou
 // nada; estorno enquanto não houver movimento posterior.
-import { boolean, check, index, integer, pgTable, text, uuid } from 'drizzle-orm/pg-core';
-import { estabelecimento } from './acesso';
-import { criacao, dataHora, emLista, id } from './comum';
-import { operacao } from './producao';
-import { empresa } from './plataforma';
+import { boolean, check, index, integer, pgTable, text, uuid } from 'drizzle-orm/pg-core'
+import { estabelecimento } from './acesso'
+import { criacao, dataHora, emLista, id } from './comum'
+import { operacao } from './producao'
+import { empresa } from './plataforma'
 
-export const TIPOS_IMPORTACAO = ['saldo_granel', 'saldo_garrafas', 'saldo_itens'] as const;
+export const TIPOS_IMPORTACAO = ['saldo_granel', 'saldo_garrafas', 'saldo_itens'] as const
 
 export const importacao = pgTable(
   'importacao',
@@ -39,4 +39,4 @@ export const importacao = pgTable(
     check('importacao_situacao', emLista('situacao', ['aplicada', 'estornada'])),
     index('importacao_estab').on(t.estabelecimentoId, t.criadoEm),
   ],
-);
+)

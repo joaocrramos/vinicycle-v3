@@ -1,6 +1,6 @@
 // Faturas e recebimentos (administracao.md, Faturas e contas a receber): detalhe com itens e
 // pagamentos; na Administração, também a baixa manual, o estorno e o cancelamento.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   FORMAS_PAGAMENTO,
   type FormaPagamento,
@@ -10,19 +10,19 @@ import {
   NOMES_SITUACAO_FATURA,
   paraCentavos,
   type SituacaoFatura,
-} from '@vinicycle/shared';
-import { Plus, Trash2, Undo2 } from 'lucide-react';
-import { useState } from 'react';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { formatarData, formatarDataHora } from '@/lib/utils';
-import { BotaoIcone } from './AcoesLinha';
-import { CampoNumero } from './campos-especiais';
-import { PedirMotivo } from './PedirMotivo';
-import { Botao } from './ui/botao';
-import { Aviso, Etiqueta } from './ui/cartao';
-import { AreaTexto, Campo, Entrada, Selecao } from './ui/campos';
-import { Dialogo } from './ui/dialogo';
+} from '@vinicycle/shared'
+import { Plus, Trash2, Undo2 } from 'lucide-react'
+import { useState } from 'react'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { formatarData, formatarDataHora } from '@/lib/utils'
+import { BotaoIcone } from './AcoesLinha'
+import { CampoNumero } from './campos-especiais'
+import { PedirMotivo } from './PedirMotivo'
+import { Botao } from './ui/botao'
+import { Aviso, Etiqueta } from './ui/cartao'
+import { AreaTexto, Campo, Entrada, Selecao } from './ui/campos'
+import { Dialogo } from './ui/dialogo'
 
 export const TOM_FATURA: Record<
   SituacaoFatura,
@@ -33,59 +33,59 @@ export const TOM_FATURA: Record<
   parcial: 'alerta',
   vencida: 'erro',
   cancelada: 'neutro',
-};
+}
 
 export interface LinhaFatura {
-  id: string;
-  numero: number;
-  empresaId: string;
-  cliente: string;
-  cicloInicio: string | null;
-  cicloFim: string | null;
-  emissao: string;
-  vencimento: string;
-  total: string;
-  situacao: SituacaoFatura;
-  recebido: string;
+  id: string
+  numero: number
+  empresaId: string
+  cliente: string
+  cicloInicio: string | null
+  cicloFim: string | null
+  emissao: string
+  vencimento: string
+  total: string
+  situacao: SituacaoFatura
+  recebido: string
 }
 
 interface Fatura extends Omit<LinhaFatura, 'recebido'> {
-  observacao: string | null;
-  motivoCancelamento: string | null;
-  canceladaEm: string | null;
+  observacao: string | null
+  motivoCancelamento: string | null
+  canceladaEm: string | null
   itens: Array<{
-    id: string;
-    descricao: string;
-    origem: string;
-    quantidade: number;
-    valorUnitario: string;
-    valor: string;
-  }>;
+    id: string
+    descricao: string
+    origem: string
+    quantidade: number
+    valorUnitario: string
+    valor: string
+  }>
   recebimentos: Array<{
-    id: string;
-    data: string;
-    valor: string;
-    forma: FormaPagamento;
-    referencia: string | null;
-    origem: 'manual' | 'provedor';
-    estornadoEm: string | null;
-    motivoEstorno: string | null;
-    comprovanteId: string | null;
-  }>;
-  recebido: string;
-  saldo: string;
-  pagamento: null | { link: string | null; pixCopiaCola: string | null; situacao: string };
-  nota: null | { numero: string | null; situacao: string; linkPdf: string | null };
+    id: string
+    data: string
+    valor: string
+    forma: FormaPagamento
+    referencia: string | null
+    origem: 'manual' | 'provedor'
+    estornadoEm: string | null
+    motivoEstorno: string | null
+    comprovanteId: string | null
+  }>
+  recebido: string
+  saldo: string
+  pagamento: null | { link: string | null; pixCopiaCola: string | null; situacao: string }
+  nota: null | { numero: string | null; situacao: string; linkPdf: string | null }
 }
 
-const moeda = (v: string | null | undefined) => formatarMoeda(paraCentavos(v));
+const moeda = (v: string | null | undefined) => formatarMoeda(paraCentavos(v))
 
 export function EtiquetaFatura({ situacao }: { situacao: SituacaoFatura }) {
-  return <Etiqueta tom={TOM_FATURA[situacao]}>{NOMES_SITUACAO_FATURA[situacao]}</Etiqueta>;
+  return <Etiqueta tom={TOM_FATURA[situacao]}>{NOMES_SITUACAO_FATURA[situacao]}</Etiqueta>
 }
 
 export function periodoFatura(f: Pick<LinhaFatura, 'cicloInicio' | 'cicloFim'>): string {
-  return f.cicloInicio ? `${formatarData(f.cicloInicio)} a ${formatarData(f.cicloFim)}` : 'Avulsa';
+  return f.cicloInicio ? `${formatarData(f.cicloInicio)} a ${formatarData(f.cicloFim)}` : 'Avulsa'
 }
 
 /** Lista curta (ficha do cliente e Configurações › Assinatura). */
@@ -93,11 +93,10 @@ export function ListaFaturas({
   faturas,
   aoAbrir,
 }: {
-  faturas: LinhaFatura[];
-  aoAbrir: (id: string) => void;
+  faturas: LinhaFatura[]
+  aoAbrir: (id: string) => void
 }) {
-  if (!faturas.length)
-    return <p className="text-sm text-muted-foreground">Nenhuma fatura ainda.</p>;
+  if (!faturas.length) return <p className="text-sm text-muted-foreground">Nenhuma fatura ainda.</p>
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -129,23 +128,23 @@ export function ListaFaturas({
         </tbody>
       </table>
     </div>
-  );
+  )
 }
 
 function RegistrarRecebimento({
   fatura,
   aoConcluir,
 }: {
-  fatura: Fatura;
-  aoConcluir: () => Promise<unknown>;
+  fatura: Fatura
+  aoConcluir: () => Promise<unknown>
 }) {
-  const [data, setData] = useState(new Date().toISOString().slice(0, 10));
-  const [valor, setValor] = useState<string | null>(fatura.saldo);
-  const [forma, setForma] = useState<FormaPagamento>('pix');
-  const [referencia, setReferencia] = useState('');
-  const [arquivo, setArquivo] = useState<File | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
+  const [data, setData] = useState(new Date().toISOString().slice(0, 10))
+  const [valor, setValor] = useState<string | null>(fatura.saldo)
+  const [forma, setForma] = useState<FormaPagamento>('pix')
+  const [referencia, setReferencia] = useState('')
+  const [arquivo, setArquivo] = useState<File | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
   return (
     <div className="grid gap-3 rounded-md border p-3 sm:grid-cols-2">
       <p className="font-medium sm:col-span-2">Registrar recebimento</p>
@@ -188,22 +187,22 @@ function RegistrarRecebimento({
         <Botao
           disabled={enviando || !valor}
           onClick={async () => {
-            setErro(null);
-            setEnviando(true);
-            const dados = new FormData();
+            setErro(null)
+            setEnviando(true)
+            const dados = new FormData()
             // Os campos vão antes do arquivo: o servidor lê na ordem.
-            dados.set('data', data);
-            dados.set('valor', valor ?? '');
-            dados.set('forma', forma);
-            if (referencia) dados.set('referencia', referencia);
-            if (arquivo) dados.set('comprovante', arquivo);
+            dados.set('data', data)
+            dados.set('valor', valor ?? '')
+            dados.set('forma', forma)
+            if (referencia) dados.set('referencia', referencia)
+            if (arquivo) dados.set('comprovante', arquivo)
             try {
-              await api.post(`/api/plataforma/faturas/${fatura.id}/recebimentos`, dados);
-              await aoConcluir();
+              await api.post(`/api/plataforma/faturas/${fatura.id}/recebimentos`, dados)
+              await aoConcluir()
             } catch (e) {
-              setErro((e as Error).message);
+              setErro((e as Error).message)
             } finally {
-              setEnviando(false);
+              setEnviando(false)
             }
           }}
         >
@@ -211,7 +210,7 @@ function RegistrarRecebimento({
         </Botao>
       </div>
     </div>
-  );
+  )
 }
 
 export function DetalheFatura({
@@ -221,31 +220,31 @@ export function DetalheFatura({
   podeEstornar = false,
   aoFechar,
 }: {
-  id: string;
-  plataforma: boolean;
-  podeEditar?: boolean;
-  podeEstornar?: boolean;
-  aoFechar: () => void;
+  id: string
+  plataforma: boolean
+  podeEditar?: boolean
+  podeEstornar?: boolean
+  aoFechar: () => void
 }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const q = useQuery({
     queryKey: ['fatura', id],
     queryFn: () =>
       api.get<Fatura>(plataforma ? `/api/plataforma/faturas/${id}` : `/api/faturas/${id}`),
-  });
-  const [estornar, setEstornar] = useState<string | null>(null);
-  const [cancelar, setCancelar] = useState(false);
-  const [baixa, setBaixa] = useState(false);
+  })
+  const [estornar, setEstornar] = useState<string | null>(null)
+  const [cancelar, setCancelar] = useState(false)
+  const [baixa, setBaixa] = useState(false)
   const recarregar = () =>
     Promise.all([
       qc.invalidateQueries({ queryKey: ['fatura', id] }),
       qc.invalidateQueries({ queryKey: ['faturas'] }),
       qc.invalidateQueries({ queryKey: ['assinatura'] }),
       qc.invalidateQueries({ queryKey: ['lista'] }),
-    ]);
-  const f = q.data;
+    ])
+  const f = q.data
   const urlComprovante = (anexoId: string) =>
-    plataforma ? `/api/plataforma/anexos/${anexoId}/arquivo` : `/api/anexos/${anexoId}/arquivo`;
+    plataforma ? `/api/plataforma/anexos/${anexoId}/arquivo` : `/api/anexos/${anexoId}/arquivo`
   return (
     <Dialogo
       aberto
@@ -421,8 +420,8 @@ export function DetalheFatura({
               <RegistrarRecebimento
                 fatura={f}
                 aoConcluir={async () => {
-                  setBaixa(false);
-                  await recarregar();
+                  setBaixa(false)
+                  await recarregar()
                 }}
               />
             ) : (
@@ -439,8 +438,8 @@ export function DetalheFatura({
         descricao="O recebimento fica registrado como estornado, e a fatura volta a ter saldo."
         rotuloBotao="Estornar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/plataforma/recebimentos/${estornar}/estornar`, { motivo });
-          await recarregar();
+          await api.post(`/api/plataforma/recebimentos/${estornar}/estornar`, { motivo })
+          await recarregar()
         }}
       />
       <PedirMotivo
@@ -450,28 +449,28 @@ export function DetalheFatura({
         descricao="A fatura deixa de ser cobrada. Proporcionais que ela cobrava voltam para a próxima."
         rotuloBotao="Cancelar fatura"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/plataforma/faturas/${id}/cancelar`, { motivo });
-          await recarregar();
+          await api.post(`/api/plataforma/faturas/${id}/cancelar`, { motivo })
+          await recarregar()
         }}
       />
     </Dialogo>
-  );
+  )
 }
 
 export function NovaFaturaAvulsa({
   empresaId,
   aoFechar,
 }: {
-  empresaId: string;
-  aoFechar: () => void;
+  empresaId: string
+  aoFechar: () => void
 }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const form = useFormulario(faturaAvulsaEntrada, {
     vencimento: new Date().toISOString().slice(0, 10),
     observacao: '',
     itens: [{ descricao: '', quantidade: 1, valorUnitario: '' }],
-  });
-  const v = form.valores;
+  })
+  const v = form.valores
   return (
     <Dialogo
       aberto
@@ -486,14 +485,14 @@ export function NovaFaturaAvulsa({
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                await api.post(`/api/plataforma/empresas/${empresaId}/faturas`, d);
-                await qc.invalidateQueries({ queryKey: ['faturas'] });
-                aoFechar();
+                await api.post(`/api/plataforma/empresas/${empresaId}/faturas`, d)
+                await qc.invalidateQueries({ queryKey: ['faturas'] })
+                aoFechar()
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -582,5 +581,5 @@ export function NovaFaturaAvulsa({
         </div>
       </div>
     </Dialogo>
-  );
+  )
 }

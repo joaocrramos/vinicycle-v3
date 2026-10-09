@@ -1,6 +1,6 @@
 // Administração › Planos e Adicionais (administracao.md, Planos, adicionais e assinaturas; P25).
 // O preço vale a partir de uma data; as assinaturas em vigor guardam o preço contratado.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   adicionalEntrada,
   FORMAS_PAGAMENTO,
@@ -15,77 +15,77 @@ import {
   planoEntrada,
   TIPOS_ADICIONAL,
   type TipoAdicional,
-} from '@vinicycle/shared';
-import { Plus } from 'lucide-react';
-import { useState } from 'react';
-import { AcoesLinha } from '@/componentes/AcoesLinha';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { pode, useSessao } from '@/lib/sessao';
-import { formatarData } from '@/lib/utils';
+} from '@vinicycle/shared'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
+import { AcoesLinha } from '@/componentes/AcoesLinha'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { pode, useSessao } from '@/lib/sessao'
+import { formatarData } from '@/lib/utils'
 
-type Precos = Partial<Record<Periodicidade, string>>;
+type Precos = Partial<Record<Periodicidade, string>>
 interface PrecoFuturo {
-  periodicidade: Periodicidade;
-  valor: string;
-  vigenteDesde: string;
+  periodicidade: Periodicidade
+  valor: string
+  vigenteDesde: string
 }
 
 export interface Plano {
-  id: string;
-  nome: string;
-  descricao: string | null;
-  ativo: boolean;
-  motivoInativacao: string | null;
-  limiteEstabelecimentos: number | null;
-  limiteUsuarios: number | null;
-  limiteArmazenamentoGb: string | null;
-  formasPagamento: Array<(typeof FORMAS_PAGAMENTO)[number]>;
-  modulos: string[];
-  assinaturas: number;
-  precos: Precos;
-  precosFuturos: PrecoFuturo[];
+  id: string
+  nome: string
+  descricao: string | null
+  ativo: boolean
+  motivoInativacao: string | null
+  limiteEstabelecimentos: number | null
+  limiteUsuarios: number | null
+  limiteArmazenamentoGb: string | null
+  formasPagamento: Array<(typeof FORMAS_PAGAMENTO)[number]>
+  modulos: string[]
+  assinaturas: number
+  precos: Precos
+  precosFuturos: PrecoFuturo[]
 }
 
 export interface Adicional {
-  id: string;
-  nome: string;
-  descricao: string | null;
-  tipo: TipoAdicional;
-  moduloCodigo: string | null;
-  quantidadePorUnidade: number;
-  ativo: boolean;
-  motivoInativacao: string | null;
-  precos: Precos;
-  precosFuturos: PrecoFuturo[];
+  id: string
+  nome: string
+  descricao: string | null
+  tipo: TipoAdicional
+  moduloCodigo: string | null
+  quantidadePorUnidade: number
+  ativo: boolean
+  motivoInativacao: string | null
+  precos: Precos
+  precosFuturos: PrecoFuturo[]
 }
 
 interface Modulo {
-  codigo: string;
-  nome: string;
-  funcao: string;
-  situacao: 'disponivel' | 'em_breve';
+  codigo: string
+  nome: string
+  funcao: string
+  situacao: 'disponivel' | 'em_breve'
 }
 
-const hoje = () => new Date().toISOString().slice(0, 10);
-export const moeda = (v: string | null | undefined) => formatarMoeda(paraCentavos(v));
+const hoje = () => new Date().toISOString().slice(0, 10)
+export const moeda = (v: string | null | undefined) => formatarMoeda(paraCentavos(v))
 
 function listaPrecos(precos: Precos): string {
   const partes = PERIODICIDADES.filter((p) => precos[p]).map(
     (p) => `${NOMES_PERIODICIDADE[p]} ${moeda(precos[p])}`,
-  );
-  return partes.length ? partes.join(' · ') : 'Sem preço';
+  )
+  return partes.length ? partes.join(' · ') : 'Sem preço'
 }
 
 function Futuros({ lista }: { lista: PrecoFuturo[] }) {
-  if (!lista.length) return null;
+  if (!lista.length) return null
   return (
     <p className="text-muted-foreground">
       A partir de:{' '}
@@ -96,7 +96,7 @@ function Futuros({ lista }: { lista: PrecoFuturo[] }) {
         )
         .join(' · ')}
     </p>
-  );
+  )
 }
 
 /** Preço por periodicidade: vazio = a periodicidade não é vendida. */
@@ -106,10 +106,10 @@ function CamposPrecos({
   erro,
   prefixo,
 }: {
-  precos: Precos;
-  aoMudar: (p: Precos) => void;
-  erro?: string;
-  prefixo: string;
+  precos: Precos
+  aoMudar: (p: Precos) => void
+  erro?: string
+  prefixo: string
 }) {
   return (
     <div className="grid gap-3 sm:col-span-2 sm:grid-cols-4">
@@ -126,19 +126,19 @@ function CamposPrecos({
       ))}
       {erro && <p className="text-sm text-destructive sm:col-span-4">{erro}</p>}
     </div>
-  );
+  )
 }
 
 const paraLista = (precos: Precos) =>
-  PERIODICIDADES.filter((p) => precos[p]).map((p) => ({ periodicidade: p, valor: precos[p]! }));
+  PERIODICIDADES.filter((p) => precos[p]).map((p) => ({ periodicidade: p, valor: precos[p]! }))
 
 function FormularioPlano({ plano, aoFechar }: { plano: Plano | null; aoFechar: () => void }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const modulos = useQuery({
     queryKey: ['modulos-plataforma'],
     queryFn: () => api.get<Modulo[]>('/api/plataforma/modulos'),
-  });
-  const [precos, setPrecos] = useState<Precos>(plano?.precos ?? {});
+  })
+  const [precos, setPrecos] = useState<Precos>(plano?.precos ?? {})
   const form = useFormulario(planoEntrada, {
     nome: plano?.nome ?? '',
     descricao: plano?.descricao ?? '',
@@ -149,12 +149,12 @@ function FormularioPlano({ plano, aoFechar }: { plano: Plano | null; aoFechar: (
     formasPagamento: plano?.formasPagamento ?? [...FORMAS_PAGAMENTO],
     precos: paraLista(plano?.precos ?? {}),
     precosDesde: hoje(),
-  });
-  const v = form.valores;
+  })
+  const v = form.valores
   const alternar = (campo: 'modulos' | 'formasPagamento', item: string) => {
-    const atual = v[campo] as string[];
-    form.definir(campo, atual.includes(item) ? atual.filter((x) => x !== item) : [...atual, item]);
-  };
+    const atual = v[campo] as string[]
+    form.definir(campo, atual.includes(item) ? atual.filter((x) => x !== item) : [...atual, item])
+  }
   const limite = (campo: 'limiteEstabelecimentos' | 'limiteUsuarios', rotulo: string) => (
     <Campo rotulo={rotulo} id={`plano-${campo}`} ajuda="Vazio = sem limite.">
       <Entrada
@@ -165,7 +165,7 @@ function FormularioPlano({ plano, aoFechar }: { plano: Plano | null; aoFechar: (
         onChange={(e) => form.definir(campo, e.target.value ? Number(e.target.value) : null)}
       />
     </Campo>
-  );
+  )
   return (
     <Dialogo
       aberto
@@ -179,15 +179,15 @@ function FormularioPlano({ plano, aoFechar }: { plano: Plano | null; aoFechar: (
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                if (plano) await api.put(`/api/plataforma/planos/${plano.id}`, d);
-                else await api.post('/api/plataforma/planos', d);
-                await qc.invalidateQueries({ queryKey: ['planos-plataforma'] });
-                aoFechar();
+                if (plano) await api.put(`/api/plataforma/planos/${plano.id}`, d)
+                else await api.post('/api/plataforma/planos', d)
+                await qc.invalidateQueries({ queryKey: ['planos-plataforma'] })
+                aoFechar()
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -270,8 +270,8 @@ function FormularioPlano({ plano, aoFechar }: { plano: Plano | null; aoFechar: (
           precos={precos}
           erro={form.erro('precos')}
           aoMudar={(p) => {
-            setPrecos(p);
-            form.definir('precos', paraLista(p));
+            setPrecos(p)
+            form.definir('precos', paraLista(p))
           }}
         />
         <Campo
@@ -289,7 +289,7 @@ function FormularioPlano({ plano, aoFechar }: { plano: Plano | null; aoFechar: (
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function Inativos<T extends { id: string; ativo: boolean }>({
@@ -297,47 +297,47 @@ function Inativos<T extends { id: string; ativo: boolean }>({
   mostrar,
   aoMudar,
 }: {
-  itens: T[];
-  mostrar: boolean;
-  aoMudar: (v: boolean) => void;
+  itens: T[]
+  mostrar: boolean
+  aoMudar: (v: boolean) => void
 }) {
-  const n = itens.filter((i) => !i.ativo).length;
-  if (!n) return null;
+  const n = itens.filter((i) => !i.ativo).length
+  if (!n) return null
   return (
     <Caixa
       rotulo={`Mostrar inativos (${n})`}
       checked={mostrar}
       onChange={(e) => aoMudar(e.target.checked)}
     />
-  );
+  )
 }
 
 function useAtivo(url: string, chave: string) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   return async (id: string, acao: 'inativar' | 'reativar', motivo?: string) => {
-    await api.post(`${url}/${id}/${acao}`, motivo ? { motivo } : {});
-    await qc.invalidateQueries({ queryKey: [chave] });
-  };
+    await api.post(`${url}/${id}/${acao}`, motivo ? { motivo } : {})
+    await qc.invalidateQueries({ queryKey: [chave] })
+  }
 }
 
 export function PaginaPlanos() {
-  const { data: s } = useSessao();
+  const { data: s } = useSessao()
   const q = useQuery({
     queryKey: ['planos-plataforma'],
     queryFn: () => api.get<Plano[]>('/api/plataforma/planos?todos=1'),
-  });
+  })
   const modulos = useQuery({
     queryKey: ['modulos-plataforma'],
     queryFn: () => api.get<Modulo[]>('/api/plataforma/modulos'),
-  });
-  const [editar, setEditar] = useState<Plano | 'novo' | null>(null);
-  const [inativar, setInativar] = useState<Plano | null>(null);
-  const [mostrarInativos, setMostrarInativos] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-  const mudarAtivo = useAtivo('/api/plataforma/planos', 'planos-plataforma');
-  const podeEditar = pode(s, 'plataforma.planos', 'editar');
-  const podeInativar = pode(s, 'plataforma.planos', 'inativar');
-  const planos = (q.data ?? []).filter((p) => p.ativo || mostrarInativos);
+  })
+  const [editar, setEditar] = useState<Plano | 'novo' | null>(null)
+  const [inativar, setInativar] = useState<Plano | null>(null)
+  const [mostrarInativos, setMostrarInativos] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+  const mudarAtivo = useAtivo('/api/plataforma/planos', 'planos-plataforma')
+  const podeEditar = pode(s, 'plataforma.planos', 'editar')
+  const podeInativar = pode(s, 'plataforma.planos', 'inativar')
+  const planos = (q.data ?? []).filter((p) => p.ativo || mostrarInativos)
   return (
     <Pagina
       titulo="Planos"
@@ -424,22 +424,22 @@ export function PaginaPlanos() {
         aoConfirmar={(m) => mudarAtivo(inativar!.id, 'inativar', m)}
       />
     </Pagina>
-  );
+  )
 }
 
 function FormularioAdicional({
   adicional,
   aoFechar,
 }: {
-  adicional: Adicional | null;
-  aoFechar: () => void;
+  adicional: Adicional | null
+  aoFechar: () => void
 }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const modulos = useQuery({
     queryKey: ['modulos-plataforma'],
     queryFn: () => api.get<Modulo[]>('/api/plataforma/modulos'),
-  });
-  const [precos, setPrecos] = useState<Precos>(adicional?.precos ?? {});
+  })
+  const [precos, setPrecos] = useState<Precos>(adicional?.precos ?? {})
   const form = useFormulario(adicionalEntrada, {
     nome: adicional?.nome ?? '',
     descricao: adicional?.descricao ?? '',
@@ -448,8 +448,8 @@ function FormularioAdicional({
     quantidadePorUnidade: adicional?.quantidadePorUnidade ?? 1,
     precos: paraLista(adicional?.precos ?? {}),
     precosDesde: hoje(),
-  });
-  const v = form.valores;
+  })
+  const v = form.valores
   return (
     <Dialogo
       aberto
@@ -463,15 +463,15 @@ function FormularioAdicional({
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                if (adicional) await api.put(`/api/plataforma/adicionais/${adicional.id}`, d);
-                else await api.post('/api/plataforma/adicionais', d);
-                await qc.invalidateQueries({ queryKey: ['adicionais-plataforma'] });
-                aoFechar();
+                if (adicional) await api.put(`/api/plataforma/adicionais/${adicional.id}`, d)
+                else await api.post('/api/plataforma/adicionais', d)
+                await qc.invalidateQueries({ queryKey: ['adicionais-plataforma'] })
+                aoFechar()
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -504,8 +504,8 @@ function FormularioAdicional({
             value={v.tipo}
             disabled={!!adicional}
             onChange={(e) => {
-              form.definir('tipo', e.target.value);
-              if (e.target.value !== 'modulo') form.definir('moduloCodigo', '');
+              form.definir('tipo', e.target.value)
+              if (e.target.value !== 'modulo') form.definir('moduloCodigo', '')
             }}
           >
             {TIPOS_ADICIONAL.map((x) => (
@@ -568,8 +568,8 @@ function FormularioAdicional({
           precos={precos}
           erro={form.erro('precos')}
           aoMudar={(p) => {
-            setPrecos(p);
-            form.definir('precos', paraLista(p));
+            setPrecos(p)
+            form.definir('precos', paraLista(p))
           }}
         />
         <Campo rotulo="Preços valem a partir de" id="ad-desde" erro={form.erro('precosDesde')}>
@@ -582,22 +582,22 @@ function FormularioAdicional({
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function PaginaAdicionais() {
-  const { data: s } = useSessao();
+  const { data: s } = useSessao()
   const q = useQuery({
     queryKey: ['adicionais-plataforma'],
     queryFn: () => api.get<Adicional[]>('/api/plataforma/adicionais?todos=1'),
-  });
-  const [editar, setEditar] = useState<Adicional | 'novo' | null>(null);
-  const [inativar, setInativar] = useState<Adicional | null>(null);
-  const [mostrarInativos, setMostrarInativos] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-  const mudarAtivo = useAtivo('/api/plataforma/adicionais', 'adicionais-plataforma');
-  const podeInativar = pode(s, 'plataforma.planos', 'inativar');
-  const lista = (q.data ?? []).filter((a) => a.ativo || mostrarInativos);
+  })
+  const [editar, setEditar] = useState<Adicional | 'novo' | null>(null)
+  const [inativar, setInativar] = useState<Adicional | null>(null)
+  const [mostrarInativos, setMostrarInativos] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+  const mudarAtivo = useAtivo('/api/plataforma/adicionais', 'adicionais-plataforma')
+  const podeInativar = pode(s, 'plataforma.planos', 'inativar')
+  const lista = (q.data ?? []).filter((a) => a.ativo || mostrarInativos)
   return (
     <Pagina
       titulo="Adicionais"
@@ -664,5 +664,5 @@ export function PaginaAdicionais() {
         aoConfirmar={(m) => mudarAtivo(inativar!.id, 'inativar', m)}
       />
     </Pagina>
-  );
+  )
 }

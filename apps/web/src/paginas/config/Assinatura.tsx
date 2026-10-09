@@ -1,23 +1,23 @@
 // Configurações › Assinatura (ambiente-cliente.md): plano, adicionais, uso × limites e mudanças.
 // Todos com a permissão veem; só o Master muda (P25).
-import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import { PainelAssinatura } from '@/componentes/Assinatura';
-import { DetalheFatura, type LinhaFatura, ListaFaturas } from '@/componentes/Faturas';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { api } from '@/lib/api';
-import { BotaoExportar } from './Exportar';
-import { Pagina } from '@/layout/Estrutura';
-import { useSessao } from '@/lib/sessao';
+import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { PainelAssinatura } from '@/componentes/Assinatura'
+import { DetalheFatura, type LinhaFatura, ListaFaturas } from '@/componentes/Faturas'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { api } from '@/lib/api'
+import { BotaoExportar } from './Exportar'
+import { Pagina } from '@/layout/Estrutura'
+import { useSessao } from '@/lib/sessao'
 
 export function PaginaAssinatura() {
-  const { data: s } = useSessao();
-  const eMaster = !!s?.empresa?.eMaster;
+  const { data: s } = useSessao()
+  const eMaster = !!s?.empresa?.eMaster
   const faturas = useQuery({
     queryKey: ['faturas', 'cliente'],
     queryFn: () => api.get<LinhaFatura[]>('/api/faturas'),
-  });
-  const [aberta, setAberta] = useState<string | null>(null);
+  })
+  const [aberta, setAberta] = useState<string | null>(null)
   return (
     <Pagina titulo="Assinatura" trilha={['Configurações']}>
       {s?.empresa?.situacao === 'bloqueado' && eMaster && (
@@ -49,5 +49,5 @@ export function PaginaAssinatura() {
       </Cartao>
       {aberta && <DetalheFatura id={aberta} plataforma={false} aoFechar={() => setAberta(null)} />}
     </Pagina>
-  );
+  )
 }

@@ -1,58 +1,58 @@
 // EnoTrace › Marcas e Produtos (cantina.md; 03-modelo-de-dados.md, 2.5).
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { dadosMarca, dadosProduto, dadosRotulo, formatarDecimal } from '@vinicycle/shared';
-import { Plus, Trash2 } from 'lucide-react';
-import { type FormEvent, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha';
-import { Anexos } from '@/componentes/Anexos';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Historico } from '@/componentes/Historico';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { useReferencia } from '@/lib/referencia';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarData } from '@/lib/utils';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { dadosMarca, dadosProduto, dadosRotulo, formatarDecimal } from '@vinicycle/shared'
+import { Plus, Trash2 } from 'lucide-react'
+import { type FormEvent, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha'
+import { Anexos } from '@/componentes/Anexos'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Historico } from '@/componentes/Historico'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { useReferencia } from '@/lib/referencia'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarData } from '@/lib/utils'
 
 const volume = (ml: number) =>
-  ml >= 1000 ? `${formatarDecimal(String(ml / 1000), ml % 1000 ? 1 : 0)} L` : `${ml} mL`;
+  ml >= 1000 ? `${formatarDecimal(String(ml / 1000), ml % 1000 ? 1 : 0)} L` : `${ml} mL`
 
 function useClientesVinificacao() {
   return useQuery({
     queryKey: ['pessoas-opcoes', 'cliente_vinificacao'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=cliente_vinificacao'),
-  });
+  })
 }
 
 // Marcas -------------------------------------------------------------------------------------
 
 interface Marca {
-  id: string;
-  nome: string;
-  donoId: string | null;
-  dono: string | null;
-  produtos: number;
-  ativo: boolean;
-  versao: number;
+  id: string
+  nome: string
+  donoId: string | null
+  dono: string | null
+  produtos: number
+  ativo: boolean
+  versao: number
 }
 
 function DialogoMarca({ marca, aoFechar }: { marca: Marca | null; aoFechar: () => void }) {
-  const qc = useQueryClient();
-  const clientes = useClientesVinificacao();
+  const qc = useQueryClient()
+  const clientes = useClientesVinificacao()
   const form = useFormulario(dadosMarca, {
     nome: marca?.nome ?? '',
     donoId: marca?.donoId ?? null,
     versao: marca?.versao,
-  });
+  })
   return (
     <Dialogo
       aberto
@@ -65,16 +65,16 @@ function DialogoMarca({ marca, aoFechar }: { marca: Marca | null; aoFechar: () =
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                if (marca) await api.put(`/api/marcas/${marca.id}`, d);
-                else await api.post('/api/marcas', d);
-                await qc.invalidateQueries({ queryKey: ['lista', '/api/marcas'] });
-                await qc.invalidateQueries({ queryKey: ['marcas-opcoes'] });
-                aoFechar();
+                if (marca) await api.put(`/api/marcas/${marca.id}`, d)
+                else await api.post('/api/marcas', d)
+                await qc.invalidateQueries({ queryKey: ['lista', '/api/marcas'] })
+                await qc.invalidateQueries({ queryKey: ['marcas-opcoes'] })
+                aoFechar()
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -113,15 +113,15 @@ function DialogoMarca({ marca, aoFechar }: { marca: Marca | null; aoFechar: () =
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function PaginaMarcas() {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [editando, setEditando] = useState<Marca | 'nova' | null>(null);
-  const [inativar, setInativar] = useState<Marca | null>(null);
-  const podeInativar = pode(s, 'enotrace.cadastros', 'inativar');
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [editando, setEditando] = useState<Marca | 'nova' | null>(null)
+  const [inativar, setInativar] = useState<Marca | null>(null)
+  const podeInativar = pode(s, 'enotrace.cadastros', 'inativar')
   return (
     <Pagina
       titulo="Marcas"
@@ -179,8 +179,8 @@ export function PaginaMarcas() {
               aoReativar={
                 podeInativar
                   ? async () => {
-                      await api.post(`/api/marcas/${m.id}/reativar`);
-                      await qc.invalidateQueries({ queryKey: ['lista', '/api/marcas'] });
+                      await api.post(`/api/marcas/${m.id}/reativar`)
+                      await qc.invalidateQueries({ queryKey: ['lista', '/api/marcas'] })
                     }
                   : undefined
               }
@@ -200,33 +200,33 @@ export function PaginaMarcas() {
         titulo={`Inativar a marca ${inativar?.nome ?? ''}`}
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/marcas/${inativar!.id}/inativar`, { motivo });
-          await qc.invalidateQueries({ queryKey: ['lista', '/api/marcas'] });
+          await api.post(`/api/marcas/${inativar!.id}/inativar`, { motivo })
+          await qc.invalidateQueries({ queryKey: ['lista', '/api/marcas'] })
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 // Produtos -----------------------------------------------------------------------------------
 
 interface LinhaProduto {
-  id: string;
-  nome: string;
-  marca: string;
-  denominacao: string;
-  registroMapa: string | null;
-  formatos: number[];
-  teorAlcoolico: string | null;
-  ativo: boolean;
+  id: string
+  nome: string
+  marca: string
+  denominacao: string
+  registroMapa: string | null
+  formatos: number[]
+  teorAlcoolico: string | null
+  ativo: boolean
 }
 
 export function ListaProdutos() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [inativar, setInativar] = useState<LinhaProduto | null>(null);
-  const podeInativar = pode(s, 'enotrace.cadastros', 'inativar');
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [inativar, setInativar] = useState<LinhaProduto | null>(null)
+  const podeInativar = pode(s, 'enotrace.cadastros', 'inativar')
   return (
     <Pagina
       titulo="Produtos"
@@ -309,8 +309,8 @@ export function ListaProdutos() {
               aoReativar={
                 podeInativar
                   ? async () => {
-                      await api.post(`/api/produtos/${p.id}/reativar`);
-                      await qc.invalidateQueries({ queryKey: ['lista', '/api/produtos'] });
+                      await api.post(`/api/produtos/${p.id}/reativar`)
+                      await qc.invalidateQueries({ queryKey: ['lista', '/api/produtos'] })
                     }
                   : undefined
               }
@@ -324,12 +324,12 @@ export function ListaProdutos() {
         titulo={`Inativar ${inativar?.nome ?? ''}`}
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/produtos/${inativar!.id}/inativar`, { motivo });
-          await qc.invalidateQueries({ queryKey: ['lista', '/api/produtos'] });
+          await api.post(`/api/produtos/${inativar!.id}/inativar`, { motivo })
+          await qc.invalidateQueries({ queryKey: ['lista', '/api/produtos'] })
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 const VAZIO = {
@@ -343,55 +343,55 @@ const VAZIO = {
   titularId: null as string | null,
   observacoes: '',
   versao: undefined as number | undefined,
-};
+}
 
 function FormularioProduto({
   inicial,
   aoSalvar,
   somenteLeitura,
 }: {
-  inicial: typeof VAZIO;
-  aoSalvar: (d: unknown) => Promise<void>;
-  somenteLeitura?: boolean;
+  inicial: typeof VAZIO
+  aoSalvar: (d: unknown) => Promise<void>
+  somenteLeitura?: boolean
 }) {
-  const form = useFormulario(dadosProduto, inicial);
-  const { data: ref } = useReferencia();
-  const clientes = useClientesVinificacao();
+  const form = useFormulario(dadosProduto, inicial)
+  const { data: ref } = useReferencia()
+  const clientes = useClientesVinificacao()
   const marcas = useQuery({
     queryKey: ['marcas-opcoes'],
     queryFn: async () => (await api.get<{ itens: Marca[] }>('/api/marcas?tamanho=0')).itens,
-  });
-  const [salvo, setSalvo] = useState(false);
-  const v = form.valores as typeof VAZIO;
-  const classe = ref?.classesProduto.find((c) => c.id === v.classeProdutoId);
+  })
+  const [salvo, setSalvo] = useState(false)
+  const v = form.valores as typeof VAZIO
+  const classe = ref?.classesProduto.find((c) => c.id === v.classeProdutoId)
   const lista = (nome: string) =>
     (ref?.listas[nome] ?? []).map((o) => (
       <option key={o.codigo} value={o.codigo}>
         {o.nome}
       </option>
-    ));
-  const nomeDe = (l: string, c: string | null) => ref?.listas[l]?.find((o) => o.codigo === c)?.nome;
+    ))
+  const nomeDe = (l: string, c: string | null) => ref?.listas[l]?.find((o) => o.codigo === c)?.nome
   const denominacao = [
     classe?.nome,
     nomeDe('cor_vinho', v.cor),
     nomeDe('teor_acucar', v.teorAcucar),
   ]
     .filter(Boolean)
-    .join(' ');
+    .join(' ')
   return (
     <form
       noValidate
       className="flex flex-col gap-5"
       onSubmit={async (ev: FormEvent) => {
-        ev.preventDefault();
-        setSalvo(false);
-        const d = form.validar();
-        if (!d) return;
+        ev.preventDefault()
+        setSalvo(false)
+        const d = form.validar()
+        if (!d) return
         try {
-          await aoSalvar(d);
-          setSalvo(true);
+          await aoSalvar(d)
+          setSalvo(true)
         } catch (e) {
-          form.erroDaApi(e);
+          form.erroDaApi(e)
         }
       }}
     >
@@ -536,11 +536,11 @@ function FormularioProduto({
         </div>
       )}
     </form>
-  );
+  )
 }
 
 export function NovoProduto() {
-  const navegar = useNavigate();
+  const navegar = useNavigate()
   return (
     <Pagina titulo="Novo produto" trilha={['EnoTrace', 'Cadastros', 'Produtos']}>
       <Cartao>
@@ -548,56 +548,56 @@ export function NovoProduto() {
           <FormularioProduto
             inicial={VAZIO}
             aoSalvar={async (d) => {
-              const r = await api.post<{ id: string }>('/api/produtos', d);
-              navegar(`/enotrace/produtos/${r.id}`, { replace: true });
+              const r = await api.post<{ id: string }>('/api/produtos', d)
+              navegar(`/enotrace/produtos/${r.id}`, { replace: true })
             }}
           />
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }
 
 interface Rotulo {
-  id: string;
-  versao: string;
-  teorAlcoolico: string;
-  urlPagina: string | null;
-  vigenteDesde: string;
-  vigenteAte: string | null;
-  observacoes: string | null;
+  id: string
+  versao: string
+  teorAlcoolico: string
+  urlPagina: string | null
+  vigenteDesde: string
+  vigenteAte: string | null
+  observacoes: string | null
 }
 interface Formato {
-  id: string;
-  volumeMl: number;
-  ativo: boolean;
-  ficha: Array<{ itemEstoqueId: string; item: string; unidade: string; quantidade: string }>;
+  id: string
+  volumeMl: number
+  ativo: boolean
+  ficha: Array<{ itemEstoqueId: string; item: string; unidade: string; quantidade: string }>
 }
 type ProdutoCompleto = typeof VAZIO & {
-  id: string;
+  id: string
   terceirizacao: null | {
-    contratoId: string;
-    sentido: 'prestamos' | 'contratamos';
-    registroProduto: 'contratante' | 'cantina';
-    texto: string;
-  };
-  ativo: boolean;
-  versao: number;
-  denominacao: string;
-  rotulos: Rotulo[];
-  formatos: Formato[];
-};
+    contratoId: string
+    sentido: 'prestamos' | 'contratamos'
+    registroProduto: 'contratante' | 'cantina'
+    texto: string
+  }
+  ativo: boolean
+  versao: number
+  denominacao: string
+  rotulos: Rotulo[]
+  formatos: Formato[]
+}
 
 function DialogoRotulo({
   produtoId,
   rotulo,
   aoFechar,
 }: {
-  produtoId: string;
-  rotulo: Rotulo | null;
-  aoFechar: () => void;
+  produtoId: string
+  rotulo: Rotulo | null
+  aoFechar: () => void
 }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const form = useFormulario(dadosRotulo, {
     versao: rotulo?.versao ?? '',
     teorAlcoolico: rotulo?.teorAlcoolico ?? '',
@@ -605,8 +605,8 @@ function DialogoRotulo({
     vigenteDesde: rotulo?.vigenteDesde ?? new Date().toISOString().slice(0, 10),
     vigenteAte: rotulo?.vigenteAte ?? '',
     observacoes: rotulo?.observacoes ?? '',
-  });
-  const v = form.valores;
+  })
+  const v = form.valores
   return (
     <Dialogo
       aberto
@@ -620,15 +620,15 @@ function DialogoRotulo({
           </Botao>
           <Botao
             onClick={async () => {
-              const d = form.validar();
-              if (!d) return;
+              const d = form.validar()
+              if (!d) return
               try {
-                if (rotulo) await api.put(`/api/produtos/${produtoId}/rotulos/${rotulo.id}`, d);
-                else await api.post(`/api/produtos/${produtoId}/rotulos`, d);
-                await qc.invalidateQueries({ queryKey: ['produto', produtoId] });
-                aoFechar();
+                if (rotulo) await api.put(`/api/produtos/${produtoId}/rotulos/${rotulo.id}`, d)
+                else await api.post(`/api/produtos/${produtoId}/rotulos`, d)
+                await qc.invalidateQueries({ queryKey: ['produto', produtoId] })
+                aoFechar()
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -697,7 +697,7 @@ function DialogoRotulo({
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function FichaEmbalagem({
@@ -705,32 +705,32 @@ function FichaEmbalagem({
   formato,
   podeEditar,
 }: {
-  produtoId: string;
-  formato: Formato;
-  podeEditar: boolean;
+  produtoId: string
+  formato: Formato
+  podeEditar: boolean
 }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const materiais = useQuery({
     queryKey: ['materiais-embalagem'],
     queryFn: async () =>
       (
         await api.get<{
-          itens: Array<{ id: string; nome: string; unidadeBase: string; tipo: string }>;
+          itens: Array<{ id: string; nome: string; unidadeBase: string; tipo: string }>
         }>('/api/itens-estoque?tamanho=0')
       ).itens.filter((i) => i.tipo === 'embalagem' || i.tipo === 'outro'),
-  });
+  })
   const [itens, setItens] = useState(
     formato.ficha.map((f) => ({
       itemEstoqueId: f.itemEstoqueId,
       quantidade: f.quantidade as string | null,
     })),
-  );
-  const [msg, setMsg] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null);
+  )
+  const [msg, setMsg] = useState<{ tom: 'sucesso' | 'erro'; texto: string } | null>(null)
   const alterado =
     JSON.stringify(itens) !==
     JSON.stringify(
       formato.ficha.map((f) => ({ itemEstoqueId: f.itemEstoqueId, quantidade: f.quantidade })),
-    );
+    )
   return (
     <div className="flex flex-col gap-3">
       <p className="text-sm text-muted-foreground">
@@ -798,11 +798,11 @@ function FichaEmbalagem({
               try {
                 await api.put(`/api/produtos/${produtoId}/formatos/${formato.id}/ficha`, {
                   itens: itens.filter((x) => x.itemEstoqueId),
-                });
-                setMsg({ tom: 'sucesso', texto: 'Ficha de embalagem salva.' });
-                await qc.invalidateQueries({ queryKey: ['produto', produtoId] });
+                })
+                setMsg({ tom: 'sucesso', texto: 'Ficha de embalagem salva.' })
+                await qc.invalidateQueries({ queryKey: ['produto', produtoId] })
               } catch (e) {
-                setMsg({ tom: 'erro', texto: (e as Error).message });
+                setMsg({ tom: 'erro', texto: (e as Error).message })
               }
             }}
           >
@@ -811,30 +811,30 @@ function FichaEmbalagem({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 export function FichaProduto() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [rotulo, setRotulo] = useState<Rotulo | 'novo' | null>(null);
-  const [novoFormato, setNovoFormato] = useState<string | null>(null);
-  const [erroFormato, setErroFormato] = useState<string | null>(null);
-  const [inativar, setInativar] = useState(false);
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [rotulo, setRotulo] = useState<Rotulo | 'novo' | null>(null)
+  const [novoFormato, setNovoFormato] = useState<string | null>(null)
+  const [erroFormato, setErroFormato] = useState<string | null>(null)
+  const [inativar, setInativar] = useState(false)
   const q = useQuery({
     queryKey: ['produto', id],
     queryFn: () => api.get<ProdutoCompleto>(`/api/produtos/${id}`),
-  });
-  const podeEditar = pode(s, 'enotrace.cadastros', 'editar');
+  })
+  const podeEditar = pode(s, 'enotrace.cadastros', 'editar')
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const p = q.data;
-  const recarregar = () => qc.invalidateQueries({ queryKey: ['produto', id] });
+    )
+  const p = q.data
+  const recarregar = () => qc.invalidateQueries({ queryKey: ['produto', id] })
   return (
     <Pagina
       titulo={p.nome}
@@ -846,8 +846,8 @@ export function FichaProduto() {
             ativo={p.ativo}
             aoInativar={() => setInativar(true)}
             aoReativar={async () => {
-              await api.post(`/api/produtos/${id}/reativar`);
-              await recarregar();
+              await api.post(`/api/produtos/${id}/reativar`)
+              await recarregar()
             }}
           />
         )
@@ -881,8 +881,8 @@ export function FichaProduto() {
                 inicial={{ ...VAZIO, ...p }}
                 somenteLeitura={!podeEditar}
                 aoSalvar={async (d) => {
-                  await api.put(`/api/produtos/${id}`, d);
-                  await recarregar();
+                  await api.put(`/api/produtos/${id}`, d)
+                  await recarregar()
                 }}
               />
             </CorpoCartao>
@@ -944,15 +944,15 @@ export function FichaProduto() {
               <Botao
                 disabled={!novoFormato}
                 onClick={async () => {
-                  setErroFormato(null);
+                  setErroFormato(null)
                   try {
                     await api.post(`/api/produtos/${id}/formatos`, {
                       volumeMl: Number(novoFormato),
-                    });
-                    setNovoFormato(null);
-                    await recarregar();
+                    })
+                    setNovoFormato(null)
+                    await recarregar()
                   } catch (e) {
-                    setErroFormato((e as Error).message);
+                    setErroFormato((e as Error).message)
                   }
                 }}
               >
@@ -974,12 +974,12 @@ export function FichaProduto() {
                     <AcoesLinha
                       ativo={f.ativo}
                       aoInativar={async () => {
-                        await api.post(`/api/produtos/${id}/formatos/${f.id}/inativar`);
-                        await recarregar();
+                        await api.post(`/api/produtos/${id}/formatos/${f.id}/inativar`)
+                        await recarregar()
                       }}
                       aoReativar={async () => {
-                        await api.post(`/api/produtos/${id}/formatos/${f.id}/reativar`);
-                        await recarregar();
+                        await api.post(`/api/produtos/${id}/formatos/${f.id}/reativar`)
+                        await recarregar()
                       }}
                     />
                   )
@@ -1021,10 +1021,10 @@ export function FichaProduto() {
         titulo={`Inativar ${p.nome}`}
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/produtos/${id}/inativar`, { motivo });
-          await recarregar();
+          await api.post(`/api/produtos/${id}/inativar`, { motivo })
+          await recarregar()
         }}
       />
     </Pagina>
-  );
+  )
 }

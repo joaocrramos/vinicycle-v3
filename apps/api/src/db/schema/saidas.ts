@@ -12,31 +12,31 @@ import {
   pgTable,
   text,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, local } from './acesso';
-import { itemEstoque } from './cantina';
-import { alteracao, criacao, dataHora, emLista, id } from './comum';
-import { loteItem, movimentoEstoque } from './estoque';
-import { pessoa } from './gestao';
-import { nfe, nfeItem } from './notas';
-import { empresa } from './plataforma';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento, local } from './acesso'
+import { itemEstoque } from './cantina'
+import { alteracao, criacao, dataHora, emLista, id } from './comum'
+import { loteItem, movimentoEstoque } from './estoque'
+import { pessoa } from './gestao'
+import { nfe, nfeItem } from './notas'
+import { empresa } from './plataforma'
 
 function daEmpresa(
   coluna: AnyPgColumn,
   empresaId: AnyPgColumn,
   alvo: { id: AnyPgColumn; empresaId: AnyPgColumn },
 ) {
-  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] });
+  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] })
 }
 
 const empresaId = () =>
   uuid('empresa_id')
     .notNull()
-    .references(() => empresa.id);
+    .references(() => empresa.id)
 
-export const ORIGENS_SAIDA = ['manual', 'xml'] as const;
-export const SITUACOES_SAIDA = ['lancada', 'estornada'] as const;
-export const ESTRATEGIAS_USADAS = ['documento', 'escolha', 'mais_antigo', 'sem_lote'] as const;
+export const ORIGENS_SAIDA = ['manual', 'xml'] as const
+export const SITUACOES_SAIDA = ['lancada', 'estornada'] as const
+export const ESTRATEGIAS_USADAS = ['documento', 'escolha', 'mais_antigo', 'sem_lote'] as const
 
 export const saida = pgTable(
   'saida',
@@ -77,7 +77,7 @@ export const saida = pgTable(
     check('saida_situacao', emLista('situacao', SITUACOES_SAIDA)),
     index('saida_data').on(t.estabelecimentoId, t.executadoEm),
   ],
-);
+)
 
 export const saidaItem = pgTable(
   'saida_item',
@@ -97,7 +97,7 @@ export const saidaItem = pgTable(
     daEmpresa(t.nfeItemId, t.empresaId, nfeItem),
     index('saida_item_saida').on(t.saidaId),
   ],
-);
+)
 
 /** De qual lote saiu (cantina.md, De qual lote sai cada garrafa): um movimento por baixa. */
 export const saidaBaixa = pgTable(
@@ -121,7 +121,7 @@ export const saidaBaixa = pgTable(
     check('saida_baixa_estrategia', emLista('estrategia', ESTRATEGIAS_USADAS)),
     index('saida_baixa_lote').on(t.loteItemId),
   ],
-);
+)
 
 /**
  * Devolução (cantina.md, Devolução): as garrafas voltam ao lote comercial de origem, no local
@@ -145,7 +145,7 @@ export const devolucao = pgTable(
     foreignKey({ columns: [t.saidaId], foreignColumns: [saida.id] }),
     index('devolucao_saida').on(t.saidaId),
   ],
-);
+)
 
 export const devolucaoItem = pgTable(
   'devolucao_item',
@@ -169,4 +169,4 @@ export const devolucaoItem = pgTable(
     daEmpresa(t.localId, t.empresaId, local),
     daEmpresa(t.movimentoId, t.empresaId, movimentoEstoque),
   ],
-);
+)

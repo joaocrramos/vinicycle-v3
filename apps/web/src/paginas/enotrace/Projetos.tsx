@@ -1,6 +1,6 @@
 // EnoTrace › Projetos de vinho (cantina.md, Projeto de vinho): lista, criação, ficha em abas,
 // plano (previsto × executado) e modelos de plano com dias relativos.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   type Composicao,
   dadosProjeto,
@@ -9,33 +9,33 @@ import {
   type SituacaoProjeto,
   TIPOS_OPERACAO,
   type TipoOperacao,
-} from '@vinicycle/shared';
-import { Plus, Trash2, X } from 'lucide-react';
-import { type FormEvent, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { AcoesLinha } from '@/componentes/AcoesLinha';
-import { Anexos } from '@/componentes/Anexos';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Historico } from '@/componentes/Historico';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { NotasDoDiario } from '@/paginas/gestao/Diario';
-import { SimuladorCorte } from './Simulador';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { useReferencia } from '@/lib/referencia';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarData, formatarDataHora } from '@/lib/utils';
-import { CartaoRotulo, OperacoesDe, type Rotulo } from './Lotes';
-import { ResumoComposicao } from './operacoes/comum';
+} from '@vinicycle/shared'
+import { Plus, Trash2, X } from 'lucide-react'
+import { type FormEvent, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { AcoesLinha } from '@/componentes/AcoesLinha'
+import { Anexos } from '@/componentes/Anexos'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Historico } from '@/componentes/Historico'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { NotasDoDiario } from '@/paginas/gestao/Diario'
+import { SimuladorCorte } from './Simulador'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { useReferencia } from '@/lib/referencia'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarData, formatarDataHora } from '@/lib/utils'
+import { CartaoRotulo, OperacoesDe, type Rotulo } from './Lotes'
+import { ResumoComposicao } from './operacoes/comum'
 
-const F = 'enotrace.projetos';
+const F = 'enotrace.projetos'
 
 const TOM_SITUACAO: Record<SituacaoProjeto, 'neutro' | 'sucesso' | 'alerta' | 'primario'> = {
   planejado: 'neutro',
@@ -45,15 +45,15 @@ const TOM_SITUACAO: Record<SituacaoProjeto, 'neutro' | 'sucesso' | 'alerta' | 'p
   engarrafado: 'sucesso',
   encerrado: 'neutro',
   cancelado: 'neutro',
-};
+}
 
 /** Operações que se planejam (sem estorno nem abertura de saldo). */
 const TIPOS_PLANO = (Object.keys(TIPOS_OPERACAO) as TipoOperacao[]).filter(
   (t) => !['estorno', 'abertura_saldo'].includes(t),
-);
+)
 
 export const litros = (v: string | number | null | undefined) =>
-  `${formatarDecimal(String(v ?? 0), 2)} L`;
+  `${formatarDecimal(String(v ?? 0), 2)} L`
 
 export function useEnologos() {
   return useQuery({
@@ -64,13 +64,13 @@ export function useEnologos() {
           '/api/pessoas/opcoes?papel=responsavel_tecnico',
         ),
         api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=funcionario'),
-      ]);
-      const vistos = new Set<string>();
+      ])
+      const vistos = new Set<string>()
       return [...a, ...b]
         .filter((p) => !vistos.has(p.id) && vistos.add(p.id))
-        .sort((x, y) => x.nome.localeCompare(y.nome));
+        .sort((x, y) => x.nome.localeCompare(y.nome))
     },
-  });
+  })
 }
 
 export function useVariedadesEmUso() {
@@ -82,27 +82,27 @@ export function useVariedadesEmUso() {
           '/api/catalogos/variedade?emUso=sim&tamanho=0',
         )
       ).itens,
-  });
+  })
 }
 
 // Lista ----------------------------------------------------------------------------------------
 
 interface LinhaProjeto {
-  id: string;
-  codigo: string;
-  nome: string;
-  safraPrevista: number;
-  cicloPrevisto: string | null;
-  denominacao: string;
-  situacao: SituacaoProjeto;
-  volume: string;
-  etapas: string[];
-  enologo: string | null;
+  id: string
+  codigo: string
+  nome: string
+  safraPrevista: number
+  cicloPrevisto: string | null
+  denominacao: string
+  situacao: SituacaoProjeto
+  volume: string
+  etapas: string[]
+  enologo: string | null
 }
 
 export function ListaProjetos() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
   return (
     <Pagina
       titulo="Projetos de vinho"
@@ -207,7 +207,7 @@ export function ListaProjetos() {
         ]}
       />
     </Pagina>
-  );
+  )
 }
 
 // Formulário -----------------------------------------------------------------------------------
@@ -227,31 +227,31 @@ export const PROJETO_VAZIO = {
   variedades: [] as string[],
   observacoes: '',
   versao: undefined as number | undefined,
-};
+}
 
 /** Campos do projeto; `rapido` mostra só o essencial (criação dentro da recepção). */
 export function CamposProjeto({
   form,
   rapido,
 }: {
-  form: ReturnType<typeof useFormulario<typeof dadosProjeto, typeof PROJETO_VAZIO>>;
-  rapido?: boolean;
+  form: ReturnType<typeof useFormulario<typeof dadosProjeto, typeof PROJETO_VAZIO>>
+  rapido?: boolean
 }) {
-  const { data: ref } = useReferencia();
-  const enologos = useEnologos();
-  const variedades = useVariedadesEmUso();
+  const { data: ref } = useReferencia()
+  const enologos = useEnologos()
+  const variedades = useVariedadesEmUso()
   const ciclos = useQuery({
     queryKey: ['parametros', '/api/cantina/ciclos'],
     queryFn: () => api.get<Array<{ numero: string; nome: string }>>('/api/cantina/ciclos'),
-  });
-  const v = form.valores;
-  const classe = ref?.classesProduto.find((c) => c.id === v.classeProdutoId);
+  })
+  const v = form.valores
+  const classe = ref?.classesProduto.find((c) => c.id === v.classeProdutoId)
   const lista = (nome: string) =>
     (ref?.listas[nome] ?? []).map((o) => (
       <option key={o.codigo} value={o.codigo}>
         {o.nome}
       </option>
-    ));
+    ))
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Campo rotulo="Nome" id="prj-nome" erro={form.erro('nome')} obrigatorio>
@@ -445,12 +445,12 @@ export function CamposProjeto({
         </>
       )}
     </div>
-  );
+  )
 }
 
 export function NovoProjeto() {
-  const navegar = useNavigate();
-  const form = useFormulario(dadosProjeto, PROJETO_VAZIO);
+  const navegar = useNavigate()
+  const form = useFormulario(dadosProjeto, PROJETO_VAZIO)
   return (
     <Pagina titulo="Novo projeto" trilha={['EnoTrace', 'Projetos de vinho']}>
       <Cartao>
@@ -459,14 +459,14 @@ export function NovoProjeto() {
             noValidate
             className="flex flex-col gap-5"
             onSubmit={async (ev: FormEvent) => {
-              ev.preventDefault();
-              const d = form.validar();
-              if (!d) return;
+              ev.preventDefault()
+              const d = form.validar()
+              if (!d) return
               try {
-                const r = await api.post<{ id: string }>('/api/projetos', d);
-                navegar(`/enotrace/projetos/${r.id}`, { replace: true });
+                const r = await api.post<{ id: string }>('/api/projetos', d)
+                navegar(`/enotrace/projetos/${r.id}`, { replace: true })
               } catch (e) {
-                form.erroDaApi(e);
+                form.erroDaApi(e)
               }
             }}
           >
@@ -482,56 +482,56 @@ export function NovoProjeto() {
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }
 
 // Ficha ----------------------------------------------------------------------------------------
 
 interface EtapaPlano {
-  id: string;
-  tipoOperacao: TipoOperacao;
-  dataPrevista: string;
-  recipienteId: string | null;
-  recipiente: string | null;
-  observacao: string | null;
-  insumos: Array<{ itemEstoqueId: string; item: string; dose: string; unidade: string }>;
-  executadas: Array<{ id: string; codigo: string; executadoEm: string }>;
+  id: string
+  tipoOperacao: TipoOperacao
+  dataPrevista: string
+  recipienteId: string | null
+  recipiente: string | null
+  observacao: string | null
+  insumos: Array<{ itemEstoqueId: string; item: string; dose: string; unidade: string }>
+  executadas: Array<{ id: string; codigo: string; executadoEm: string }>
 }
 
 interface Projeto {
-  id: string;
-  codigo: string;
-  nome: string;
-  safraPrevista: number;
-  cicloPrevisto: string | null;
-  classeProdutoId: string | null;
-  cor: string | null;
-  teorAcucar: string | null;
-  metodoEspumante: string | null;
-  teorAlcoolicoPretendido: string | null;
-  volumePrevistoLitros: string | null;
-  kgPrevistos: string | null;
-  enologoId: string | null;
-  observacoes: string | null;
-  situacao: SituacaoProjeto;
-  situacaoDesde: string;
-  versao: number;
-  projetoOrigem: { id: string; codigo: string; nome: string } | null;
-  incorporadoAo: { id: string; codigo: string; nome: string } | null;
-  denominacao: string;
-  volume: string;
-  variedades: Array<{ id: string; nome: string }>;
+  id: string
+  codigo: string
+  nome: string
+  safraPrevista: number
+  cicloPrevisto: string | null
+  classeProdutoId: string | null
+  cor: string | null
+  teorAcucar: string | null
+  metodoEspumante: string | null
+  teorAlcoolicoPretendido: string | null
+  volumePrevistoLitros: string | null
+  kgPrevistos: string | null
+  enologoId: string | null
+  observacoes: string | null
+  situacao: SituacaoProjeto
+  situacaoDesde: string
+  versao: number
+  projetoOrigem: { id: string; codigo: string; nome: string } | null
+  incorporadoAo: { id: string; codigo: string; nome: string } | null
+  denominacao: string
+  volume: string
+  variedades: Array<{ id: string; nome: string }>
   lotes: Array<{
-    id: string;
-    codigo: string;
-    etapa: string | null;
-    situacao: string;
-    titular: string | null;
-    rendimentoReal: string | null;
-    volume: string;
-    recipientes: Array<{ id: string; codigo: string; litros: string }>;
-  }>;
-  plano: EtapaPlano[];
+    id: string
+    codigo: string
+    etapa: string | null
+    situacao: string
+    titular: string | null
+    rendimentoReal: string | null
+    volume: string
+    recipientes: Array<{ id: string; codigo: string; litros: string }>
+  }>
+  plano: EtapaPlano[]
 }
 
 function DialogoEtapa({
@@ -539,11 +539,11 @@ function DialogoEtapa({
   etapa,
   aoFechar,
 }: {
-  projetoId: string;
-  etapa: EtapaPlano | null;
-  aoFechar: () => void;
+  projetoId: string
+  etapa: EtapaPlano | null
+  aoFechar: () => void
 }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const recipientes = useQuery({
     queryKey: ['recipientes-opcoes'],
     queryFn: async () =>
@@ -552,7 +552,7 @@ function DialogoEtapa({
           '/api/recipientes?tamanho=0',
         )
       ).itens,
-  });
+  })
   const insumos = useQuery({
     queryKey: ['insumos-opcoes'],
     queryFn: async () =>
@@ -561,7 +561,7 @@ function DialogoEtapa({
           '/api/itens-estoque?tamanho=0&tipo=insumo',
         )
       ).itens,
-  });
+  })
   const [d, setD] = useState({
     tipoOperacao: etapa?.tipoOperacao ?? ('desengace' as TipoOperacao),
     dataPrevista: etapa?.dataPrevista ?? new Date().toISOString().slice(0, 10),
@@ -572,8 +572,8 @@ function DialogoEtapa({
       dose: i.dose as string | null,
       unidade: i.unidade,
     })),
-  });
-  const [erro, setErro] = useState<string | null>(null);
+  })
+  const [erro, setErro] = useState<string | null>(null)
   return (
     <Dialogo
       aberto
@@ -586,19 +586,19 @@ function DialogoEtapa({
           </Botao>
           <Botao
             onClick={async () => {
-              setErro(null);
+              setErro(null)
               const corpo = {
                 ...d,
                 recipienteId: d.recipienteId || null,
                 insumos: d.insumos.filter((i) => i.itemEstoqueId),
-              };
+              }
               try {
-                if (etapa) await api.put(`/api/projetos/${projetoId}/plano/${etapa.id}`, corpo);
-                else await api.post(`/api/projetos/${projetoId}/plano`, corpo);
-                await qc.invalidateQueries({ queryKey: ['projeto', projetoId] });
-                aoFechar();
+                if (etapa) await api.put(`/api/projetos/${projetoId}/plano/${etapa.id}`, corpo)
+                else await api.post(`/api/projetos/${projetoId}/plano`, corpo)
+                await qc.invalidateQueries({ queryKey: ['projeto', projetoId] })
+                aoFechar()
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               }
             }}
           >
@@ -730,15 +730,15 @@ function DialogoEtapa({
         </div>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function AbaPlano({ p, podeEditar }: { p: Projeto; podeEditar: boolean }) {
-  const qc = useQueryClient();
-  const [etapa, setEtapa] = useState<EtapaPlano | 'nova' | null>(null);
-  const [aplicar, setAplicar] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-  const hoje = new Date().toISOString().slice(0, 10);
+  const qc = useQueryClient()
+  const [etapa, setEtapa] = useState<EtapaPlano | 'nova' | null>(null)
+  const [aplicar, setAplicar] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+  const hoje = new Date().toISOString().slice(0, 10)
   return (
     <div className="flex flex-col gap-3">
       {podeEditar && (
@@ -755,7 +755,7 @@ function AbaPlano({ p, podeEditar }: { p: Projeto; podeEditar: boolean }) {
       <Cartao>
         <ul className="divide-y">
           {p.plano.map((e) => {
-            const atrasada = !e.executadas.length && e.dataPrevista < hoje;
+            const atrasada = !e.executadas.length && e.dataPrevista < hoje
             return (
               <li
                 key={e.id}
@@ -800,10 +800,10 @@ function AbaPlano({ p, podeEditar }: { p: Projeto; podeEditar: boolean }) {
                       aria-label="Tirar etapa do plano"
                       onClick={async () => {
                         try {
-                          await api.post(`/api/projetos/${p.id}/plano/${e.id}/excluir`);
-                          await qc.invalidateQueries({ queryKey: ['projeto', p.id] });
+                          await api.post(`/api/projetos/${p.id}/plano/${e.id}/excluir`)
+                          await qc.invalidateQueries({ queryKey: ['projeto', p.id] })
                         } catch (x) {
-                          setErro((x as Error).message);
+                          setErro((x as Error).message)
                         }
                       }}
                     >
@@ -812,7 +812,7 @@ function AbaPlano({ p, podeEditar }: { p: Projeto; podeEditar: boolean }) {
                   )}
                 </span>
               </li>
-            );
+            )
           })}
           {!p.plano.length && (
             <li className="px-5 py-6 text-sm text-muted-foreground">
@@ -830,18 +830,18 @@ function AbaPlano({ p, podeEditar }: { p: Projeto; podeEditar: boolean }) {
       )}
       {aplicar && <AplicarModelo projetoId={p.id} aoFechar={() => setAplicar(false)} />}
     </div>
-  );
+  )
 }
 
 function AplicarModelo({ projetoId, aoFechar }: { projetoId: string; aoFechar: () => void }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const modelos = useQuery({
     queryKey: ['modelos-plano'],
     queryFn: () => api.get<ModeloPlano[]>('/api/modelos-plano'),
-  });
-  const [modeloId, setModeloId] = useState('');
-  const [dia0, setDia0] = useState(new Date().toISOString().slice(0, 10));
-  const [erro, setErro] = useState<string | null>(null);
+  })
+  const [modeloId, setModeloId] = useState('')
+  const [dia0, setDia0] = useState(new Date().toISOString().slice(0, 10))
+  const [erro, setErro] = useState<string | null>(null)
   return (
     <Dialogo
       aberto
@@ -860,11 +860,11 @@ function AplicarModelo({ projetoId, aoFechar }: { projetoId: string; aoFechar: (
                 await api.post(`/api/projetos/${projetoId}/plano/modelo`, {
                   modeloId,
                   dataDia0: dia0,
-                });
-                await qc.invalidateQueries({ queryKey: ['projeto', projetoId] });
-                aoFechar();
+                })
+                await qc.invalidateQueries({ queryKey: ['projeto', projetoId] })
+                aoFechar()
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               }
             }}
           >
@@ -905,19 +905,19 @@ function AplicarModelo({ projetoId, aoFechar }: { projetoId: string; aoFechar: (
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function AbaResumo({ p, podeEditar }: { p: Projeto; podeEditar: boolean }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const composicao = useQuery({
     queryKey: ['projeto-composicao', p.id, p.volume],
     queryFn: () =>
       api.get<{ composicao: Composicao; rotulo: Rotulo }>(`/api/projetos/${p.id}/composicao`),
-  });
-  const { data: ref } = useReferencia();
-  const etapas = ref?.listas.etapa_producao ?? [];
-  const nomeEtapa = (c: string | null) => etapas.find((e) => e.codigo === c)?.nome ?? c ?? '—';
+  })
+  const { data: ref } = useReferencia()
+  const etapas = ref?.listas.etapa_producao ?? []
+  const nomeEtapa = (c: string | null) => etapas.find((e) => e.codigo === c)?.nome ?? c ?? '—'
   return (
     <div className="flex flex-col gap-4">
       <div className="grid gap-4 sm:grid-cols-3">
@@ -985,8 +985,8 @@ function AbaResumo({ p, podeEditar }: { p: Projeto; podeEditar: boolean }) {
                   className="w-48"
                   value={l.etapa ?? ''}
                   onChange={async (e) => {
-                    await api.post(`/api/lotes/${l.id}/etapa`, { etapa: e.target.value });
-                    await qc.invalidateQueries({ queryKey: ['projeto', p.id] });
+                    await api.post(`/api/lotes/${l.id}/etapa`, { etapa: e.target.value })
+                    await qc.invalidateQueries({ queryKey: ['projeto', p.id] })
                   }}
                 >
                   <option value="" disabled>
@@ -1011,7 +1011,7 @@ function AbaResumo({ p, podeEditar }: { p: Projeto; podeEditar: boolean }) {
         </ul>
       </Cartao>
     </div>
-  );
+  )
 }
 
 function AbaDados({
@@ -1019,9 +1019,9 @@ function AbaDados({
   podeEditar,
   aoSalvar,
 }: {
-  p: Projeto;
-  podeEditar: boolean;
-  aoSalvar: () => Promise<void>;
+  p: Projeto
+  podeEditar: boolean
+  aoSalvar: () => Promise<void>
 }) {
   const inicial: typeof PROJETO_VAZIO = {
     nome: p.nome,
@@ -1038,8 +1038,8 @@ function AbaDados({
     variedades: p.variedades.map((v) => v.id),
     observacoes: p.observacoes ?? '',
     versao: p.versao,
-  };
-  const form = useFormulario(dadosProjeto, inicial);
+  }
+  const form = useFormulario(dadosProjeto, inicial)
   return (
     <Cartao>
       <CorpoCartao>
@@ -1047,14 +1047,14 @@ function AbaDados({
           noValidate
           className="flex flex-col gap-5"
           onSubmit={async (ev: FormEvent) => {
-            ev.preventDefault();
-            const d = form.validar();
-            if (!d) return;
+            ev.preventDefault()
+            const d = form.validar()
+            if (!d) return
             try {
-              await api.put(`/api/projetos/${p.id}`, d);
-              await aoSalvar();
+              await api.put(`/api/projetos/${p.id}`, d)
+              await aoSalvar()
             } catch (e) {
-              form.erroDaApi(e);
+              form.erroDaApi(e)
             }
           }}
         >
@@ -1070,41 +1070,41 @@ function AbaDados({
         </form>
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 export function FichaProjeto() {
-  const { id = '' } = useParams();
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
+  const { id = '' } = useParams()
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
   const q = useQuery({
     queryKey: ['projeto', id],
     queryFn: () => api.get<Projeto>(`/api/projetos/${id}`),
-  });
-  const [motivo, setMotivo] = useState<'cancelado' | 'encerrado' | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-  const podeEditar = pode(s, F, 'editar');
+  })
+  const [motivo, setMotivo] = useState<'cancelado' | 'encerrado' | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const podeEditar = pode(s, F, 'editar')
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const p = q.data;
+    )
+  const p = q.data
   const recarregar = async () => {
-    await qc.invalidateQueries({ queryKey: ['projeto', id] });
-  };
+    await qc.invalidateQueries({ queryKey: ['projeto', id] })
+  }
   const mudar = async (situacao: string, m?: string) => {
-    setErro(null);
+    setErro(null)
     try {
-      await api.post(`/api/projetos/${id}/situacao`, { situacao, motivo: m });
-      await recarregar();
+      await api.post(`/api/projetos/${id}/situacao`, { situacao, motivo: m })
+      await recarregar()
     } catch (e) {
-      setErro((e as Error).message);
+      setErro((e as Error).message)
     }
-  };
-  const aberto = !['encerrado', 'cancelado'].includes(p.situacao);
+  }
+  const aberto = !['encerrado', 'cancelado'].includes(p.situacao)
   return (
     <Pagina
       titulo={`${p.codigo} · ${p.nome}`}
@@ -1192,12 +1192,12 @@ export function FichaProjeto() {
         </ConteudoAba>
         <ConteudoAba value="recepcoes">
           <TabelaDados<{
-            id: string;
-            codigo: string | null;
-            chegadaEm: string;
-            variedades: string[];
-            kg: string;
-            aProcessar: string;
+            id: string
+            codigo: string | null
+            chegadaEm: string
+            variedades: string[]
+            kg: string
+            aProcessar: string
           }>
             tabela="romaneios-projeto"
             url={`/api/romaneios?projeto=${id}`}
@@ -1263,29 +1263,29 @@ export function FichaProjeto() {
         aoConfirmar={(m) => mudar(motivo!, m)}
       />
     </Pagina>
-  );
+  )
 }
 
 // Modelos de plano -----------------------------------------------------------------------------
 
 interface ModeloPlano {
-  id: string;
-  nome: string;
-  descricao: string | null;
-  ativo: boolean;
-  versao: number;
+  id: string
+  nome: string
+  descricao: string | null
+  ativo: boolean
+  versao: number
   etapas: Array<{
-    tipoOperacao: TipoOperacao;
-    diaRelativo: number;
-    observacao: string | null;
-    insumos: Array<{ itemEstoqueId: string; item: string; dose: string; unidade: string }>;
-  }>;
+    tipoOperacao: TipoOperacao
+    diaRelativo: number
+    observacao: string | null
+    insumos: Array<{ itemEstoqueId: string; item: string; dose: string; unidade: string }>
+  }>
 }
 
 function DialogoModelo({ modelo, aoFechar }: { modelo: ModeloPlano | null; aoFechar: () => void }) {
-  const qc = useQueryClient();
-  const [nome, setNome] = useState(modelo?.nome ?? '');
-  const [descricao, setDescricao] = useState(modelo?.descricao ?? '');
+  const qc = useQueryClient()
+  const [nome, setNome] = useState(modelo?.nome ?? '')
+  const [descricao, setDescricao] = useState(modelo?.descricao ?? '')
   const [etapas, setEtapas] = useState(
     (modelo?.etapas ?? []).map((e) => ({
       tipoOperacao: e.tipoOperacao,
@@ -1297,10 +1297,10 @@ function DialogoModelo({ modelo, aoFechar }: { modelo: ModeloPlano | null; aoFec
         unidade: i.unidade,
       })),
     })),
-  );
-  const [erro, setErro] = useState<string | null>(null);
+  )
+  const [erro, setErro] = useState<string | null>(null)
   const muda = (n: number, parcial: Partial<(typeof etapas)[number]>) =>
-    setEtapas(etapas.map((e, j) => (j === n ? { ...e, ...parcial } : e)));
+    setEtapas(etapas.map((e, j) => (j === n ? { ...e, ...parcial } : e)))
   return (
     <Dialogo
       aberto
@@ -1314,15 +1314,15 @@ function DialogoModelo({ modelo, aoFechar }: { modelo: ModeloPlano | null; aoFec
           </Botao>
           <Botao
             onClick={async () => {
-              setErro(null);
-              const corpo = { nome, descricao, etapas, versao: modelo?.versao };
+              setErro(null)
+              const corpo = { nome, descricao, etapas, versao: modelo?.versao }
               try {
-                if (modelo) await api.put(`/api/modelos-plano/${modelo.id}`, corpo);
-                else await api.post('/api/modelos-plano', corpo);
-                await qc.invalidateQueries({ queryKey: ['modelos-plano'] });
-                aoFechar();
+                if (modelo) await api.put(`/api/modelos-plano/${modelo.id}`, corpo)
+                else await api.post('/api/modelos-plano', corpo)
+                await qc.invalidateQueries({ queryKey: ['modelos-plano'] })
+                aoFechar()
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               }
             }}
           >
@@ -1407,18 +1407,18 @@ function DialogoModelo({ modelo, aoFechar }: { modelo: ModeloPlano | null; aoFec
         </div>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function PaginaModelosPlano() {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
   const q = useQuery({
     queryKey: ['modelos-plano'],
     queryFn: () => api.get<ModeloPlano[]>('/api/modelos-plano'),
-  });
-  const [editando, setEditando] = useState<ModeloPlano | 'novo' | null>(null);
-  const [inativar, setInativar] = useState<ModeloPlano | null>(null);
+  })
+  const [editando, setEditando] = useState<ModeloPlano | 'novo' | null>(null)
+  const [inativar, setInativar] = useState<ModeloPlano | null>(null)
   return (
     <Pagina
       titulo="Modelos de plano"
@@ -1451,8 +1451,8 @@ export function PaginaModelosPlano() {
                   aoEditar={() => setEditando(m)}
                   aoInativar={() => setInativar(m)}
                   aoReativar={async () => {
-                    await api.post(`/api/modelos-plano/${m.id}/reativar`);
-                    await qc.invalidateQueries({ queryKey: ['modelos-plano'] });
+                    await api.post(`/api/modelos-plano/${m.id}/reativar`)
+                    await qc.invalidateQueries({ queryKey: ['modelos-plano'] })
                   }}
                 />
               )
@@ -1494,10 +1494,10 @@ export function PaginaModelosPlano() {
         titulo={`Inativar ${inativar?.nome ?? ''}`}
         rotuloBotao="Inativar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/modelos-plano/${inativar!.id}/inativar`, { motivo });
-          await qc.invalidateQueries({ queryKey: ['modelos-plano'] });
+          await api.post(`/api/modelos-plano/${inativar!.id}/inativar`, { motivo })
+          await qc.invalidateQueries({ queryKey: ['modelos-plano'] })
         }}
       />
     </Pagina>
-  );
+  )
 }

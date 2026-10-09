@@ -1,6 +1,6 @@
 // Central de alertas (P20; 03-modelo-de-dados.md, 2.2, Alerta e Notificação): um alerta aberto por
 // chave, que se resolve sozinho quando a causa some; a leitura é por usuário.
-import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm'
 import {
   check,
   date,
@@ -10,12 +10,12 @@ import {
   text,
   uniqueIndex,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, usuario } from './acesso';
-import { dataHora, emLista, id } from './comum';
-import { empresa } from './plataforma';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento, usuario } from './acesso'
+import { dataHora, emLista, id } from './comum'
+import { empresa } from './plataforma'
 
-export const GRAVIDADES_ALERTA = ['info', 'atencao', 'critico'] as const;
+export const GRAVIDADES_ALERTA = ['info', 'atencao', 'critico'] as const
 
 export const alerta = pgTable(
   'alerta',
@@ -47,7 +47,7 @@ export const alerta = pgTable(
       .where(sql`situacao = 'aberto'`),
     index('alerta_situacao').on(t.empresaId, t.situacao),
   ],
-);
+)
 
 /** Leitura do alerta por usuário (2.2, Notificação: "lida em"). */
 export const alertaLeitura = pgTable(
@@ -65,4 +65,4 @@ export const alertaLeitura = pgTable(
     lidaEm: dataHora('lida_em').notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.alertaId, t.usuarioId] })],
-);
+)

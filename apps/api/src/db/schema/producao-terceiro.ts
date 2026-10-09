@@ -4,7 +4,7 @@
 // O produtor não registra as operações da cantina ("entrega simples"). O granel sai e entra pelas
 // operações da cantina (saída e entrada de granel); os insumos, pelo livro do estoque, para um
 // local externo (a cantina), onde fica o saldo em poder do terceiro.
-import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm'
 import {
   type AnyPgColumn,
   check,
@@ -16,35 +16,35 @@ import {
   text,
   unique,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, local } from './acesso';
-import { itemEstoque, produto, produtoFormato } from './cantina';
-import { variedade } from './catalogos';
-import { criacao, dataHora, emLista, id } from './comum';
-import { loteComercial } from './envase';
-import { loteItem } from './estoque';
-import { pessoa } from './gestao';
-import { empresa } from './plataforma';
-import { operacao, parcela, projeto, romaneioItem } from './producao';
-import { contratoTerceirizacao } from './terceiros';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento, local } from './acesso'
+import { itemEstoque, produto, produtoFormato } from './cantina'
+import { variedade } from './catalogos'
+import { criacao, dataHora, emLista, id } from './comum'
+import { loteComercial } from './envase'
+import { loteItem } from './estoque'
+import { pessoa } from './gestao'
+import { empresa } from './plataforma'
+import { operacao, parcela, projeto, romaneioItem } from './producao'
+import { contratoTerceirizacao } from './terceiros'
 
 function daEmpresa(
   coluna: AnyPgColumn,
   empresaId: AnyPgColumn,
   alvo: { id: AnyPgColumn; empresaId: AnyPgColumn },
 ) {
-  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] });
+  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] })
 }
 
 const empresaId = () =>
   uuid('empresa_id')
     .notNull()
-    .references(() => empresa.id);
+    .references(() => empresa.id)
 
-export const SITUACOES_TERCEIRO = ['lancada', 'estornada'] as const;
-export const TIPOS_ITEM_REMESSA = ['uva', 'granel', 'insumo'] as const;
-export const ORIGENS_UVA_REMESSA = ['parcela', 'romaneio', 'fornecedor'] as const;
-export const TIPOS_ITEM_RETORNO = ['granel', 'engarrafado', 'insumo_consumido'] as const;
+export const SITUACOES_TERCEIRO = ['lancada', 'estornada'] as const
+export const TIPOS_ITEM_REMESSA = ['uva', 'granel', 'insumo'] as const
+export const ORIGENS_UVA_REMESSA = ['parcela', 'romaneio', 'fornecedor'] as const
+export const TIPOS_ITEM_RETORNO = ['granel', 'engarrafado', 'insumo_consumido'] as const
 
 export const remessaTerceiro = pgTable(
   'remessa_terceiro',
@@ -81,7 +81,7 @@ export const remessaTerceiro = pgTable(
     check('remessa_terceiro_nf_chave', sql`nf_chave is null or nf_chave ~ '^[0-9]{44}$'`),
     index('remessa_terceiro_projeto').on(t.projetoId),
   ],
-);
+)
 
 export const remessaTerceiroItem = pgTable(
   'remessa_terceiro_item',
@@ -131,7 +131,7 @@ export const remessaTerceiroItem = pgTable(
     index('remessa_terceiro_item_romaneio').on(t.romaneioItemId),
     index('remessa_terceiro_item_operacao').on(t.operacaoId),
   ],
-);
+)
 
 export const retornoTerceiro = pgTable(
   'retorno_terceiro',
@@ -171,7 +171,7 @@ export const retornoTerceiro = pgTable(
     index('retorno_terceiro_remessa').on(t.remessaId),
     index('retorno_terceiro_projeto').on(t.projetoId),
   ],
-);
+)
 
 export const retornoTerceiroItem = pgTable(
   'retorno_terceiro_item',
@@ -216,4 +216,4 @@ export const retornoTerceiroItem = pgTable(
     ),
     index('retorno_terceiro_item_retorno').on(t.retornoId, t.ordem),
   ],
-);
+)

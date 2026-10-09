@@ -1,6 +1,6 @@
 // Estrutura da tela (ambiente-cliente.md): barra superior, menu lateral por módulo e conteúdo.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { NOMES_SITUACAO_EMPRESA, type SituacaoEmpresa } from '@vinicycle/shared';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { NOMES_SITUACAO_EMPRESA, type SituacaoEmpresa } from '@vinicycle/shared'
 import {
   FlaskConical,
   Boxes,
@@ -65,12 +65,12 @@ import {
   ClipboardList,
   FileSearch,
   BottleWine,
-} from 'lucide-react';
-import { type ReactNode, useEffect, useState } from 'react';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router';
-import { SinoAlertas } from '@/componentes/SinoAlertas';
-import { Botao } from '@/componentes/ui/botao';
-import { Selecao } from '@/componentes/ui/campos';
+} from 'lucide-react'
+import { type ReactNode, useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router'
+import { SinoAlertas } from '@/componentes/SinoAlertas'
+import { Botao } from '@/componentes/ui/botao'
+import { Selecao } from '@/componentes/ui/campos'
 import {
   ConteudoMenu,
   GatilhoMenu,
@@ -78,20 +78,20 @@ import {
   Menu,
   RotuloMenu,
   SeparadorMenu,
-} from '@/componentes/ui/menu';
-import { api } from '@/lib/api';
-import { type EstadoSessao, pode, useAtualizarSessao } from '@/lib/sessao';
-import { cn, formatarData, iniciais } from '@/lib/utils';
+} from '@/componentes/ui/menu'
+import { api } from '@/lib/api'
+import { type EstadoSessao, pode, useAtualizarSessao } from '@/lib/sessao'
+import { cn, formatarData, iniciais } from '@/lib/utils'
 
 interface ItemNavegacao {
-  para: string;
-  rotulo: string;
-  icone: ReactNode;
-  visivel: boolean;
+  para: string
+  rotulo: string
+  icone: ReactNode
+  visivel: boolean
   /** Seção retrátil dentro do módulo (itens da mesma seção ficam juntos). */
-  secao?: string;
+  secao?: string
   /** Número ao lado do nome (ex.: aprovações pendentes); zero não aparece. */
-  contador?: number;
+  contador?: number
 }
 
 const ICONES_SECAO: Record<string, ReactNode> = {
@@ -103,20 +103,20 @@ const ICONES_SECAO: Record<string, ReactNode> = {
   Documentos: <FileText />,
   'Empresa e acesso': <Building2 />,
   'Conta e dados': <CreditCard />,
-};
+}
 
 /** Módulos e seções abertos ou fechados: preferência deste navegador. */
-const CHAVE_MENU = 'vinicycle.menu.abertos';
+const CHAVE_MENU = 'vinicycle.menu.abertos'
 function lerAbertos(): Record<string, boolean> {
   try {
-    return JSON.parse(localStorage.getItem(CHAVE_MENU) ?? '{}') as Record<string, boolean>;
+    return JSON.parse(localStorage.getItem(CHAVE_MENU) ?? '{}') as Record<string, boolean>
   } catch {
-    return {};
+    return {}
   }
 }
 function gravarAbertos(v: Record<string, boolean>) {
   try {
-    localStorage.setItem(CHAVE_MENU, JSON.stringify(v));
+    localStorage.setItem(CHAVE_MENU, JSON.stringify(v))
   } catch {
     // Sem armazenamento: o menu só não lembra.
   }
@@ -205,7 +205,7 @@ function grupos(
           },
         ],
       },
-    ];
+    ]
   }
   // Um item sem permissão de Visualizar não aparece; um módulo não contratado também não (P25, P27).
   // Do uso diário para o raro (05/10/2026): o trabalho do dia a um clique, os módulos antes da
@@ -539,7 +539,7 @@ function grupos(
         },
       ],
     },
-  ];
+  ]
 }
 
 /**
@@ -547,12 +547,12 @@ function grupos(
  * também o Engarrafamento).
  */
 function itemAtivo(pathname: string, itens: ItemNavegacao[]): string | null {
-  let melhor: string | null = null;
+  let melhor: string | null = null
   for (const i of itens) {
-    if (pathname !== i.para && !pathname.startsWith(`${i.para}/`)) continue;
-    if (!melhor || i.para.length > melhor.length) melhor = i.para;
+    if (pathname !== i.para && !pathname.startsWith(`${i.para}/`)) continue
+    if (!melhor || i.para.length > melhor.length) melhor = i.para
   }
-  return melhor;
+  return melhor
 }
 
 function LinkMenu({
@@ -562,11 +562,11 @@ function LinkMenu({
   recuo,
   aoNavegar,
 }: {
-  item: ItemNavegacao;
-  ativo: boolean;
-  recolhido: boolean;
-  recuo?: boolean;
-  aoNavegar: () => void;
+  item: ItemNavegacao
+  ativo: boolean
+  recolhido: boolean
+  recuo?: boolean
+  aoNavegar: () => void
 }) {
   const contador = item.contador ? (
     <span
@@ -577,7 +577,7 @@ function LinkMenu({
     >
       {item.contador}
     </span>
-  ) : null;
+  ) : null
   return (
     <li>
       <NavLink
@@ -596,7 +596,7 @@ function LinkMenu({
         {contador}
       </NavLink>
     </li>
-  );
+  )
 }
 
 /**
@@ -614,25 +614,25 @@ function GrupoMenu({
   aoNavegar,
 }: {
   /** Vazio: itens soltos no topo, sem título. */
-  titulo: string;
-  funcao?: string;
-  itens: ItemNavegacao[];
-  ativoPara: string | null;
-  recolhido: boolean;
-  abertos: Record<string, boolean>;
-  alternar: (chave: string, atual: boolean) => void;
-  aoNavegar: () => void;
+  titulo: string
+  funcao?: string
+  itens: ItemNavegacao[]
+  ativoPara: string | null
+  recolhido: boolean
+  abertos: Record<string, boolean>
+  alternar: (chave: string, atual: boolean) => void
+  aoNavegar: () => void
 }) {
-  if (!itens.length) return null;
-  const ativo = (i: ItemNavegacao) => i.para === ativoPara;
-  const chaveModulo = `m:${titulo}`;
-  const moduloAberto = recolhido || (abertos[chaveModulo] ?? true) || itens.some(ativo);
+  if (!itens.length) return null
+  const ativo = (i: ItemNavegacao) => i.para === ativoPara
+  const chaveModulo = `m:${titulo}`
+  const moduloAberto = recolhido || (abertos[chaveModulo] ?? true) || itens.some(ativo)
   // Itens soltos e seções, na ordem em que aparecem.
-  const blocos: Array<{ secao: string | null; itens: ItemNavegacao[] }> = [];
+  const blocos: Array<{ secao: string | null; itens: ItemNavegacao[] }> = []
   for (const i of itens) {
-    const ultimo = blocos.at(-1);
-    if (i.secao && ultimo?.secao === i.secao) ultimo.itens.push(i);
-    else blocos.push({ secao: i.secao ?? null, itens: [i] });
+    const ultimo = blocos.at(-1)
+    if (i.secao && ultimo?.secao === i.secao) ultimo.itens.push(i)
+    else blocos.push({ secao: i.secao ?? null, itens: [i] })
   }
   return (
     <div>
@@ -667,9 +667,9 @@ function GrupoMenu({
                   recolhido={recolhido}
                   aoNavegar={aoNavegar}
                 />
-              ));
-            const chave = `s:${titulo}/${b.secao}`;
-            const aberta = abertos[chave] ?? b.itens.some(ativo);
+              ))
+            const chave = `s:${titulo}/${b.secao}`
+            const aberta = abertos[chave] ?? b.itens.some(ativo)
             return (
               <li key={chave}>
                 <button
@@ -701,12 +701,12 @@ function GrupoMenu({
                   </ul>
                 )}
               </li>
-            );
+            )
           })}
         </ul>
       )}
     </div>
-  );
+  )
 }
 
 function Avatar({
@@ -714,9 +714,9 @@ function Avatar({
   cor,
   className,
 }: {
-  nome: string;
-  cor?: string | null;
-  className?: string;
+  nome: string
+  cor?: string | null
+  className?: string
 }) {
   return (
     <span
@@ -729,13 +729,13 @@ function Avatar({
     >
       {iniciais(nome)}
     </span>
-  );
+  )
 }
 
 /** Faixa fixa da personificação (P28), com o botão de encerrar. */
 function FaixaPersonificacao({ p }: { p: NonNullable<EstadoSessao['personificacao']> }) {
-  const atualizar = useAtualizarSessao();
-  const navegar = useNavigate();
+  const atualizar = useAtualizarSessao()
+  const navegar = useNavigate()
   return (
     <div
       role="alert"
@@ -750,46 +750,46 @@ function FaixaPersonificacao({ p }: { p: NonNullable<EstadoSessao['personificaca
         type="button"
         className="rounded-md bg-white/20 px-3 py-1 hover:bg-white/30"
         onClick={async () => {
-          const s = await api.post<EstadoSessao>('/api/auth/personificacao/encerrar', {});
-          atualizar(s);
-          navegar('/plataforma/clientes');
+          const s = await api.post<EstadoSessao>('/api/auth/personificacao/encerrar', {})
+          atualizar(s)
+          navegar('/plataforma/clientes')
         }}
       >
         Encerrar
       </button>
     </div>
-  );
+  )
 }
 
 function Faixas({ s }: { s: EstadoSessao }) {
-  const e = s.empresa;
-  if (s.contexto !== 'empresa' || !e) return null;
-  const faixas: Array<{ tom: string; texto: string }> = [];
+  const e = s.empresa
+  if (s.contexto !== 'empresa' || !e) return null
+  const faixas: Array<{ tom: string; texto: string }> = []
   if (e.emTeste && e.fimTeste)
     faixas.push({
       tom: 'bg-accent text-accent-foreground',
       texto: `Período de teste até ${formatarData(e.fimTeste)}.`,
-    });
-  const c = e.cobranca;
+    })
+  const c = e.cobranca
   if (e.situacao === 'ativo' && c && e.eMaster)
     faixas.push({
       tom: 'bg-warning-muted',
       texto: `Fatura ${c.numero} vencida em ${formatarData(c.vencimento)}. Sem o pagamento, a empresa passa a somente leitura em ${formatarData(c.somenteLeituraEm)}.`,
-    });
+    })
   if (e.situacao === 'somente_leitura')
     faixas.push({
       tom: 'bg-warning-muted',
       texto: c
         ? `Fatura ${c.numero} vencida em ${formatarData(c.vencimento)}: empresa em somente leitura (consultas e exportações liberadas, lançamentos bloqueados). Sem o pagamento, o acesso é bloqueado em ${formatarData(c.bloqueioEm)}. O pagamento libera na hora.`
         : 'Empresa em somente leitura: consultas liberadas, alterações bloqueadas. Fale com o suporte.',
-    });
+    })
   if (e.situacao === 'bloqueado')
     faixas.push({
       tom: 'bg-destructive-muted',
       texto: c
         ? `Fatura ${c.numero} vencida em ${formatarData(c.vencimento)}: empresa bloqueada. Só o Master tem acesso, à assinatura e à exportação dos dados. O pagamento libera na hora.`
         : 'Empresa bloqueada. Só o Master tem acesso, à assinatura e à exportação dos dados.',
-    });
+    })
   return (
     <>
       {faixas.map((f) => (
@@ -798,59 +798,59 @@ function Faixas({ s }: { s: EstadoSessao }) {
         </div>
       ))}
     </>
-  );
+  )
 }
 
 export function Estrutura({ sessao: s, children }: { sessao: EstadoSessao; children?: ReactNode }) {
-  const navegar = useNavigate();
-  const qc = useQueryClient();
-  const atualizar = useAtualizarSessao();
-  const [recolhido, setRecolhido] = useState(!!s.usuario.preferencias?.menuRecolhido);
-  const [menuMovel, setMenuMovel] = useState(false);
-  const [abertos, setAbertos] = useState(lerAbertos);
+  const navegar = useNavigate()
+  const qc = useQueryClient()
+  const atualizar = useAtualizarSessao()
+  const [recolhido, setRecolhido] = useState(!!s.usuario.preferencias?.menuRecolhido)
+  const [menuMovel, setMenuMovel] = useState(false)
+  const [abertos, setAbertos] = useState(lerAbertos)
   function alternarAberto(chave: string, atual: boolean) {
-    const v = { ...abertos, [chave]: !atual };
-    setAbertos(v);
-    gravarAbertos(v);
+    const v = { ...abertos, [chave]: !atual }
+    setAbertos(v)
+    gravarAbertos(v)
   }
 
   async function trocar(dados: Record<string, unknown>) {
-    const novo = await api.post<EstadoSessao>('/api/auth/contexto', dados);
-    atualizar(novo);
+    const novo = await api.post<EstadoSessao>('/api/auth/contexto', dados)
+    atualizar(novo)
     if (dados.empresaId || dados.contexto)
-      navegar(novo.contexto === 'plataforma' ? '/plataforma/clientes' : '/inicio');
+      navegar(novo.contexto === 'plataforma' ? '/plataforma/clientes' : '/inicio')
   }
 
   async function sair() {
-    await api.post('/api/auth/sair');
-    qc.clear();
-    navegar('/entrar');
+    await api.post('/api/auth/sair')
+    qc.clear()
+    navegar('/entrar')
   }
 
   function alternarMenu() {
-    const v = !recolhido;
-    setRecolhido(v);
-    void api.put('/api/eu/preferencias', { menuRecolhido: v }).catch(() => {});
+    const v = !recolhido
+    setRecolhido(v)
+    void api.put('/api/eu/preferencias', { menuRecolhido: v }).catch(() => {})
   }
 
-  const e = s.empresa;
-  const { pathname } = useLocation();
+  const e = s.empresa
+  const { pathname } = useLocation()
   const resumoAprovacoes = useQuery({
     queryKey: ['aprovacoes', 'resumo', e?.id, e?.estabelecimentoId],
     queryFn: () => api.get<{ pendentes: number }>('/api/aprovacoes/resumo'),
     enabled: s.contexto === 'empresa' && pode(s, 'gestao.aprovacoes', 'visualizar'),
     refetchInterval: 60_000,
-  });
-  const navegacao = grupos(s, resumoAprovacoes.data?.pendentes ?? 0);
-  const visiveis = navegacao.flatMap((g) => g.itens.filter((i) => i.visivel));
-  const ativoPara = itemAtivo(pathname, visiveis);
+  })
+  const navegacao = grupos(s, resumoAprovacoes.data?.pendentes ?? 0)
+  const visiveis = navegacao.flatMap((g) => g.itens.filter((i) => i.visivel))
+  const ativoPara = itemAtivo(pathname, visiveis)
   // Vitrine dos módulos não contratados: no rodapé do menu, fora do trabalho do dia.
   const vitrine: ItemNavegacao = {
     para: '/modulos',
     rotulo: 'Conheça e contrate',
     icone: <Sparkles />,
     visivel: s.contexto === 'empresa' && e?.situacao !== 'bloqueado' && e?.modulos.length !== 5,
-  };
+  }
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -1031,7 +1031,7 @@ export function Estrutura({ sessao: s, children }: { sessao: EstadoSessao; child
         </main>
       </div>
     </div>
-  );
+  )
 }
 
 /** Título da tela e trilha (ex.: Gestão › Locais). */
@@ -1041,14 +1041,14 @@ export function Pagina({
   acoes,
   children,
 }: {
-  titulo: string;
-  trilha?: string[];
-  acoes?: ReactNode;
-  children: ReactNode;
+  titulo: string
+  trilha?: string[]
+  acoes?: ReactNode
+  children: ReactNode
 }) {
   useEffect(() => {
-    document.title = `${titulo} · ViniCycle`;
-  }, [titulo]);
+    document.title = `${titulo} · ViniCycle`
+  }, [titulo])
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -1064,5 +1064,5 @@ export function Pagina({
       </div>
       {children}
     </div>
-  );
+  )
 }

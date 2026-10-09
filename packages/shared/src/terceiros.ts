@@ -2,19 +2,19 @@
 // terceiros; 03-modelo-de-dados.md, 2.5, Terceirização; 04, roteiro do ciclo 10). O contrato segue a
 // IN MAPA 72/2018 (arts. 14, 25, 27, 28 e 30); o tratamento fiscal fica para a fase fiscal
 // (FISCAL.md). Fontes conferidas em pesquisa/2026-10-elaboracao-por-terceiros.md.
-import { z } from 'zod';
-import { formatarDocumento } from './documentos';
+import { z } from 'zod'
+import { formatarDocumento } from './documentos'
 
 const chaves = <T extends Record<string, string>>(o: T) =>
-  Object.keys(o) as [keyof T & string, ...(keyof T & string)[]];
+  Object.keys(o) as [keyof T & string, ...(keyof T & string)[]]
 
 /** Quem presta o serviço: a própria empresa (vinificação para terceiro) ou a contraparte. */
 export const SENTIDOS_CONTRATO = {
   prestamos: 'Prestamos o serviço (vinificação para terceiro)',
   contratamos: 'Contratamos o serviço (produção em terceiro)',
-} as const;
-export type SentidoContrato = keyof typeof SENTIDOS_CONTRATO;
-export const CHAVES_SENTIDO_CONTRATO = chaves(SENTIDOS_CONTRATO);
+} as const
+export type SentidoContrato = keyof typeof SENTIDOS_CONTRATO
+export const CHAVES_SENTIDO_CONTRATO = chaves(SENTIDOS_CONTRATO)
 
 /** Atividades contratadas (IN MAPA 72/2018, art. 25, §§4º e 6º). */
 export const ATIVIDADES_CONTRATO = {
@@ -22,9 +22,9 @@ export const ATIVIDADES_CONTRATO = {
   padronizacao: 'Padronização',
   envase: 'Envase',
   guarda: 'Guarda',
-} as const;
-export type AtividadeContrato = keyof typeof ATIVIDADES_CONTRATO;
-export const CHAVES_ATIVIDADE_CONTRATO = chaves(ATIVIDADES_CONTRATO);
+} as const
+export type AtividadeContrato = keyof typeof ATIVIDADES_CONTRATO
+export const CHAVES_ATIVIDADE_CONTRATO = chaves(ATIVIDADES_CONTRATO)
 
 /**
  * Quem tem o registro do produto: o contratante ("unidade central", IN 72, arts. 14 e 30) ou a
@@ -33,9 +33,9 @@ export const CHAVES_ATIVIDADE_CONTRATO = chaves(ATIVIDADES_CONTRATO);
 export const REGISTROS_PRODUTO = {
   contratante: 'O contratante (unidade central)',
   cantina: 'A cantina que produz, com a marca do cliente',
-} as const;
-export type RegistroProduto = keyof typeof REGISTROS_PRODUTO;
-export const CHAVES_REGISTRO_PRODUTO = chaves(REGISTROS_PRODUTO);
+} as const
+export type RegistroProduto = keyof typeof REGISTROS_PRODUTO
+export const CHAVES_REGISTRO_PRODUTO = chaves(REGISTROS_PRODUTO)
 
 /** Formas do texto do rótulo; o texto montado é editável no contrato. */
 export const FORMAS_TEXTO_ROTULO = {
@@ -45,36 +45,36 @@ export const FORMAS_TEXTO_ROTULO = {
   responsabilidade_padronizado:
     '"Padronizado e envasilhado sob responsabilidade de" + unidade central (IN 72, art. 28)',
   cantina_produtora: 'A cantina como produtora e o cliente como dono da marca',
-} as const;
-export type FormaTextoRotulo = keyof typeof FORMAS_TEXTO_ROTULO;
-export const CHAVES_FORMA_TEXTO_ROTULO = chaves(FORMAS_TEXTO_ROTULO);
+} as const
+export type FormaTextoRotulo = keyof typeof FORMAS_TEXTO_ROTULO
+export const CHAVES_FORMA_TEXTO_ROTULO = chaves(FORMAS_TEXTO_ROTULO)
 
 /** Perda tolerada no contrato: percentual do volume ou rendimento mínimo (L/kg). */
 export const TIPOS_PERDA_TOLERADA = {
   percentual: '% do volume',
   rendimento_minimo: 'rendimento mínimo (L/kg)',
-} as const;
-export const CHAVES_TIPO_PERDA_TOLERADA = chaves(TIPOS_PERDA_TOLERADA);
+} as const
+export const CHAVES_TIPO_PERDA_TOLERADA = chaves(TIPOS_PERDA_TOLERADA)
 
 /** Pagamento em produto: percentual do vinho pronto, litros ou garrafas. */
 export const UNIDADES_PAGAMENTO_PRODUTO = {
   percentual: '% do vinho pronto',
   litro: 'litros',
   garrafa: 'garrafas',
-} as const;
-export const CHAVES_UNIDADE_PAGAMENTO_PRODUTO = chaves(UNIDADES_PAGAMENTO_PRODUTO);
+} as const
+export const CHAVES_UNIDADE_PAGAMENTO_PRODUTO = chaves(UNIDADES_PAGAMENTO_PRODUTO)
 
 /** Motivo da transferência de titularidade (cantina.md, Mistura entre titulares; Pagamento em produto). */
 export const MOTIVOS_TITULARIDADE = {
   compra_venda: 'Compra ou venda do vinho',
   pagamento_servico: 'Pagamento do serviço em produto',
   outro: 'Outro',
-} as const;
-export type MotivoTitularidade = keyof typeof MOTIVOS_TITULARIDADE;
-export const CHAVES_MOTIVO_TITULARIDADE = chaves(MOTIVOS_TITULARIDADE);
+} as const
+export type MotivoTitularidade = keyof typeof MOTIVOS_TITULARIDADE
+export const CHAVES_MOTIVO_TITULARIDADE = chaves(MOTIVOS_TITULARIDADE)
 
 /** Forma da transferência: vinho no recipiente ou garrafas (e outros itens) no estoque. */
-export const FORMAS_TITULARIDADE = ['granel', 'estoque'] as const;
+export const FORMAS_TITULARIDADE = ['granel', 'estoque'] as const
 
 const textoOpc = (max: number) =>
   z
@@ -83,28 +83,28 @@ const textoOpc = (max: number) =>
     .max(max)
     .nullable()
     .optional()
-    .transform((v) => v || null);
+    .transform((v) => v || null)
 const decimal = (casas: number, mensagem: string) =>
-  z.string().regex(new RegExp(`^\\d+(\\.\\d{1,${casas}})?$`), mensagem);
+  z.string().regex(new RegExp(`^\\d+(\\.\\d{1,${casas}})?$`), mensagem)
 const decimalOpc = (casas: number, mensagem: string) =>
   decimal(casas, mensagem)
     .nullable()
     .optional()
     .or(z.literal('').transform(() => null))
-    .transform((v) => v ?? null);
+    .transform((v) => v ?? null)
 const opcional = <T extends [string, ...string[]]>(valores: T) =>
   z
     .enum(valores)
     .nullable()
     .optional()
     .or(z.literal('').transform(() => null))
-    .transform((v) => v ?? null);
+    .transform((v) => v ?? null)
 const dataOpc = z.iso
   .date()
   .nullable()
   .optional()
   .or(z.literal('').transform(() => null))
-  .transform((v) => v ?? null);
+  .transform((v) => v ?? null)
 
 /** Item de preço, só registrado (cobrança fica para a parte comercial e a fiscal). */
 export const precoContrato = z.object({
@@ -112,7 +112,7 @@ export const precoContrato = z.object({
   valor: decimal(2, 'Valor inválido'),
   /** Livre: por litro, por garrafa, por mês, total… */
   unidade: z.string().trim().min(1, 'Informe a unidade').max(40),
-});
+})
 
 export const dadosContrato = z
   .object({
@@ -165,49 +165,49 @@ export const dadosContrato = z
   })
   .superRefine((d, c) => {
     const erro = (campo: string, message: string) =>
-      c.addIssue({ code: 'custom', path: [campo], message });
+      c.addIssue({ code: 'custom', path: [campo], message })
     if (d.vigenciaFim && d.vigenciaFim < d.vigenciaInicio)
-      erro('vigenciaFim', 'O fim da vigência é anterior ao início');
+      erro('vigenciaFim', 'O fim da vigência é anterior ao início')
     if ((d.perdaToleradaTipo === null) !== (d.perdaToleradaValor === null))
       erro(
         d.perdaToleradaTipo === null ? 'perdaToleradaTipo' : 'perdaToleradaValor',
         'Informe o tipo e o valor da perda tolerada',
-      );
+      )
     if (d.perdaToleradaTipo === 'percentual' && Number(d.perdaToleradaValor) > 100)
-      erro('perdaToleradaValor', 'O percentual vai até 100');
+      erro('perdaToleradaValor', 'O percentual vai até 100')
     if ((d.pagamentoProdutoValor === null) !== (d.pagamentoProdutoUnidade === null))
       erro(
         d.pagamentoProdutoValor === null ? 'pagamentoProdutoValor' : 'pagamentoProdutoUnidade',
         'Informe quanto e em que unidade',
-      );
+      )
     if (d.pagamentoProdutoUnidade === 'percentual' && Number(d.pagamentoProdutoValor) > 100)
-      erro('pagamentoProdutoValor', 'O percentual vai até 100');
+      erro('pagamentoProdutoValor', 'O percentual vai até 100')
     if (!d.pagamentoDinheiro && !d.pagamentoProdutoUnidade)
-      erro('pagamentoDinheiro', 'Escolha ao menos uma forma de pagamento');
+      erro('pagamentoDinheiro', 'Escolha ao menos uma forma de pagamento')
     if (!d.comunicadoSipeagroEm && d.protocoloSipeagro)
-      erro('comunicadoSipeagroEm', 'Informe a data da comunicação');
-  });
-export type DadosContrato = z.infer<typeof dadosContrato>;
+      erro('comunicadoSipeagroEm', 'Informe a data da comunicação')
+  })
+export type DadosContrato = z.infer<typeof dadosContrato>
 
 export interface ParteRotulo {
-  nome: string;
-  tipoDocumento: 'cpf' | 'cnpj' | 'outro' | null;
-  documento: string | null;
+  nome: string
+  tipoDocumento: 'cpf' | 'cnpj' | 'outro' | null
+  documento: string | null
   /** Endereço em uma linha, para as formas "sob responsabilidade de". */
-  endereco?: string | null;
+  endereco?: string | null
 }
 
 function comDocumento(p: ParteRotulo): string {
-  if (!p.documento) return p.nome;
-  const rotulo = p.tipoDocumento === 'cpf' ? 'CPF' : p.tipoDocumento === 'cnpj' ? 'CNPJ' : 'doc.';
+  if (!p.documento) return p.nome
+  const rotulo = p.tipoDocumento === 'cpf' ? 'CPF' : p.tipoDocumento === 'cnpj' ? 'CNPJ' : 'doc.'
   const valor =
     p.tipoDocumento === 'cpf' || p.tipoDocumento === 'cnpj'
       ? formatarDocumento(p.tipoDocumento, p.documento)
-      : p.documento;
-  return `${p.nome}, ${rotulo} ${valor}`;
+      : p.documento
+  return `${p.nome}, ${rotulo} ${valor}`
 }
 
-const comEndereco = (p: ParteRotulo) => (p.endereco ? `${p.nome}, ${p.endereco}` : p.nome);
+const comEndereco = (p: ParteRotulo) => (p.endereco ? `${p.nome}, ${p.endereco}` : p.nome)
 
 /**
  * Texto do rótulo na elaboração por terceiro, montado a partir do contrato (cantina.md, Rótulo;
@@ -219,16 +219,16 @@ export function textoRotuloTerceirizacao(
   forma: FormaTextoRotulo,
   partes: { cantina: ParteRotulo; cliente: ParteRotulo; unidadeCentral: ParteRotulo },
 ): string {
-  const { cantina, cliente, unidadeCentral } = partes;
+  const { cantina, cliente, unidadeCentral } = partes
   switch (forma) {
     case 'produzido_para':
-      return `Produzido por ${comDocumento(cantina)}, para ${comDocumento(cliente)}`;
+      return `Produzido por ${comDocumento(cantina)}, para ${comDocumento(cliente)}`
     case 'responsabilidade_produzido':
-      return `Produzido e envasilhado sob responsabilidade de ${comEndereco(unidadeCentral)}`;
+      return `Produzido e envasilhado sob responsabilidade de ${comEndereco(unidadeCentral)}`
     case 'responsabilidade_padronizado':
-      return `Padronizado e envasilhado sob responsabilidade de ${comEndereco(unidadeCentral)}`;
+      return `Padronizado e envasilhado sob responsabilidade de ${comEndereco(unidadeCentral)}`
     case 'cantina_produtora':
-      return `Produzido e envasilhado por ${comDocumento(cantina)}. Marca de propriedade de ${comDocumento(cliente)}`;
+      return `Produzido e envasilhado por ${comDocumento(cantina)}. Marca de propriedade de ${comDocumento(cliente)}`
   }
 }
 
@@ -237,7 +237,7 @@ export function contratoVigente(
   c: { vigenciaInicio: string; vigenciaFim: string | null },
   data: string,
 ): boolean {
-  return c.vigenciaInicio <= data && (!c.vigenciaFim || c.vigenciaFim >= data);
+  return c.vigenciaInicio <= data && (!c.vigenciaFim || c.vigenciaFim >= data)
 }
 
 const uuidOpcional = z
@@ -245,7 +245,7 @@ const uuidOpcional = z
   .nullable()
   .optional()
   .or(z.literal('').transform(() => null))
-  .transform((v) => v ?? null);
+  .transform((v) => v ?? null)
 
 /**
  * Transferência de titularidade no estoque (garrafas e outros itens com lote): o lote passa a ser
@@ -272,24 +272,24 @@ export const titularidadeEstoque = z.object({
     )
     .min(1, 'Inclua ao menos um item')
     .max(50),
-});
+})
 
-const litrosOpcionais = decimalOpc(2, 'Volume inválido');
-const datahora = z.iso.datetime({ offset: true, message: 'Informe data e hora' });
+const litrosOpcionais = decimalOpc(2, 'Volume inválido')
+const datahora = z.iso.datetime({ offset: true, message: 'Informe data e hora' })
 const chaveNfe = z
   .string()
   .regex(/^\d{44}$/, 'A chave tem 44 dígitos')
   .nullable()
   .optional()
   .or(z.literal('').transform(() => null))
-  .transform((v) => v ?? null);
+  .transform((v) => v ?? null)
 
 /** Origem da uva remetida à cantina (produção em terceiro, entrega simples). */
 export const ORIGENS_UVA_REMESSA = {
   parcela: 'Vinhedo próprio (parcela)',
   romaneio: 'Uva já recebida (romaneio)',
   fornecedor: 'Fornecedor que entregou direto na cantina',
-} as const;
+} as const
 
 /**
  * Remessa para terceiro ("vinho cigano", 04, roteiro do ciclo 10, bloco 5): uva, mosto ou vinho a
@@ -333,7 +333,7 @@ export const remessaTerceiro = z.object({
     )
     .min(1, 'Inclua ao menos um item')
     .max(50),
-});
+})
 
 /** Retorno de terceiro: registro único da chegada; vários retornos parciais por remessa. */
 export const retornoTerceiro = z.object({
@@ -392,4 +392,4 @@ export const retornoTerceiro = z.object({
     )
     .min(1, 'Inclua ao menos um item')
     .max(50),
-});
+})

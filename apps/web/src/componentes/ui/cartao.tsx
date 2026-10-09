@@ -1,5 +1,5 @@
-import type { ComponentProps, ReactNode } from 'react';
-import { cn } from '@/lib/utils';
+import type { ComponentProps, ReactNode } from 'react'
+import { cn } from '@/lib/utils'
 
 export function Cartao({ className, ...props }: ComponentProps<'section'>) {
   return (
@@ -7,7 +7,7 @@ export function Cartao({ className, ...props }: ComponentProps<'section'>) {
       className={cn('rounded-lg border bg-card text-card-foreground shadow-xs', className)}
       {...props}
     />
-  );
+  )
 }
 
 export function CabecalhoCartao({
@@ -15,9 +15,9 @@ export function CabecalhoCartao({
   descricao,
   acoes,
 }: {
-  titulo: ReactNode;
-  descricao?: ReactNode;
-  acoes?: ReactNode;
+  titulo: ReactNode
+  descricao?: ReactNode
+  acoes?: ReactNode
 }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-4">
@@ -27,11 +27,11 @@ export function CabecalhoCartao({
       </div>
       {acoes && <div className="flex gap-2">{acoes}</div>}
     </div>
-  );
+  )
 }
 
 export function CorpoCartao({ className, ...props }: ComponentProps<'div'>) {
-  return <div className={cn('p-5', className)} {...props} />;
+  return <div className={cn('p-5', className)} {...props} />
 }
 
 export function Etiqueta({
@@ -45,7 +45,7 @@ export function Etiqueta({
     alerta: 'bg-warning-muted text-warning',
     erro: 'bg-destructive-muted text-destructive',
     primario: 'bg-accent text-accent-foreground',
-  };
+  }
   return (
     <span
       className={cn(
@@ -55,7 +55,7 @@ export function Etiqueta({
       )}
       {...props}
     />
-  );
+  )
 }
 
 export function Aviso({
@@ -68,12 +68,12 @@ export function Aviso({
     erro: 'border-destructive/40 bg-destructive-muted text-foreground',
     sucesso: 'border-success/40 bg-success-muted text-foreground',
     info: 'border-primary/30 bg-accent text-accent-foreground',
-  };
+  }
   return (
     <div
       role={tom === 'erro' ? 'alert' : 'status'}
       className={cn('rounded-md border px-4 py-3 text-sm', tons[tom], className)}
       {...props}
     />
-  );
+  )
 }

@@ -1,15 +1,15 @@
 // Cenário da cantina para os testes das operações: empresa, recipientes, romaneio confirmado e lote.
-import { expect } from 'vitest';
-import type { montar } from './apoio';
+import { expect } from 'vitest'
+import type { montar } from './apoio'
 
 /** Empresa com estabelecimento, local, projeto tinto e os auxiliares de recipiente, uva e lote. */
 export async function cantina(t: Awaited<ReturnType<typeof montar>>) {
-  const { master } = await t.empresaComMaster();
-  const estab = await t.criarEstabelecimento(master);
-  await master.post('/api/auth/contexto', { estabelecimentoId: estab });
-  const local = (await master.post('/api/locais', { nome: 'Adega', uso: 'recipientes' })).corpo.id;
+  const { master } = await t.empresaComMaster()
+  const estab = await t.criarEstabelecimento(master)
+  await master.post('/api/auth/contexto', { estabelecimentoId: estab })
+  const local = (await master.post('/api/locais', { nome: 'Adega', uso: 'recipientes' })).corpo.id
   const tipos = (await master.get('/api/catalogos/tipo_recipiente?tamanho=0')).corpo
-    .itens as Array<{ id: string; nome: string }>;
+    .itens as Array<{ id: string; nome: string }>
   const recipiente = async (codigo: string, litros: string, tipo = 'Tanque de inox') =>
     (
       await master.post('/api/recipientes', {
@@ -18,16 +18,16 @@ export async function cantina(t: Awaited<ReturnType<typeof montar>>) {
         capacidadeLitros: litros,
         localId: local,
       })
-    ).corpo.id as string;
+    ).corpo.id as string
   const variedade = async (nome: string) =>
     (
       await master.get(`/api/catalogos/variedade?tamanho=0&busca=${encodeURIComponent(nome)}`)
-    ).corpo.itens.find((v: { nome: string }) => v.nome === nome).id as string;
-  const malbec = await variedade('Malbec');
-  const cabernet = await variedade('Cabernet Sauvignon');
+    ).corpo.itens.find((v: { nome: string }) => v.nome === nome).id as string
+  const malbec = await variedade('Malbec')
+  const cabernet = await variedade('Cabernet Sauvignon')
   const projeto = (
     await master.post('/api/projetos', { nome: 'Tinto 2026', safraPrevista: 2026, cor: 'tinto' })
-  ).corpo.id as string;
+  ).corpo.id as string
   /** Romaneio de vinhedo próprio, confirmado; devolve o id de cada item. */
   const romaneio = async (
     itens: Array<[string, string]>,
@@ -51,29 +51,29 @@ export async function cantina(t: Awaited<ReturnType<typeof montar>>) {
           },
         ],
       })),
-    });
+    })
     const avisos = (await master.get(`/api/romaneios/${r.corpo.id}/previa`)).corpo.avisos as Array<{
-      codigo: string;
-    }>;
+      codigo: string
+    }>
     const ok = await master.post(`/api/romaneios/${r.corpo.id}/confirmar`, {
       cientes: avisos.map((a) => a.codigo),
-    });
-    expect(ok.status).toBe(200);
+    })
+    expect(ok.status).toBe(200)
     return (
       (await master.get(`/api/romaneios/${r.corpo.id}`)).corpo.itens as Array<{ id: string }>
-    ).map((i) => i.id);
-  };
+    ).map((i) => i.id)
+  }
   const lote = async (recipienteId: string) => {
-    const p = (await master.get(`/api/projetos/${projeto}`)).corpo;
+    const p = (await master.get(`/api/projetos/${projeto}`)).corpo
     return (
       p.lotes as Array<{
-        id: string;
-        codigo: string;
-        volume: string;
-        rendimentoReal: string | null;
-        recipientes: Array<{ id: string; litros: string }>;
+        id: string
+        codigo: string
+        volume: string
+        rendimentoReal: string | null
+        recipientes: Array<{ id: string; litros: string }>
       }>
-    ).find((l) => l.recipientes.some((r) => r.id === recipienteId))!;
-  };
-  return { master, estab, recipiente, malbec, cabernet, projeto, romaneio, lote };
+    ).find((l) => l.recipientes.some((r) => r.id === recipienteId))!
+  }
+  return { master, estab, recipiente, malbec, cabernet, projeto, romaneio, lote }
 }

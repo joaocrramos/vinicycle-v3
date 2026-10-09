@@ -1,6 +1,6 @@
 // Cadastros da cantina e do estoque comum (03-modelo-de-dados.md, 2.4 e 2.5; cantina.md).
-import { SITUACOES_RECIPIENTE, TIPOS_ITEM_ESTOQUE } from '@vinicycle/shared';
-import { sql } from 'drizzle-orm';
+import { SITUACOES_RECIPIENTE, TIPOS_ITEM_ESTOQUE } from '@vinicycle/shared'
+import { sql } from 'drizzle-orm'
 import {
   boolean,
   check,
@@ -15,8 +15,8 @@ import {
   unique,
   uniqueIndex,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, local } from './acesso';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento, local } from './acesso'
 import {
   classeProduto,
   parametroAnalise,
@@ -24,16 +24,16 @@ import {
   tipoRecipiente,
   unidade,
   variedade,
-} from './catalogos';
-import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum';
-import { pessoa } from './gestao';
-import { empresa } from './plataforma';
+} from './catalogos'
+import { alteracao, criacao, dataHora, emLista, id, inativacao } from './comum'
+import { pessoa } from './gestao'
+import { empresa } from './plataforma'
 
 const refEstab = (t: { estabelecimentoId: never; empresaId: never }) =>
   foreignKey({
     columns: [t.estabelecimentoId, t.empresaId],
     foreignColumns: [estabelecimento.id, estabelecimento.empresaId],
-  });
+  })
 
 /** Variedades com que a empresa trabalha: só elas aparecem nas telas (ambiente-cliente.md). */
 export const empresaVariedade = pgTable(
@@ -49,7 +49,7 @@ export const empresaVariedade = pgTable(
     ...criacao(),
   },
   (t) => [primaryKey({ columns: [t.empresaId, t.variedadeId] })],
-);
+)
 
 /** Tanque, barrica, autoclave… O volume não é campo: é a soma do livro (seção 4 do modelo). */
 export const recipiente = pgTable(
@@ -97,7 +97,7 @@ export const recipiente = pgTable(
       sql`ano_primeiro_uso is null or ano_primeiro_uso between 1900 and 2200`,
     ),
   ],
-);
+)
 
 /** O que se guarda no estoque, de qualquer módulo. O saldo é por estabelecimento e local. */
 export const itemEstoque = pgTable(
@@ -131,7 +131,7 @@ export const itemEstoque = pgTable(
     check('item_estoque_tipo', emLista('tipo', TIPOS_ITEM_ESTOQUE)),
     check('item_estoque_minimo', sql`estoque_minimo is null or estoque_minimo >= 0`),
   ],
-);
+)
 
 /** Detalhe do insumo enológico (ambiente-cliente.md, Cadastros: cadastro completo). */
 export const itemInsumo = pgTable(
@@ -160,7 +160,7 @@ export const itemInsumo = pgTable(
       foreignColumns: [pessoa.id, pessoa.empresaId],
     }),
   ],
-);
+)
 
 /** Marca comercial. Dono vazio = a própria empresa; senão, o cliente de vinificação. */
 export const marca = pgTable(
@@ -185,7 +185,7 @@ export const marca = pgTable(
       sql`lower(nome)`,
     ),
   ],
-);
+)
 
 /** Vinho comercial. Denominação = classe + cor + açúcar (IN MAPA 14/2018, art. 26). */
 export const produto = pgTable(
@@ -219,7 +219,7 @@ export const produto = pgTable(
     unique('produto_id_empresa').on(t.id, t.empresaId),
     uniqueIndex('produto_nome').on(t.empresaId, t.marcaId, sql`lower(nome)`),
   ],
-);
+)
 
 /** Versões de rótulo, com o teor alcoólico declarado. */
 export const produtoRotulo = pgTable(
@@ -244,7 +244,7 @@ export const produtoRotulo = pgTable(
     unique('produto_rotulo_versao').on(t.produtoId, t.versao),
     check('produto_rotulo_teor', sql`teor_alcoolico > 0 and teor_alcoolico < 100`),
   ],
-);
+)
 
 /** Apresentação (750 mL, 1,5 L…). Cada formato é um item de estoque de produto acabado. */
 export const produtoFormato = pgTable(
@@ -272,7 +272,7 @@ export const produtoFormato = pgTable(
     uniqueIndex('produto_formato_item').on(t.itemEstoqueId),
     check('produto_formato_volume_positivo', sql`volume_ml > 0`),
   ],
-);
+)
 
 /** Materiais por unidade do formato (cantina.md, Engarrafamento). */
 export const fichaEmbalagem = pgTable(
@@ -297,7 +297,7 @@ export const fichaEmbalagem = pgTable(
     unique('ficha_embalagem_item').on(t.formatoId, t.itemEstoqueId),
     check('ficha_embalagem_quantidade', sql`quantidade > 0`),
   ],
-);
+)
 
 /** Nome de cada ciclo da safra, por estabelecimento (cantina.md, Códigos). */
 export const ciclo = pgTable(
@@ -315,7 +315,7 @@ export const ciclo = pgTable(
     unique('ciclo_numero').on(t.estabelecimentoId, t.numero),
     check('ciclo_numero_formato', sql`numero ~ '^[0-9]{2}$'`),
   ],
-);
+)
 
 /** Litros estimados por kg de uva (cantina.md, Quilos → litros). */
 export const rendimentoPadrao = pgTable(
@@ -338,7 +338,7 @@ export const rendimentoPadrao = pgTable(
       .nullsNotDistinct(),
     check('rendimento_padrao_faixa', sql`litros_por_kg > 0 and litros_por_kg < 1`),
   ],
-);
+)
 
 /** Parâmetros de análise que a empresa mede, com a unidade preferida. */
 export const empresaParametroAnalise = pgTable(
@@ -354,7 +354,7 @@ export const empresaParametroAnalise = pgTable(
     ativo: boolean('ativo').notNull().default(true),
   },
   (t) => [primaryKey({ columns: [t.empresaId, t.parametroId] })],
-);
+)
 
 /** Faixa de referência; o nível mais específico vence (cantina.md, Análises). */
 export const faixaIdeal = pgTable(
@@ -387,7 +387,7 @@ export const faixaIdeal = pgTable(
     ),
     check('faixa_ideal_ordem', sql`minimo is null or maximo is null or minimo <= maximo`),
   ],
-);
+)
 
 /** Higienização por tipo de recipiente; vencida gera alerta (cantina.md, Recipientes). */
 export const periodicidadeHigienizacao = pgTable(
@@ -409,7 +409,7 @@ export const periodicidadeHigienizacao = pgTable(
     check('periodicidade_higienizacao_dias', sql`intervalo_dias > 0`),
     index('periodicidade_higienizacao_empresa').on(t.empresaId),
   ],
-);
+)
 
 /** Parâmetros técnicos por tipo de tratamento, configurados pela empresa (2.5; P29). */
 export const tipoTratamentoParametro = pgTable(
@@ -436,4 +436,4 @@ export const tipoTratamentoParametro = pgTable(
       sql`lower(nome)`,
     ),
   ],
-);
+)

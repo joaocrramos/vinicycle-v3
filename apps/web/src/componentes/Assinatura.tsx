@@ -1,6 +1,6 @@
 // Painel da assinatura (administracao.md, Planos, adicionais e assinaturas; ambiente-cliente.md,
 // Configurações › Assinatura): o mesmo na ficha do cliente (Administração) e para o Master.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   descontoEntrada,
   type FormaPagamento,
@@ -14,121 +14,121 @@ import {
   PERIODICIDADES,
   type Periodicidade,
   type TipoAdicional,
-} from '@vinicycle/shared';
-import { Ban, Pencil } from 'lucide-react';
-import { useState } from 'react';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { formatarData } from '@/lib/utils';
-import { CampoNumero } from './campos-especiais';
-import { AcoesLinha, BotaoIcone } from './AcoesLinha';
-import { PedirMotivo } from './PedirMotivo';
-import { Botao } from './ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from './ui/cartao';
-import { AreaTexto, Campo, Entrada, Selecao } from './ui/campos';
-import { Dialogo } from './ui/dialogo';
+} from '@vinicycle/shared'
+import { Ban, Pencil } from 'lucide-react'
+import { useState } from 'react'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { formatarData } from '@/lib/utils'
+import { CampoNumero } from './campos-especiais'
+import { AcoesLinha, BotaoIcone } from './AcoesLinha'
+import { PedirMotivo } from './PedirMotivo'
+import { Botao } from './ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from './ui/cartao'
+import { AreaTexto, Campo, Entrada, Selecao } from './ui/campos'
+import { Dialogo } from './ui/dialogo'
 
 export interface ResumoAssinatura {
-  id: string;
-  plano: { id: string; nome: string; formasPagamento: FormaPagamento[] };
-  periodicidade: Periodicidade;
-  valorContratado: string;
-  valorRecorrente: string;
-  inicio: string;
-  emTeste: boolean;
-  fimTeste: string | null;
-  cicloInicio: string | null;
-  cicloFim: string | null;
-  proximaRenovacao: string;
-  diaVencimento: number;
+  id: string
+  plano: { id: string; nome: string; formasPagamento: FormaPagamento[] }
+  periodicidade: Periodicidade
+  valorContratado: string
+  valorRecorrente: string
+  inicio: string
+  emTeste: boolean
+  fimTeste: string | null
+  cicloInicio: string | null
+  cicloFim: string | null
+  proximaRenovacao: string
+  diaVencimento: number
   /** A partir desta data o Master muda o dia de novo; vazia se já pode. */
-  diaVencimentoLivreEm: string | null;
-  formaPagamento: FormaPagamento | null;
+  diaVencimentoLivreEm: string | null
+  formaPagamento: FormaPagamento | null
   itens: Array<{
-    id: string;
-    adicionalId: string;
-    nome: string;
-    tipo: TipoAdicional;
-    tipoNome: string;
-    quantidade: number;
-    quantidadePorUnidade: number;
-    valorUnitario: string;
-    inicio: string;
-  }>;
+    id: string
+    adicionalId: string
+    nome: string
+    tipo: TipoAdicional
+    tipoNome: string
+    quantidade: number
+    quantidadePorUnidade: number
+    valorUnitario: string
+    inicio: string
+  }>
   mudancas: Array<{
-    id: string;
-    tipo: 'plano' | 'periodicidade' | 'adicional_inclusao' | 'adicional_retirada' | 'reajuste';
-    plano: string | null;
-    periodicidade: Periodicidade | null;
-    adicional: string | null;
-    quantidade: number | null;
-    efeitoEm: string;
-    situacao: 'agendada' | 'aplicada';
-    valorProporcional: string | null;
-    valorNovo: string | null;
-    motivo: string | null;
-    origem: 'plataforma' | 'master';
-    criadoEm: string;
-  }>;
+    id: string
+    tipo: 'plano' | 'periodicidade' | 'adicional_inclusao' | 'adicional_retirada' | 'reajuste'
+    plano: string | null
+    periodicidade: Periodicidade | null
+    adicional: string | null
+    quantidade: number | null
+    efeitoEm: string
+    situacao: 'agendada' | 'aplicada'
+    valorProporcional: string | null
+    valorNovo: string | null
+    motivo: string | null
+    origem: 'plataforma' | 'master'
+    criadoEm: string
+  }>
   descontos: Array<{
-    id: string;
-    tipo: 'percentual' | 'valor';
-    valor: string;
-    motivo: string | null;
-    inicio: string;
-    fim: string | null;
-  }>;
+    id: string
+    tipo: 'percentual' | 'valor'
+    valor: string
+    motivo: string | null
+    inicio: string
+    fim: string | null
+  }>
   limites: {
-    estabelecimentos: number | null;
-    usuarios: number | null;
-    armazenamentoGb: number | null;
-    mensagensWhatsapp: number;
-    mensagensSms: number;
-    modulos: string[];
-  };
+    estabelecimentos: number | null
+    usuarios: number | null
+    armazenamentoGb: number | null
+    mensagensWhatsapp: number
+    mensagensSms: number
+    modulos: string[]
+  }
   uso: {
-    estabelecimentos: number;
-    usuarios: number;
-    armazenamentoBytes: number;
-    mensagensWhatsapp: number;
-    mensagensSms: number;
-  };
-  excessos: string[];
+    estabelecimentos: number
+    usuarios: number
+    armazenamentoBytes: number
+    mensagensWhatsapp: number
+    mensagensSms: number
+  }
+  excessos: string[]
 }
 
 interface Opcao {
-  id: string;
-  nome: string;
-  descricao: string | null;
-  precos: Partial<Record<Periodicidade, string>>;
+  id: string
+  nome: string
+  descricao: string | null
+  precos: Partial<Record<Periodicidade, string>>
 }
 interface Opcoes {
-  planos: Opcao[];
-  adicionais: Array<Opcao & { tipo: TipoAdicional; quantidadePorUnidade: number }>;
+  planos: Opcao[]
+  adicionais: Array<Opcao & { tipo: TipoAdicional; quantidadePorUnidade: number }>
 }
 
 interface ResultadoMudanca {
-  situacao: 'aplicada' | 'agendada';
-  efeitoEm: string;
-  valorProporcional: string | null;
-  aviso: string | null;
+  situacao: 'aplicada' | 'agendada'
+  efeitoEm: string
+  valorProporcional: string | null
+  aviso: string | null
 }
 
-const moeda = (v: string | null | undefined) => formatarMoeda(paraCentavos(v));
-const ciclo = (p: Periodicidade) => NOMES_PERIODICIDADE[p].toLowerCase();
+const moeda = (v: string | null | undefined) => formatarMoeda(paraCentavos(v))
+const ciclo = (p: Periodicidade) => NOMES_PERIODICIDADE[p].toLowerCase()
 
 function descreverMudanca(m: ResumoAssinatura['mudancas'][number]): string {
   switch (m.tipo) {
     case 'plano':
-      return `Plano ${m.plano}`;
+      return `Plano ${m.plano}`
     case 'periodicidade':
-      return `Ciclo ${m.periodicidade ? ciclo(m.periodicidade) : ''}`;
+      return `Ciclo ${m.periodicidade ? ciclo(m.periodicidade) : ''}`
     case 'adicional_inclusao':
-      return `Inclusão: ${m.quantidade} × ${m.adicional}`;
+      return `Inclusão: ${m.quantidade} × ${m.adicional}`
     case 'adicional_retirada':
-      return `Retirada: ${m.quantidade} × ${m.adicional}`;
+      return `Retirada: ${m.quantidade} × ${m.adicional}`
     case 'reajuste':
-      return `Reajuste do plano para ${m.valorNovo ? moeda(m.valorNovo) : 'o preço de tabela'}${m.motivo ? ` (${m.motivo})` : ''}`;
+      return `Reajuste do plano para ${m.valorNovo ? moeda(m.valorNovo) : 'o preço de tabela'}${m.motivo ? ` (${m.motivo})` : ''}`
   }
 }
 
@@ -141,8 +141,8 @@ function textoResultado(r: ResultadoMudanca): string {
             ? `O proporcional de ${moeda(r.valorProporcional)} entra na próxima fatura.`
             : '',
         ]
-      : [`Mudança agendada para ${formatarData(r.efeitoEm)} (renovação), sem reembolso.`];
-  return [...partes, r.aviso ?? ''].filter(Boolean).join(' ');
+      : [`Mudança agendada para ${formatarData(r.efeitoEm)} (renovação), sem reembolso.`]
+  return [...partes, r.aviso ?? ''].filter(Boolean).join(' ')
 }
 
 function LinhaUso({ rotulo, uso, limite }: { rotulo: string; uso: string; limite: string | null }) {
@@ -151,11 +151,11 @@ function LinhaUso({ rotulo, uso, limite }: { rotulo: string; uso: string; limite
       <span>{rotulo}</span>
       <span>{limite === null ? `${uso} (sem limite)` : `${uso} de ${limite}`}</span>
     </p>
-  );
+  )
 }
 
 const gb = (bytes: number) =>
-  `${(bytes / 1024 ** 3).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} GB`;
+  `${(bytes / 1024 ** 3).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} GB`
 
 export function PainelAssinatura({
   url,
@@ -164,65 +164,65 @@ export function PainelAssinatura({
   plataforma,
 }: {
   /** Base das rotas: a ficha do cliente na Administração, ou /api/assinatura. */
-  url: string;
-  opcoesUrl: 'plataforma' | 'cliente';
-  podeMudar: boolean;
-  plataforma: boolean;
+  url: string
+  opcoesUrl: 'plataforma' | 'cliente'
+  podeMudar: boolean
+  plataforma: boolean
 }) {
-  const qc = useQueryClient();
-  const chave = ['assinatura', url];
-  const q = useQuery({ queryKey: chave, queryFn: () => api.get<ResumoAssinatura>(url) });
+  const qc = useQueryClient()
+  const chave = ['assinatura', url]
+  const q = useQuery({ queryKey: chave, queryFn: () => api.get<ResumoAssinatura>(url) })
   const opcoes = useQuery({
     queryKey: ['assinatura-opcoes', opcoesUrl],
     enabled: podeMudar,
     queryFn: async (): Promise<Opcoes> => {
-      if (opcoesUrl === 'cliente') return api.get<Opcoes>('/api/assinatura/opcoes');
+      if (opcoesUrl === 'cliente') return api.get<Opcoes>('/api/assinatura/opcoes')
       const [planos, adicionais] = await Promise.all([
         api.get<Opcoes['planos']>('/api/plataforma/planos'),
         api.get<Opcoes['adicionais']>('/api/plataforma/adicionais'),
-      ]);
-      return { planos, adicionais };
+      ])
+      return { planos, adicionais }
     },
-  });
+  })
   const [dialogo, setDialogo] = useState<
     | null
     | { tipo: 'plano' | 'periodicidade' | 'adicional' | 'cobranca' | 'desconto' | 'reajuste' }
     | { tipo: 'editarDesconto'; desconto: ResumoAssinatura['descontos'][number] }
     | { tipo: 'retirar'; item: ResumoAssinatura['itens'][number] }
-  >(null);
-  const [inativarDesconto, setInativarDesconto] = useState<string | null>(null);
-  const [contratar, setContratar] = useState(false);
+  >(null)
+  const [inativarDesconto, setInativarDesconto] = useState<string | null>(null)
+  const [contratar, setContratar] = useState(false)
   const [mensagem, setMensagem] = useState<{
-    tom: 'sucesso' | 'erro' | 'alerta';
-    texto: string;
-  } | null>(null);
-  const recarregar = () => qc.invalidateQueries({ queryKey: ['assinatura'] });
+    tom: 'sucesso' | 'erro' | 'alerta'
+    texto: string
+  } | null>(null)
+  const recarregar = () => qc.invalidateQueries({ queryKey: ['assinatura'] })
   const enviar = async (caminho: string, corpo: unknown) => {
     try {
-      const r = await api.post<ResultadoMudanca | { ok: true }>(`${url}/${caminho}`, corpo);
+      const r = await api.post<ResultadoMudanca | { ok: true }>(`${url}/${caminho}`, corpo)
       setMensagem(
         'situacao' in r
           ? { tom: r.aviso ? 'alerta' : 'sucesso', texto: textoResultado(r) }
           : { tom: 'sucesso', texto: 'Feito.' },
-      );
-      setDialogo(null);
-      await recarregar();
+      )
+      setDialogo(null)
+      await recarregar()
     } catch (e) {
-      setMensagem({ tom: 'erro', texto: (e as Error).message });
-      setDialogo(null);
+      setMensagem({ tom: 'erro', texto: (e as Error).message })
+      setDialogo(null)
     }
-  };
+  }
 
   if (!q.data) {
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando a assinatura…'}
       </p>
-    );
+    )
   }
-  const a = q.data;
-  const agendadas = a.mudancas.filter((m) => m.situacao === 'agendada');
-  const aplicadas = a.mudancas.filter((m) => m.situacao === 'aplicada');
+  const a = q.data
+  const agendadas = a.mudancas.filter((m) => m.situacao === 'agendada')
+  const aplicadas = a.mudancas.filter((m) => m.situacao === 'aplicada')
 
   return (
     <div className="flex flex-col gap-5">
@@ -532,9 +532,9 @@ export function PainelAssinatura({
             aoFechar={() => setContratar(false)}
             rotulo="Contratar"
             aoConfirmar={async () => {
-              setContratar(false);
-              await enviar('contratar', {});
-              await qc.invalidateQueries({ queryKey: ['faturas'] });
+              setContratar(false)
+              await enviar('contratar', {})
+              await qc.invalidateQueries({ queryKey: ['faturas'] })
             }}
           />
         }
@@ -551,12 +551,12 @@ export function PainelAssinatura({
             {
               motivo,
             },
-          );
-          await recarregar();
+          )
+          await recarregar()
         }}
       />
     </div>
-  );
+  )
 }
 
 function Rodape({
@@ -565,10 +565,10 @@ function Rodape({
   desabilitado,
   rotulo = 'Confirmar',
 }: {
-  aoFechar: () => void;
-  aoConfirmar: () => void;
-  desabilitado?: boolean;
-  rotulo?: string;
+  aoFechar: () => void
+  aoConfirmar: () => void
+  desabilitado?: boolean
+  rotulo?: string
 }) {
   return (
     <>
@@ -579,7 +579,7 @@ function Rodape({
         {rotulo}
       </Botao>
     </>
-  );
+  )
 }
 
 function EscolherPlano({
@@ -588,15 +588,15 @@ function EscolherPlano({
   aoFechar,
   aoEnviar,
 }: {
-  a: ResumoAssinatura;
-  opcoes: Opcao[];
-  aoFechar: () => void;
-  aoEnviar: (planoId: string) => void;
+  a: ResumoAssinatura
+  opcoes: Opcao[]
+  aoFechar: () => void
+  aoEnviar: (planoId: string) => void
 }) {
-  const [planoId, setPlanoId] = useState('');
-  const escolhido = opcoes.find((p) => p.id === planoId);
-  const preco = escolhido?.precos[a.periodicidade];
-  const maior = preco !== undefined && paraCentavos(preco) >= paraCentavos(a.valorContratado);
+  const [planoId, setPlanoId] = useState('')
+  const escolhido = opcoes.find((p) => p.id === planoId)
+  const preco = escolhido?.precos[a.periodicidade]
+  const maior = preco !== undefined && paraCentavos(preco) >= paraCentavos(a.valorContratado)
   return (
     <Dialogo
       aberto
@@ -639,7 +639,7 @@ function EscolherPlano({
           ))}
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function EscolherCiclo({
@@ -647,11 +647,11 @@ function EscolherCiclo({
   aoFechar,
   aoEnviar,
 }: {
-  a: ResumoAssinatura;
-  aoFechar: () => void;
-  aoEnviar: (p: Periodicidade) => void;
+  a: ResumoAssinatura
+  aoFechar: () => void
+  aoEnviar: (p: Periodicidade) => void
 }) {
-  const [p, setP] = useState<Periodicidade | ''>('');
+  const [p, setP] = useState<Periodicidade | ''>('')
   return (
     <Dialogo
       aberto
@@ -675,7 +675,7 @@ function EscolherCiclo({
         </Selecao>
       </Campo>
     </Dialogo>
-  );
+  )
 }
 
 function IncluirAdicional({
@@ -684,15 +684,15 @@ function IncluirAdicional({
   aoFechar,
   aoEnviar,
 }: {
-  a: ResumoAssinatura;
-  opcoes: Opcoes['adicionais'];
-  aoFechar: () => void;
-  aoEnviar: (adicionalId: string, quantidade: number) => void;
+  a: ResumoAssinatura
+  opcoes: Opcoes['adicionais']
+  aoFechar: () => void
+  aoEnviar: (adicionalId: string, quantidade: number) => void
 }) {
-  const [id, setId] = useState('');
-  const [quantidade, setQuantidade] = useState(1);
-  const escolhido = opcoes.find((x) => x.id === id);
-  const preco = escolhido?.precos[a.periodicidade];
+  const [id, setId] = useState('')
+  const [quantidade, setQuantidade] = useState(1)
+  const escolhido = opcoes.find((x) => x.id === id)
+  const preco = escolhido?.precos[a.periodicidade]
   return (
     <Dialogo
       aberto
@@ -746,7 +746,7 @@ function IncluirAdicional({
         )}
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function RetirarAdicional({
@@ -755,12 +755,12 @@ function RetirarAdicional({
   aoFechar,
   aoEnviar,
 }: {
-  a: ResumoAssinatura;
-  item: ResumoAssinatura['itens'][number];
-  aoFechar: () => void;
-  aoEnviar: (quantidade: number) => void;
+  a: ResumoAssinatura
+  item: ResumoAssinatura['itens'][number]
+  aoFechar: () => void
+  aoEnviar: (quantidade: number) => void
 }) {
-  const [quantidade, setQuantidade] = useState(item.quantidade);
+  const [quantidade, setQuantidade] = useState(item.quantidade)
   return (
     <Dialogo
       aberto
@@ -790,7 +790,7 @@ function RetirarAdicional({
         </Campo>
       )}
     </Dialogo>
-  );
+  )
 }
 
 function Cobranca({
@@ -800,20 +800,20 @@ function Cobranca({
   aoFechar,
   aoSalvar,
 }: {
-  a: ResumoAssinatura;
-  url: string;
-  plataforma: boolean;
-  aoFechar: () => void;
-  aoSalvar: () => void;
+  a: ResumoAssinatura
+  url: string
+  plataforma: boolean
+  aoFechar: () => void
+  aoSalvar: () => void
 }) {
   // O Master muda o dia uma vez a cada 90 dias; a Administração, quando precisar.
-  const diaTravado = !plataforma && !!a.diaVencimentoLivreEm;
-  const dias: number[] = [...DIAS_VENCIMENTO];
+  const diaTravado = !plataforma && !!a.diaVencimentoLivreEm
+  const dias: number[] = [...DIAS_VENCIMENTO]
   // O dia de antes da lista continua valendo até ser trocado.
-  if (!dias.includes(a.diaVencimento)) dias.unshift(a.diaVencimento);
-  const [dia, setDia] = useState(a.diaVencimento);
-  const [forma, setForma] = useState<FormaPagamento | ''>(a.formaPagamento ?? '');
-  const [erro, setErro] = useState<string | null>(null);
+  if (!dias.includes(a.diaVencimento)) dias.unshift(a.diaVencimento)
+  const [dia, setDia] = useState(a.diaVencimento)
+  const [forma, setForma] = useState<FormaPagamento | ''>(a.formaPagamento ?? '')
+  const [erro, setErro] = useState<string | null>(null)
   return (
     <Dialogo
       aberto
@@ -829,11 +829,11 @@ function Cobranca({
               await api.put(`${url}/cobranca`, {
                 diaVencimento: dia,
                 formaPagamento: forma || null,
-              });
-              aoSalvar();
-              aoFechar();
+              })
+              aoSalvar()
+              aoFechar()
             } catch (e) {
-              setErro((e as Error).message);
+              setErro((e as Error).message)
             }
           }}
         />
@@ -884,7 +884,7 @@ function Cobranca({
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function NovoDesconto({
@@ -893,10 +893,10 @@ function NovoDesconto({
   aoFechar,
   aoSalvar,
 }: {
-  url: string;
-  desconto?: ResumoAssinatura['descontos'][number];
-  aoFechar: () => void;
-  aoSalvar: () => void;
+  url: string
+  desconto?: ResumoAssinatura['descontos'][number]
+  aoFechar: () => void
+  aoSalvar: () => void
 }) {
   const form = useFormulario(descontoEntrada, {
     tipo: desconto?.tipo ?? 'percentual',
@@ -904,8 +904,8 @@ function NovoDesconto({
     motivo: desconto?.motivo ?? '',
     inicio: desconto?.inicio ?? new Date().toISOString().slice(0, 10),
     fim: desconto?.fim ?? '',
-  });
-  const v = form.valores;
+  })
+  const v = form.valores
   return (
     <Dialogo
       aberto
@@ -917,15 +917,15 @@ function NovoDesconto({
           aoFechar={aoFechar}
           rotulo="Salvar"
           aoConfirmar={async () => {
-            const d = form.validar();
-            if (!d) return;
+            const d = form.validar()
+            if (!d) return
             try {
-              if (desconto) await api.put(`${url}/${desconto.id}`, d);
-              else await api.post(url, d);
-              aoSalvar();
-              aoFechar();
+              if (desconto) await api.put(`${url}/${desconto.id}`, d)
+              else await api.post(url, d)
+              aoSalvar()
+              aoFechar()
             } catch (e) {
-              form.erroDaApi(e);
+              form.erroDaApi(e)
             }
           }}
         />
@@ -987,7 +987,7 @@ function NovoDesconto({
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 function Reajuste({
@@ -995,13 +995,13 @@ function Reajuste({
   aoFechar,
   aoEnviar,
 }: {
-  a: ResumoAssinatura;
-  aoFechar: () => void;
-  aoEnviar: (corpo: { modo: 'tabela' | 'valor'; valor: string | null; motivo: string }) => void;
+  a: ResumoAssinatura
+  aoFechar: () => void
+  aoEnviar: (corpo: { modo: 'tabela' | 'valor'; valor: string | null; motivo: string }) => void
 }) {
-  const [modo, setModo] = useState<'tabela' | 'valor'>('tabela');
-  const [valor, setValor] = useState<string | null>(null);
-  const [motivo, setMotivo] = useState('');
+  const [modo, setModo] = useState<'tabela' | 'valor'>('tabela')
+  const [valor, setValor] = useState<string | null>(null)
+  const [motivo, setMotivo] = useState('')
   return (
     <Dialogo
       aberto
@@ -1038,5 +1038,5 @@ function Reajuste({
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }

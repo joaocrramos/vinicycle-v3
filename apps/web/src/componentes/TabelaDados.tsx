@@ -1,42 +1,42 @@
 // Componente único de listagem (P4): ordenação pelo título da coluna, busca e filtros acima,
 // paginação (10, 20, 50, 100, Tudo) com o total, tudo feito no servidor. Lembra, por usuário e
 // por tabela, a última ordenação, os filtros e o tamanho de página; exporta o resultado filtrado.
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { type RespostaListagem, TAMANHO_TUDO, TAMANHOS_PAGINA } from '@vinicycle/shared';
-import { ArrowDown, ArrowUp, ArrowUpDown, Download, Search } from 'lucide-react';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { api, query } from '@/lib/api';
-import { cn } from '@/lib/utils';
-import { Botao } from './ui/botao';
-import { Entrada, Selecao } from './ui/campos';
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { type RespostaListagem, TAMANHO_TUDO, TAMANHOS_PAGINA } from '@vinicycle/shared'
+import { ArrowDown, ArrowUp, ArrowUpDown, Download, Search } from 'lucide-react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { api, query } from '@/lib/api'
+import { cn } from '@/lib/utils'
+import { Botao } from './ui/botao'
+import { Entrada, Selecao } from './ui/campos'
 
 export interface Coluna<T> {
-  id: string;
-  titulo: string;
-  ordenavel?: boolean;
-  celula: (item: T) => ReactNode;
+  id: string
+  titulo: string
+  ordenavel?: boolean
+  celula: (item: T) => ReactNode
   /** Texto exportado; sem ele, a coluna não vai para o arquivo. */
-  exportar?: (item: T) => string | number | null | undefined;
-  className?: string;
+  exportar?: (item: T) => string | number | null | undefined
+  className?: string
 }
 
 interface Estado {
-  pagina: number;
-  tamanho: number;
-  ordem: string | null;
-  direcao: 'asc' | 'desc' | null;
-  busca: string;
-  filtros: Record<string, string>;
+  pagina: number
+  tamanho: number
+  ordem: string | null
+  direcao: 'asc' | 'desc' | null
+  busca: string
+  filtros: Record<string, string>
 }
 
 function csv(linhas: Array<Array<string | number | null | undefined>>): string {
   const celula = (v: string | number | null | undefined) => {
-    const t = v === null || v === undefined ? '' : String(v);
-    return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
-  };
+    const t = v === null || v === undefined ? '' : String(v)
+    return /[";\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t
+  }
   // Ponto e vírgula e BOM: o Excel em português abre direto, com acentos.
-  return '﻿' + linhas.map((l) => l.map(celula).join(';')).join('\r\n');
+  return '﻿' + linhas.map((l) => l.map(celula).join(';')).join('\r\n')
 }
 
 export function TabelaDados<T extends { id: string }>({
@@ -53,19 +53,19 @@ export function TabelaDados<T extends { id: string }>({
   podeExportar = true,
 }: {
   /** Identificador para lembrar as preferências. */
-  tabela: string;
-  url: string;
-  colunas: Coluna<T>[];
-  ordemPadrao: { campo: string; direcao: 'asc' | 'desc' };
-  filtros?: (valores: Record<string, string>, definir: (k: string, v: string) => void) => ReactNode;
-  filtrosIniciais?: Record<string, string>;
-  aoClicar?: (item: T) => void;
-  acoes?: ReactNode;
-  vazio?: ReactNode;
-  nomeArquivo?: string;
-  podeExportar?: boolean;
+  tabela: string
+  url: string
+  colunas: Coluna<T>[]
+  ordemPadrao: { campo: string; direcao: 'asc' | 'desc' }
+  filtros?: (valores: Record<string, string>, definir: (k: string, v: string) => void) => ReactNode
+  filtrosIniciais?: Record<string, string>
+  aoClicar?: (item: T) => void
+  acoes?: ReactNode
+  vazio?: ReactNode
+  nomeArquivo?: string
+  podeExportar?: boolean
 }) {
-  const { t } = useTranslation();
+  const { t } = useTranslation()
   const [estado, setEstado] = useState<Estado>({
     pagina: 1,
     tamanho: 10,
@@ -73,23 +73,23 @@ export function TabelaDados<T extends { id: string }>({
     direcao: null,
     busca: '',
     filtros: filtrosIniciais,
-  });
-  const [busca, setBusca] = useState('');
-  const [carregouPreferencia, setCarregouPreferencia] = useState(false);
-  const salvar = useRef<ReturnType<typeof setTimeout>>(undefined);
+  })
+  const [busca, setBusca] = useState('')
+  const [carregouPreferencia, setCarregouPreferencia] = useState(false)
+  const salvar = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   useEffect(() => {
-    let ativo = true;
+    let ativo = true
     api
       .get<{
-        ordem: string | null;
-        direcao: 'asc' | 'desc' | null;
-        tamanho: number;
-        filtros: Record<string, string>;
+        ordem: string | null
+        direcao: 'asc' | 'desc' | null
+        tamanho: number
+        filtros: Record<string, string>
       } | null>(`/api/preferencias-listagem/${tabela}`)
       .then((p) => {
-        if (!ativo || !p) return;
-        const { busca: b = '', ...filtros } = p.filtros ?? {};
+        if (!ativo || !p) return
+        const { busca: b = '', ...filtros } = p.filtros ?? {}
         setEstado((e) => ({
           ...e,
           ordem: p.ordem,
@@ -97,19 +97,19 @@ export function TabelaDados<T extends { id: string }>({
           tamanho: p.tamanho,
           busca: b,
           filtros: { ...e.filtros, ...filtros },
-        }));
-        setBusca(b);
+        }))
+        setBusca(b)
       })
       .catch(() => {})
-      .finally(() => ativo && setCarregouPreferencia(true));
+      .finally(() => ativo && setCarregouPreferencia(true))
     return () => {
-      ativo = false;
-    };
-  }, [tabela]);
+      ativo = false
+    }
+  }, [tabela])
 
   useEffect(() => {
-    if (!carregouPreferencia) return;
-    clearTimeout(salvar.current);
+    if (!carregouPreferencia) return
+    clearTimeout(salvar.current)
     salvar.current = setTimeout(() => {
       void api
         .put(`/api/preferencias-listagem/${tabela}`, {
@@ -118,18 +118,18 @@ export function TabelaDados<T extends { id: string }>({
           tamanho: estado.tamanho,
           filtros: { ...estado.filtros, busca: estado.busca },
         })
-        .catch(() => {});
-    }, 800);
-  }, [tabela, estado, carregouPreferencia]);
+        .catch(() => {})
+    }, 800)
+  }, [tabela, estado, carregouPreferencia])
 
   // A busca vai ao servidor depois de uma pausa na digitação.
   useEffect(() => {
     const id = setTimeout(
       () => setEstado((e) => (e.busca === busca ? e : { ...e, busca, pagina: 1 })),
       300,
-    );
-    return () => clearTimeout(id);
-  }, [busca]);
+    )
+    return () => clearTimeout(id)
+  }, [busca])
 
   const parametros = {
     pagina: estado.pagina,
@@ -138,43 +138,43 @@ export function TabelaDados<T extends { id: string }>({
     direcao: estado.direcao ?? undefined,
     busca: estado.busca,
     ...estado.filtros,
-  };
+  }
   const q = useQuery({
     queryKey: ['lista', url, parametros],
     queryFn: () => api.get<RespostaListagem<T>>(url + query(parametros)),
     enabled: carregouPreferencia,
     placeholderData: keepPreviousData,
-  });
+  })
 
-  const ordemAtual = estado.ordem ?? ordemPadrao.campo;
-  const direcaoAtual = estado.ordem ? (estado.direcao ?? 'asc') : ordemPadrao.direcao;
+  const ordemAtual = estado.ordem ?? ordemPadrao.campo
+  const direcaoAtual = estado.ordem ? (estado.direcao ?? 'asc') : ordemPadrao.direcao
   const ordenar = (id: string) =>
     setEstado((e) => ({
       ...e,
       pagina: 1,
       ordem: id,
       direcao: ordemAtual === id && direcaoAtual === 'asc' ? 'desc' : 'asc',
-    }));
+    }))
 
-  const total = q.data?.total ?? 0;
+  const total = q.data?.total ?? 0
   const paginas =
-    estado.tamanho === TAMANHO_TUDO ? 1 : Math.max(1, Math.ceil(total / estado.tamanho));
+    estado.tamanho === TAMANHO_TUDO ? 1 : Math.max(1, Math.ceil(total / estado.tamanho))
 
   async function exportar() {
     const tudo = await api.get<RespostaListagem<T>>(
       url + query({ ...parametros, pagina: 1, tamanho: TAMANHO_TUDO }),
-    );
-    await api.post('/api/exportacoes', { tabela, registros: tudo.itens.length });
-    const cols = colunas.filter((c) => c.exportar);
+    )
+    await api.post('/api/exportacoes', { tabela, registros: tudo.itens.length })
+    const cols = colunas.filter((c) => c.exportar)
     const conteudo = csv([
       cols.map((c) => c.titulo),
       ...tudo.itens.map((i) => cols.map((c) => c.exportar!(i))),
-    ]);
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(new Blob([conteudo], { type: 'text/csv;charset=utf-8' }));
-    link.download = `${nomeArquivo ?? tabela}-${new Date().toISOString().slice(0, 10)}.csv`;
-    link.click();
-    URL.revokeObjectURL(link.href);
+    ])
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(new Blob([conteudo], { type: 'text/csv;charset=utf-8' }))
+    link.download = `${nomeArquivo ?? tabela}-${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(link.href)
   }
 
   return (
@@ -320,5 +320,5 @@ export function TabelaDados<T extends { id: string }>({
         </div>
       </div>
     </div>
-  );
+  )
 }

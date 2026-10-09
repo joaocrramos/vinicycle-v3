@@ -1,65 +1,65 @@
 // EnoTrace › Livro de álcool etílico (cantina.md, Fermentação, chaptalização, álcool e atesto;
 // Lei 7.678/1988, art. 29, §3º): entradas e usos do período, com os saldos; cada entrada pede a
 // comunicação ao MAPA, registrada aqui (data e protocolo). Imprime e sai em CSV.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatarDecimal, TIPOS_MOVIMENTO_ESTOQUE } from '@vinicycle/shared';
-import { Download, Printer } from 'lucide-react';
-import { useState } from 'react';
-import { Link } from 'react-router';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Campo, Entrada } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { baixarCsv } from '@/lib/csv';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarData, formatarDataHora } from '@/lib/utils';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { formatarDecimal, TIPOS_MOVIMENTO_ESTOQUE } from '@vinicycle/shared'
+import { Download, Printer } from 'lucide-react'
+import { useState } from 'react'
+import { Link } from 'react-router'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Campo, Entrada } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { baixarCsv } from '@/lib/csv'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarData, formatarDataHora } from '@/lib/utils'
 
 interface Movimento {
-  id: string;
-  data: string;
-  item: string;
-  unidade: string;
-  lote: string | null;
-  quantidade: string;
-  tipo: string;
-  estornoDe: string | null;
-  documento: string | null;
-  emitente: string | null;
-  operacaoId: string | null;
-  operacao: string | null;
-  motivo: string | null;
-  estornado: boolean;
+  id: string
+  data: string
+  item: string
+  unidade: string
+  lote: string | null
+  quantidade: string
+  tipo: string
+  estornoDe: string | null
+  documento: string | null
+  emitente: string | null
+  operacaoId: string | null
+  operacao: string | null
+  motivo: string | null
+  estornado: boolean
 }
 interface Livro {
-  itens: Array<{ id: string; nome: string; unidade: string; inicial: string; final: string }>;
+  itens: Array<{ id: string; nome: string; unidade: string; inicial: string; final: string }>
   entradas: Array<
     Movimento & { comunicar: boolean; comunicacao: { em: string; protocolo: string | null } | null }
-  >;
-  usos: Movimento[];
+  >
+  usos: Movimento[]
 }
 
-const Q = (v: string, u: string) => `${formatarDecimal(String(Math.abs(Number(v))), 3)} ${u}`;
+const Q = (v: string, u: string) => `${formatarDecimal(String(Math.abs(Number(v))), 3)} ${u}`
 const tipo = (m: Movimento) =>
   m.estornoDe
     ? `Estorno de ${TIPOS_MOVIMENTO_ESTOQUE[m.estornoDe as keyof typeof TIPOS_MOVIMENTO_ESTOQUE] ?? m.estornoDe}`
-    : (TIPOS_MOVIMENTO_ESTOQUE[m.tipo as keyof typeof TIPOS_MOVIMENTO_ESTOQUE] ?? m.tipo);
+    : (TIPOS_MOVIMENTO_ESTOQUE[m.tipo as keyof typeof TIPOS_MOVIMENTO_ESTOQUE] ?? m.tipo)
 
 export function PaginaAlcool() {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const hoje = new Intl.DateTimeFormat('en-CA', { timeZone: fuso }).format(new Date());
-  const [de, setDe] = useState(`${hoje.slice(0, 4)}-01-01`);
-  const [ate, setAte] = useState(hoje);
-  const [comunicando, setComunicando] = useState<Livro['entradas'][number] | null>(null);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const hoje = new Intl.DateTimeFormat('en-CA', { timeZone: fuso }).format(new Date())
+  const [de, setDe] = useState(`${hoje.slice(0, 4)}-01-01`)
+  const [ate, setAte] = useState(hoje)
+  const [comunicando, setComunicando] = useState<Livro['entradas'][number] | null>(null)
   const q = useQuery({
     queryKey: ['alcool', de, ate],
     queryFn: () => api.get<Livro>(`/api/alcool?de=${de}&ate=${ate}`),
     enabled: !!de && !!ate,
-  });
-  const l = q.data;
+  })
+  const l = q.data
   return (
     <Pagina
       titulo="Livro de álcool etílico"
@@ -307,15 +307,15 @@ export function PaginaAlcool() {
         entrada={comunicando}
         hoje={hoje}
         aoFechar={async (salvou) => {
-          setComunicando(null);
+          setComunicando(null)
           if (salvou) {
-            await qc.invalidateQueries({ queryKey: ['alcool'] });
-            await qc.invalidateQueries({ queryKey: ['alertas'] });
+            await qc.invalidateQueries({ queryKey: ['alcool'] })
+            await qc.invalidateQueries({ queryKey: ['alertas'] })
           }
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 function DialogoComunicacao({
@@ -323,13 +323,13 @@ function DialogoComunicacao({
   hoje,
   aoFechar,
 }: {
-  entrada: Livro['entradas'][number] | null;
-  hoje: string;
-  aoFechar: (salvou: boolean) => void;
+  entrada: Livro['entradas'][number] | null
+  hoje: string
+  aoFechar: (salvou: boolean) => void
 }) {
-  const [em, setEm] = useState(hoje);
-  const [protocolo, setProtocolo] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
+  const [em, setEm] = useState(hoje)
+  const [protocolo, setProtocolo] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
   return (
     <Dialogo
       aberto={!!entrada}
@@ -348,16 +348,16 @@ function DialogoComunicacao({
           <Botao
             disabled={!em}
             onClick={async () => {
-              setErro(null);
+              setErro(null)
               try {
                 await api.post(`/api/alcool/entradas/${entrada!.id}/comunicacao`, {
                   comunicadaEm: em,
                   protocolo: protocolo || null,
-                });
-                setProtocolo('');
-                aoFechar(true);
+                })
+                setProtocolo('')
+                aoFechar(true)
               } catch (e) {
-                setErro(e instanceof ErroApi ? e.message : (e as Error).message);
+                setErro(e instanceof ErroApi ? e.message : (e as Error).message)
               }
             }}
           >
@@ -386,5 +386,5 @@ function DialogoComunicacao({
         {erro && <Aviso tom="erro">{erro}</Aviso>}
       </div>
     </Dialogo>
-  );
+  )
 }

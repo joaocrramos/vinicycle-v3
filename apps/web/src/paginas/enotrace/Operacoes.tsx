@@ -1,7 +1,7 @@
 // EnoTrace › Operações: desengace e prensagem (cantina.md, Desengace, esmagamento e prensagem),
 // com a prévia de cada recipiente antes e depois (cantina.md, Tela de registro em passos), o
 // rascunho e o estorno (cantina.md, Regras comuns das operações) e a lista e a ficha das operações.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   EMBALAGENS_GRANEL,
   formatarDecimal,
@@ -11,24 +11,24 @@ import {
   TIPOS_OPERACAO,
   TIPOS_SAIDA_GRANEL,
   type TipoOperacao,
-} from '@vinicycle/shared';
-import { Plus, Trash2, Undo2 } from 'lucide-react';
-import { useState } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router';
-import { BotaoIcone } from '@/componentes/AcoesLinha';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Botao } from '@/componentes/ui/botao';
-import { ConteudoMenu, GatilhoMenu, ItemMenu, Menu } from '@/componentes/ui/menu';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { nomeNaLista, useReferencia } from '@/lib/referencia';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
-import { litros } from './Projetos';
+} from '@vinicycle/shared'
+import { Plus, Trash2, Undo2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, Navigate, useNavigate, useParams } from 'react-router'
+import { BotaoIcone } from '@/componentes/AcoesLinha'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Botao } from '@/componentes/ui/botao'
+import { ConteudoMenu, GatilhoMenu, ItemMenu, Menu } from '@/componentes/ui/menu'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { nomeNaLista, useReferencia } from '@/lib/referencia'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
+import { litros } from './Projetos'
 import {
   F,
   TIPOS_LIGACAO,
@@ -46,38 +46,38 @@ import {
   Rodape,
   Cabecalho,
   Residuos,
-} from './operacoes/comum';
-import { CartaoInsumos, type InsumoLinha, insumosParaApi } from './operacoes/insumos';
+} from './operacoes/comum'
+import { CartaoInsumos, type InsumoLinha, insumosParaApi } from './operacoes/insumos'
 
 interface UvaAProcessar {
-  itemId: string;
-  romaneio: string;
-  chegadaEm: string;
-  projetoId: string;
-  projeto: string;
-  variedade: string;
-  safra: number;
-  ciclo: string | null;
-  brix: string | null;
-  saldoKg: string;
+  itemId: string
+  romaneio: string
+  chegadaEm: string
+  projetoId: string
+  projeto: string
+  variedade: string
+  safra: number
+  ciclo: string | null
+  brix: string | null
+  saldoKg: string
 }
 
 function useUva() {
   return useQuery({
     queryKey: ['uva-a-processar'],
     queryFn: () => api.get<UvaAProcessar[]>('/api/romaneios/uva-a-processar'),
-  });
+  })
 }
 
 function EscolhaUva({
   consumos,
   set,
 }: {
-  consumos: Record<string, string | null>;
-  set: (c: Record<string, string | null>) => void;
+  consumos: Record<string, string | null>
+  set: (c: Record<string, string | null>) => void
 }) {
-  const { data: s } = useSessao();
-  const uva = useUva();
+  const { data: s } = useSessao()
+  const uva = useUva()
   return (
     <Cartao>
       <CabecalhoCartao
@@ -86,17 +86,17 @@ function EscolhaUva({
       />
       <CorpoCartao className="flex flex-col gap-2">
         {uva.data?.map((u) => {
-          const marcado = u.itemId in consumos;
+          const marcado = u.itemId in consumos
           return (
             <div key={u.itemId} className="grid items-center gap-3 sm:grid-cols-[1fr_12rem]">
               <Caixa
                 rotulo={`${u.romaneio} · ${u.variedade} ${u.safra}${u.ciclo ? `.${u.ciclo}` : ''} · ${formatarDecimal(u.saldoKg, 1)} kg a processar · ${formatarDataHora(u.chegadaEm, fusoAtivo(s))}`}
                 checked={marcado}
                 onChange={(e) => {
-                  const novo = { ...consumos };
-                  if (e.target.checked) novo[u.itemId] = u.saldoKg;
-                  else delete novo[u.itemId];
-                  set(novo);
+                  const novo = { ...consumos }
+                  if (e.target.checked) novo[u.itemId] = u.saldoKg
+                  else delete novo[u.itemId]
+                  set(novo)
                 }}
               />
               {marcado && (
@@ -109,7 +109,7 @@ function EscolhaUva({
                 />
               )}
             </div>
-          );
+          )
         })}
         {uva.data && !uva.data.length && (
           <p className="text-sm text-muted-foreground">
@@ -122,20 +122,20 @@ function EscolhaUva({
         )}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 // Desengace ------------------------------------------------------------------------------------
 
 export function PaginaDesengace() {
-  return <ComRascunho>{(r) => <Desengace rascunho={r} />}</ComRascunho>;
+  return <ComRascunho>{(r) => <Desengace rascunho={r} />}</ComRascunho>
 }
 
 function Desengace({ rascunho }: { rascunho: Rascunho | null }) {
-  const recipientes = useRecipientes();
-  const projetos = useProjetos();
-  const uva = useUva();
-  const envio = useEnvio('desengace', rascunho);
+  const recipientes = useRecipientes()
+  const projetos = useProjetos()
+  const uva = useUva()
+  const envio = useEnvio('desengace', rascunho)
   const [d, setD] = useState(() => ({
     executadoEm: agora(),
     projetoId: '',
@@ -152,15 +152,15 @@ function Desengace({ rascunho }: { rascunho: Rascunho | null }) {
     insumos: [] as InsumoLinha[],
     localEstoqueId: '',
     ...rascunho?.formulario,
-  }));
+  }))
   const set = (p: Partial<typeof d>) => {
-    envio.limpar();
-    setD({ ...d, ...p });
-  };
-  const lotes = useLotesDoProjeto(d.projetoId);
+    envio.limpar()
+    setD({ ...d, ...p })
+  }
+  const lotes = useLotesDoProjeto(d.projetoId)
   // O projeto sugerido é o da primeira uva escolhida.
-  const projetoSugerido = uva.data?.find((u) => u.itemId in d.consumos)?.projetoId;
-  const projetoId = d.projetoId || projetoSugerido || '';
+  const projetoSugerido = uva.data?.find((u) => u.itemId in d.consumos)?.projetoId
+  const projetoId = d.projetoId || projetoSugerido || ''
   const corpo = () => ({
     executadoEm: doCampo(d.executadoEm),
     projetoId,
@@ -181,8 +181,8 @@ function Desengace({ rascunho }: { rascunho: Rascunho | null }) {
     residuos: d.residuos.filter((r) => r.kg).map((r) => ({ ...r, destino: r.destino || null })),
     insumos: insumosParaApi(d.insumos),
     localEstoqueId: d.localEstoqueId || null,
-  });
-  const escolhidos = (uva.data ?? []).filter((u) => u.itemId in d.consumos);
+  })
+  const escolhidos = (uva.data ?? []).filter((u) => u.itemId in d.consumos)
   return (
     <Pagina titulo="Desengace / esmagamento" trilha={['EnoTrace', 'Operações']}>
       <p className="text-sm text-muted-foreground">
@@ -217,7 +217,7 @@ function Desengace({ rascunho }: { rascunho: Rascunho | null }) {
         />
         <CorpoCartao className="flex flex-col gap-3">
           {d.destinos.map((x, n) => {
-            const r = recipientes.data?.find((y) => y.id === x.recipienteId);
+            const r = recipientes.data?.find((y) => y.id === x.recipienteId)
             return (
               <div key={n} className="grid items-end gap-2 sm:grid-cols-[1fr_1fr_10rem_auto]">
                 <Campo rotulo="Recipiente" id={`dst-rec-${n}`}>
@@ -225,7 +225,7 @@ function Desengace({ rascunho }: { rascunho: Rascunho | null }) {
                     id={`dst-rec-${n}`}
                     value={x.recipienteId}
                     onChange={(e) => {
-                      const rr = recipientes.data?.find((y) => y.id === e.target.value);
+                      const rr = recipientes.data?.find((y) => y.id === e.target.value)
                       set({
                         destinos: d.destinos.map((z, j) =>
                           j === n
@@ -236,7 +236,7 @@ function Desengace({ rascunho }: { rascunho: Rascunho | null }) {
                               }
                             : z,
                         ),
-                      });
+                      })
                     }}
                   >
                     <option value="">Escolha</option>
@@ -284,7 +284,7 @@ function Desengace({ rascunho }: { rascunho: Rascunho | null }) {
                   <Trash2 />
                 </Botao>
               </div>
-            );
+            )
           })}
           <div className="flex flex-wrap items-center gap-4">
             <Botao
@@ -364,8 +364,8 @@ function Desengace({ rascunho }: { rascunho: Rascunho | null }) {
         insumos={d.insumos}
         set={(insumos) => set({ insumos })}
         recipientes={d.destinos.flatMap((x) => {
-          const r = recipientes.data?.find((y) => y.id === x.recipienteId);
-          return r ? [{ id: r.id, codigo: r.codigo }] : [];
+          const r = recipientes.data?.find((y) => y.id === x.recipienteId)
+          return r ? [{ id: r.id, codigo: r.codigo }] : []
         })}
         rotuloTodos="Todos os destinos"
         localEstoqueId={d.localEstoqueId}
@@ -374,20 +374,20 @@ function Desengace({ rascunho }: { rascunho: Rascunho | null }) {
       <Residuos residuos={d.residuos} set={(residuos) => set({ residuos })} />
       <Rodape envio={envio} corpo={corpo} formulario={() => ({ ...d, projetoId })} />
     </Pagina>
-  );
+  )
 }
 
 // Prensagem ------------------------------------------------------------------------------------
 
 export function PaginaPrensagem() {
-  return <ComRascunho>{(r) => <Prensagem rascunho={r} />}</ComRascunho>;
+  return <ComRascunho>{(r) => <Prensagem rascunho={r} />}</ComRascunho>
 }
 
 function Prensagem({ rascunho }: { rascunho: Rascunho | null }) {
-  const recipientes = useRecipientes();
-  const projetos = useProjetos();
-  const { data: ref } = useReferencia();
-  const envio = useEnvio('prensagem', rascunho);
+  const recipientes = useRecipientes()
+  const projetos = useProjetos()
+  const { data: ref } = useReferencia()
+  const envio = useEnvio('prensagem', rascunho)
   const [d, setD] = useState(() => ({
     modo: 'massa' as 'massa' | 'direta',
     executadoEm: agora(),
@@ -407,16 +407,16 @@ function Prensagem({ rascunho }: { rascunho: Rascunho | null }) {
     ],
     residuos: [] as Array<{ tipo: 'engaco' | 'bagaco'; kg: string | null; destino: string }>,
     ...rascunho?.formulario,
-  }));
+  }))
   const set = (p: Partial<typeof d>) => {
-    envio.limpar();
-    setD({ ...d, ...p });
-  };
-  const origem = recipientes.data?.find((r) => r.id === d.origemRecipienteId);
+    envio.limpar()
+    setD({ ...d, ...p })
+  }
+  const origem = recipientes.data?.find((r) => r.id === d.origemRecipienteId)
   // Na prensagem da massa, o projeto é o do lote que está no recipiente.
-  const projetoId = d.modo === 'massa' ? (origem?.lote?.projetoId ?? '') : d.projetoId;
-  const lotes = useLotesDoProjeto(projetoId);
-  const total = d.fracoes.reduce((t, f) => t + Number(f.litros ?? 0), 0);
+  const projetoId = d.modo === 'massa' ? (origem?.lote?.projetoId ?? '') : d.projetoId
+  const lotes = useLotesDoProjeto(projetoId)
+  const total = d.fracoes.reduce((t, f) => t + Number(f.litros ?? 0), 0)
   const corpo = () => ({
     executadoEm: doCampo(d.executadoEm),
     origemRecipienteId: d.modo === 'massa' ? d.origemRecipienteId : null,
@@ -430,7 +430,7 @@ function Prensagem({ rascunho }: { rascunho: Rascunho | null }) {
         : [],
     fracoes: d.fracoes.map((f) => ({ ...f, litros: f.litros ?? '0' })),
     residuos: d.residuos.filter((r) => r.kg).map((r) => ({ ...r, destino: r.destino || null })),
-  });
+  })
   return (
     <Pagina titulo="Prensagem" trilha={['EnoTrace', 'Operações']}>
       <p className="text-sm text-muted-foreground">
@@ -496,8 +496,8 @@ function Prensagem({ rascunho }: { rascunho: Rascunho | null }) {
         />
         <CorpoCartao className="flex flex-col gap-3">
           {d.fracoes.map((f, n) => {
-            const r = recipientes.data?.find((y) => y.id === f.recipienteId);
-            const noProprio = d.modo === 'massa' && f.recipienteId === d.origemRecipienteId;
+            const r = recipientes.data?.find((y) => y.id === f.recipienteId)
+            const noProprio = d.modo === 'massa' && f.recipienteId === d.origemRecipienteId
             return (
               <div key={n} className="grid items-end gap-2 sm:grid-cols-[10rem_10rem_1fr_1fr_auto]">
                 <Campo rotulo="Fração" id={`fr-tipo-${n}`}>
@@ -593,7 +593,7 @@ function Prensagem({ rascunho }: { rascunho: Rascunho | null }) {
                   <Trash2 />
                 </Botao>
               </div>
-            );
+            )
           })}
           <div>
             <Botao
@@ -621,24 +621,24 @@ function Prensagem({ rascunho }: { rascunho: Rascunho | null }) {
       <Residuos residuos={d.residuos} set={(residuos) => set({ residuos })} />
       <Rodape envio={envio} corpo={corpo} formulario={() => ({ ...d, projetoId })} />
     </Pagina>
-  );
+  )
 }
 
 // Lista e ficha --------------------------------------------------------------------------------
 
 interface LinhaOperacao {
-  id: string;
-  codigo: string | null;
-  tipo: TipoOperacao;
-  situacao: 'rascunho' | 'confirmada' | 'estornada';
-  executadoEm: string;
-  lancadoEm: string | null;
-  atualizadoEm: string;
-  estornoDe: string | null;
-  projeto: string | null;
-  recipientes: string[];
-  lotes: string[];
-  kg: string | null;
+  id: string
+  codigo: string | null
+  tipo: TipoOperacao
+  situacao: 'rascunho' | 'confirmada' | 'estornada'
+  executadoEm: string
+  lancadoEm: string | null
+  atualizadoEm: string
+  estornoDe: string | null
+  projeto: string | null
+  recipientes: string[]
+  lotes: string[]
+  kg: string | null
 }
 
 /** Tipos com tela de registro: o rascunho abre de volta nela. */
@@ -656,12 +656,12 @@ const COM_TELA: Partial<Record<TipoOperacao, string>> = {
   entrada_granel: '/enotrace/operacoes/entrada_granel',
   saida_granel: '/enotrace/operacoes/saida_granel',
   titularidade: '/enotrace/operacoes/titularidade',
-};
+}
 
 export function ListaOperacoes() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
   return (
     <Pagina
       titulo="Operações"
@@ -778,109 +778,109 @@ export function ListaOperacoes() {
         ]}
       />
     </Pagina>
-  );
+  )
 }
 
 interface Operacao {
-  id: string;
-  codigo: string;
-  tipo: TipoOperacao;
-  nomeTipo: string;
-  situacao: 'rascunho' | 'confirmada' | 'estornada';
-  executadoEm: string;
-  lancadoEm: string;
-  projetoId: string | null;
-  projeto: string | null;
-  responsavel: string | null;
-  observacao: string | null;
-  motivo: string | null;
-  eCorte: boolean;
-  dados: Record<string, unknown> | null;
+  id: string
+  codigo: string
+  tipo: TipoOperacao
+  nomeTipo: string
+  situacao: 'rascunho' | 'confirmada' | 'estornada'
+  executadoEm: string
+  lancadoEm: string
+  projetoId: string | null
+  projeto: string | null
+  responsavel: string | null
+  observacao: string | null
+  motivo: string | null
+  eCorte: boolean
+  dados: Record<string, unknown> | null
   estornadaPor: {
-    id: string;
-    codigo: string;
-    lancadoEm: string;
-    motivo: string;
-    por: string | null;
-  } | null;
-  estornoDe: { id: string; codigo: string; nomeTipo: string } | null;
+    id: string
+    codigo: string
+    lancadoEm: string
+    motivo: string
+    por: string | null
+  } | null
+  estornoDe: { id: string; codigo: string; nomeTipo: string } | null
   movimentos: Array<{
-    recipiente: string;
-    lote: string;
-    litros: string;
-    nomeTipo: string;
-    estimado: boolean;
-  }>;
+    recipiente: string
+    lote: string
+    litros: string
+    nomeTipo: string
+    estimado: boolean
+  }>
   uva: Array<{
-    romaneio: string;
-    variedade: string;
-    kg: string;
-    recipiente: string;
-    lote: string;
-    litros: string;
-  }>;
-  genealogia: Array<{ origem: string; destino: string; litros: string; tipo: string }>;
-  residuos: Array<{ tipo: string; kg: string; destino: string | null }>;
-  ocorrencias: Array<{ mensagem: string; cienteEm: string }>;
+    romaneio: string
+    variedade: string
+    kg: string
+    recipiente: string
+    lote: string
+    litros: string
+  }>
+  genealogia: Array<{ origem: string; destino: string; litros: string; tipo: string }>
+  residuos: Array<{ tipo: string; kg: string; destino: string | null }>
+  ocorrencias: Array<{ mensagem: string; cienteEm: string }>
   insumos: Array<{
-    recipiente: string;
-    lote: string;
-    item: string | null;
-    descricao: string | null;
-    loteItem: string | null;
-    dose: string;
-    unidade: string;
-    volumeTratado: string;
-    quantidade: string | null;
-    unidadeItem: string | null;
-    so2: string | null;
-  }>;
+    recipiente: string
+    lote: string
+    item: string | null
+    descricao: string | null
+    loteItem: string | null
+    dose: string
+    unidade: string
+    volumeTratado: string
+    quantidade: string | null
+    unidadeItem: string | null
+    so2: string | null
+  }>
   chaptalizacao: {
-    acucarKg: string;
-    gramasPorLitro: string;
-    ganhoEstimado: string;
-  } | null;
-  parametros: Array<{ nome: string; unidade: string | null; valor: string }>;
+    acucarKg: string
+    gramasPorLitro: string
+    ganhoEstimado: string
+  } | null
+  parametros: Array<{ nome: string; unidade: string | null; valor: string }>
   higienizacao: Array<{
-    recipiente: string;
-    recipienteId: string;
-    tipo: 'higienizacao' | 'manutencao';
-    produto: string | null;
-    dose: string | null;
-    situacaoAnterior: keyof typeof NOMES_SITUACAO_RECIPIENTE;
-  }>;
-  granel: Granel | null;
+    recipiente: string
+    recipienteId: string
+    tipo: 'higienizacao' | 'manutencao'
+    produto: string | null
+    dose: string | null
+    situacaoAnterior: keyof typeof NOMES_SITUACAO_RECIPIENTE
+  }>
+  granel: Granel | null
   titularidade: null | {
-    motivo: keyof typeof MOTIVOS_TITULARIDADE;
-    de: string | null;
-    para: string | null;
-    contratoId: string | null;
-    contrato: string | null;
-    litros: string;
-  };
+    motivo: keyof typeof MOTIVOS_TITULARIDADE
+    de: string | null
+    para: string | null
+    contratoId: string | null
+    contrato: string | null
+    litros: string
+  }
 }
 
 interface Granel {
-  sentido: 'entrada' | 'saida';
-  tipo: string;
-  notaNumero: string | null;
-  notaChave: string | null;
-  remetente: string | null;
-  destinatario: string | null;
-  transportador: string | null;
-  glt: string | null;
-  embalagem: keyof typeof EMBALAGENS_GRANEL | null;
-  recebimentoConfirmadoEm: string | null;
+  sentido: 'entrada' | 'saida'
+  tipo: string
+  notaNumero: string | null
+  notaChave: string | null
+  remetente: string | null
+  destinatario: string | null
+  transportador: string | null
+  glt: string | null
+  embalagem: keyof typeof EMBALAGENS_GRANEL | null
+  recebimentoConfirmadoEm: string | null
 }
 
 /** Nota, partes, GLT e o recebimento confirmado (cantina.md, Granel e GLT). */
 function CartaoGranel({ id, g, confirmada }: { id: string; g: Granel; confirmada: boolean }) {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [data, setData] = useState(g.recebimentoConfirmadoEm ?? '');
-  const [glt, setGlt] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
-  const tipos: Record<string, string> = { ...TIPOS_ENTRADA_GRANEL, ...TIPOS_SAIDA_GRANEL };
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [data, setData] = useState(g.recebimentoConfirmadoEm ?? '')
+  const [glt, setGlt] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
+  const tipos: Record<string, string> = { ...TIPOS_ENTRADA_GRANEL, ...TIPOS_SAIDA_GRANEL }
   const linhas: Array<[string, string | null]> = [
     ['Tipo', tipos[g.tipo] ?? g.tipo],
     [
@@ -891,16 +891,16 @@ function CartaoGranel({ id, g, confirmada }: { id: string; g: Granel; confirmada
     ['Nota', [g.notaNumero, g.notaChave].filter(Boolean).join(' · ') || null],
     ['GLT', g.glt],
     ['Embalagem', g.embalagem ? EMBALAGENS_GRANEL[g.embalagem] : null],
-  ];
+  ]
   const salvar = async (valor: string | null) => {
-    setErro(null);
+    setErro(null)
     try {
-      await api.post(`/api/operacoes/${id}/recebimento`, { recebimentoConfirmadoEm: valor });
-      await qc.invalidateQueries({ queryKey: ['operacao', id] });
+      await api.post(`/api/operacoes/${id}/recebimento`, { recebimentoConfirmadoEm: valor })
+      await qc.invalidateQueries({ queryKey: ['operacao', id] })
     } catch (e) {
-      setErro((e as Error).message);
+      setErro((e as Error).message)
     }
-  };
+  }
   return (
     <Cartao>
       <CabecalhoCartao titulo={g.sentido === 'entrada' ? 'Entrada de granel' : 'Saída de granel'} />
@@ -929,13 +929,13 @@ function CartaoGranel({ id, g, confirmada }: { id: string; g: Granel; confirmada
                   tamanho="pequeno"
                   disabled={!glt.trim()}
                   onClick={async () => {
-                    setErro(null);
+                    setErro(null)
                     try {
-                      await api.post(`/api/operacoes/${id}/glt`, { glt });
-                      await qc.invalidateQueries({ queryKey: ['operacao', id] });
-                      await qc.invalidateQueries({ queryKey: ['alertas-resumo'] });
+                      await api.post(`/api/operacoes/${id}/glt`, { glt })
+                      await qc.invalidateQueries({ queryKey: ['operacao', id] })
+                      await qc.invalidateQueries({ queryKey: ['alertas-resumo'] })
                     } catch (e) {
-                      setErro((e as Error).message);
+                      setErro((e as Error).message)
                     }
                   }}
                 >
@@ -977,8 +977,8 @@ function CartaoGranel({ id, g, confirmada }: { id: string; g: Granel; confirmada
                     variante="fantasma"
                     tamanho="pequeno"
                     onClick={() => {
-                      setData('');
-                      void salvar(null);
+                      setData('')
+                      void salvar(null)
                     }}
                   >
                     Desmarcar
@@ -991,14 +991,14 @@ function CartaoGranel({ id, g, confirmada }: { id: string; g: Granel; confirmada
         {erro && <Aviso tom="erro">{erro}</Aviso>}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 interface PreviaEstorno {
-  codigo: string;
-  recipientes: Array<{ recipienteId: string; recipiente: string; antes: string; depois: string }>;
-  dependentes: Array<{ id: string; codigo: string; tipo: TipoOperacao; executadoEm: string }>;
-  bloqueios: string[];
+  codigo: string
+  recipientes: Array<{ recipienteId: string; recipiente: string; antes: string; depois: string }>
+  dependentes: Array<{ id: string; codigo: string; tipo: TipoOperacao; executadoEm: string }>
+  bloqueios: string[]
 }
 
 /**
@@ -1006,18 +1006,18 @@ interface PreviaEstorno {
  * estornadas e os volumes que voltam; os lançamentos inversos levam a data original (P13).
  */
 function DialogoEstorno({ id, aoFechar }: { id: string; aoFechar: () => void }) {
-  const qc = useQueryClient();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
+  const qc = useQueryClient()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
   const q = useQuery({
     queryKey: ['estorno', id],
     queryFn: () => api.get<PreviaEstorno>(`/api/operacoes/${id}/estorno`),
-  });
-  const [motivo, setMotivo] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
-  const p = q.data;
-  const bloqueado = !p || p.bloqueios.length > 0;
+  })
+  const [motivo, setMotivo] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
+  const p = q.data
+  const bloqueado = !p || p.bloqueios.length > 0
   return (
     <Dialogo
       aberto
@@ -1035,22 +1035,22 @@ function DialogoEstorno({ id, aoFechar }: { id: string; aoFechar: () => void }) 
               variante="perigo"
               disabled={enviando}
               onClick={async () => {
-                if (motivo.trim().length < 3) return setErro('Informe o motivo.');
-                setEnviando(true);
-                setErro(null);
+                if (motivo.trim().length < 3) return setErro('Informe o motivo.')
+                setEnviando(true)
+                setErro(null)
                 try {
-                  await api.post(`/api/operacoes/${id}/estorno`, { motivo: motivo.trim() });
+                  await api.post(`/api/operacoes/${id}/estorno`, { motivo: motivo.trim() })
                   await Promise.all(
                     [['operacao', id], ['lista'], ['recipientes-saldo'], ['uva-a-processar']].map(
                       (queryKey) => qc.invalidateQueries({ queryKey }),
                     ),
-                  );
-                  aoFechar();
+                  )
+                  aoFechar()
                 } catch (e) {
-                  setErro((e as Error).message);
-                  await q.refetch();
+                  setErro((e as Error).message)
+                  await q.refetch()
                 } finally {
-                  setEnviando(false);
+                  setEnviando(false)
                 }
               }}
             >
@@ -1126,30 +1126,29 @@ function DialogoEstorno({ id, aoFechar }: { id: string; aoFechar: () => void }) 
         </div>
       )}
     </Dialogo>
-  );
+  )
 }
 
 export function FichaOperacao() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const [estornando, setEstornando] = useState(false);
-  const { data: ref } = useReferencia();
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const [estornando, setEstornando] = useState(false)
+  const { data: ref } = useReferencia()
   const q = useQuery({
     queryKey: ['operacao', id],
     queryFn: () => api.get<Operacao>(`/api/operacoes/${id}`),
-  });
+  })
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const o = q.data;
+    )
+  const o = q.data
   if (o.situacao === 'rascunho' && COM_TELA[o.tipo])
-    return <Navigate to={`${COM_TELA[o.tipo]}?rascunho=${o.id}`} replace />;
-  const podeEstornar =
-    o.situacao === 'confirmada' && o.tipo !== 'estorno' && pode(s, F, 'estornar');
+    return <Navigate to={`${COM_TELA[o.tipo]}?rascunho=${o.id}`} replace />
+  const podeEstornar = o.situacao === 'confirmada' && o.tipo !== 'estorno' && pode(s, F, 'estornar')
   return (
     <Pagina
       titulo={`${o.codigo} · ${o.estornoDe ? `Estorno de ${o.estornoDe.codigo}` : o.nomeTipo}`}
@@ -1396,5 +1395,5 @@ export function FichaOperacao() {
         </Cartao>
       )}
     </Pagina>
-  );
+  )
 }

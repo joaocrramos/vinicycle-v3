@@ -1,169 +1,164 @@
 // Rotas e regras de acesso das telas. A barreira de verdade é o servidor (P27); aqui só se
 // decide o que mostrar.
-import { PaginaAlertas } from '@/paginas/Alertas';
-import { useMutation } from '@tanstack/react-query';
-import { useEffect } from 'react';
-import { createBrowserRouter, Navigate, useLocation, useNavigate } from 'react-router';
-import { Aviso } from '@/componentes/ui/cartao';
-import { Estrutura } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { type EstadoSessao, useAtualizarSessao, useSessao } from '@/lib/sessao';
-import { PaginaAssinatura } from '@/paginas/config/Assinatura';
-import { PaginaVitrine } from '@/paginas/gestao/Vitrine';
-import { PaginaExportar } from '@/paginas/config/Exportar';
-import { PaginaAuditoria } from '@/paginas/config/Auditoria';
-import { PaginaEmpresa } from '@/paginas/config/Empresa';
+import { PaginaAlertas } from '@/paginas/Alertas'
+import { useMutation } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { createBrowserRouter, Navigate, useLocation, useNavigate } from 'react-router'
+import { Aviso } from '@/componentes/ui/cartao'
+import { Estrutura } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { type EstadoSessao, useAtualizarSessao, useSessao } from '@/lib/sessao'
+import { PaginaAssinatura } from '@/paginas/config/Assinatura'
+import { PaginaVitrine } from '@/paginas/gestao/Vitrine'
+import { PaginaExportar } from '@/paginas/config/Exportar'
+import { PaginaAuditoria } from '@/paginas/config/Auditoria'
+import { PaginaEmpresa } from '@/paginas/config/Empresa'
 import {
   CriarPrimeiroEstabelecimento,
   FichaEstabelecimento,
   ListaEstabelecimentos,
   NovoEstabelecimento,
-} from '@/paginas/config/Estabelecimentos';
-import { PaginaLocais } from '@/paginas/config/Locais';
-import { GradePerfil, ListaPerfis } from '@/paginas/config/Perfis';
-import { PaginaParametrosGestao } from '@/paginas/config/Parametros';
-import { PaginaUsuarios } from '@/paginas/config/Usuarios';
-import { PaginaBastao } from '@/paginas/Bastao';
-import { PaginaConvite } from '@/paginas/Convite';
-import { EscolherEmpresa } from '@/paginas/EscolherEmpresa';
-import { PaginaCatalogos } from '@/paginas/enotrace/Catalogos';
-import { PaginaItens } from '@/paginas/enotrace/Itens';
-import { PaginaParametros } from '@/paginas/enotrace/Parametros';
+} from '@/paginas/config/Estabelecimentos'
+import { PaginaLocais } from '@/paginas/config/Locais'
+import { GradePerfil, ListaPerfis } from '@/paginas/config/Perfis'
+import { PaginaParametrosGestao } from '@/paginas/config/Parametros'
+import { PaginaUsuarios } from '@/paginas/config/Usuarios'
+import { PaginaBastao } from '@/paginas/Bastao'
+import { PaginaConvite } from '@/paginas/Convite'
+import { EscolherEmpresa } from '@/paginas/EscolherEmpresa'
+import { PaginaCatalogos } from '@/paginas/enotrace/Catalogos'
+import { PaginaItens } from '@/paginas/enotrace/Itens'
+import { PaginaParametros } from '@/paginas/enotrace/Parametros'
 import {
   FichaProjeto,
   ListaProjetos,
   NovoProjeto,
   PaginaModelosPlano,
-} from '@/paginas/enotrace/Projetos';
-import {
-  FichaProduto,
-  ListaProdutos,
-  NovoProduto,
-  PaginaMarcas,
-} from '@/paginas/enotrace/Produtos';
-import { FichaRecipiente, ListaRecipientes, NovoRecipiente } from '@/paginas/enotrace/Recipientes';
-import { PaginaVinhedos } from '@/paginas/enotrace/Vinhedos';
-import { FichaLote } from '@/paginas/enotrace/Lotes';
-import { FichaRecepcao, ListaRecepcao, NovaRecepcao } from '@/paginas/enotrace/Recepcao';
+} from '@/paginas/enotrace/Projetos'
+import { FichaProduto, ListaProdutos, NovoProduto, PaginaMarcas } from '@/paginas/enotrace/Produtos'
+import { FichaRecipiente, ListaRecipientes, NovoRecipiente } from '@/paginas/enotrace/Recipientes'
+import { PaginaVinhedos } from '@/paginas/enotrace/Vinhedos'
+import { FichaLote } from '@/paginas/enotrace/Lotes'
+import { FichaRecepcao, ListaRecepcao, NovaRecepcao } from '@/paginas/enotrace/Recepcao'
 import {
   FichaOperacao,
   ListaOperacoes,
   PaginaDesengace,
   PaginaPrensagem,
-} from '@/paginas/enotrace/Operacoes';
+} from '@/paginas/enotrace/Operacoes'
 import {
   PaginaAtesto,
   PaginaCorte,
   PaginaPerda,
   PaginaTrasfega,
-} from '@/paginas/enotrace/operacoes/Movimentos';
-import { RelatoriosCantina } from '@/paginas/enotrace/Relatorios';
-import { FichaFermentacao, ListaFermentacoes } from '@/paginas/enotrace/Fermentacoes';
-import { FichaInventario, ListaInventarios } from '@/paginas/enotrace/Inventarios';
-import { PaginaPainel } from '@/paginas/enotrace/Painel';
-import { FichaAnalise, PaginaLaboratorio } from '@/paginas/enotrace/Laboratorio';
-import { PaginaEntradaGranel, PaginaSaidaGranel } from '@/paginas/enotrace/operacoes/Granel';
-import { PaginaTitularidade } from '@/paginas/enotrace/operacoes/Titularidade';
-import { PaginaHigienizacao } from '@/paginas/enotrace/operacoes/Higienizacao';
+} from '@/paginas/enotrace/operacoes/Movimentos'
+import { RelatoriosCantina } from '@/paginas/enotrace/Relatorios'
+import { FichaFermentacao, ListaFermentacoes } from '@/paginas/enotrace/Fermentacoes'
+import { FichaInventario, ListaInventarios } from '@/paginas/enotrace/Inventarios'
+import { PaginaPainel } from '@/paginas/enotrace/Painel'
+import { FichaAnalise, PaginaLaboratorio } from '@/paginas/enotrace/Laboratorio'
+import { PaginaEntradaGranel, PaginaSaidaGranel } from '@/paginas/enotrace/operacoes/Granel'
+import { PaginaTitularidade } from '@/paginas/enotrace/operacoes/Titularidade'
+import { PaginaHigienizacao } from '@/paginas/enotrace/operacoes/Higienizacao'
 import {
   PaginaAdicao,
   PaginaChaptalizacao,
   PaginaTratamento,
-} from '@/paginas/enotrace/operacoes/Tratamentos';
+} from '@/paginas/enotrace/operacoes/Tratamentos'
 import {
   EntradaEstoque,
   FichaEstoque,
   ListaEstoque,
   TitularidadeEstoque,
   TransferenciaEstoque,
-} from '@/paginas/enotrace/Estoque';
+} from '@/paginas/enotrace/Estoque'
 import {
   EditarOrdem,
   FichaOrdemEngarrafamento,
   ListaLotesComerciais,
   ListaOrdens,
   NovaOrdem,
-} from '@/paginas/enotrace/Engarrafamento';
-import { PaginaCargaInicial } from '@/paginas/enotrace/CargaInicial';
-import { PaginaAlcool } from '@/paginas/enotrace/Alcool';
-import { PaginaSelos } from '@/paginas/enotrace/Selos';
-import { FichaEspumante, ListaEspumantes, NovaTiragem } from '@/paginas/enotrace/Espumantes';
-import { PaginaContaCliente } from '@/paginas/enotrace/ContaCliente';
-import { FichaDossie, ListaDossies } from '@/paginas/enotrace/Dossies';
+} from '@/paginas/enotrace/Engarrafamento'
+import { PaginaCargaInicial } from '@/paginas/enotrace/CargaInicial'
+import { PaginaAlcool } from '@/paginas/enotrace/Alcool'
+import { PaginaSelos } from '@/paginas/enotrace/Selos'
+import { FichaEspumante, ListaEspumantes, NovaTiragem } from '@/paginas/enotrace/Espumantes'
+import { PaginaContaCliente } from '@/paginas/enotrace/ContaCliente'
+import { FichaDossie, ListaDossies } from '@/paginas/enotrace/Dossies'
 import {
   FichaRemessa,
   ListaRemessas,
   NovaRemessa,
   NovoRetorno,
-} from '@/paginas/enotrace/ProducaoTerceiro';
-import { FichaContrato, ListaContratos, NovoContrato } from '@/paginas/enotrace/Contratos';
-import { PaginaDeclaracoes } from '@/paginas/enotrace/Declaracoes';
-import { PaginaAprovacoes } from '@/paginas/gestao/Aprovacoes';
-import { PaginaDiario } from '@/paginas/gestao/Diario';
-import { FichaAutocontrole, ListaAutocontrole } from '@/paginas/gestao/Autocontrole';
-import { PaginaFechamento } from '@/paginas/enotrace/Fechamento';
-import { PaginaHistoria } from '@/paginas/enotrace/Historia';
-import { FichaNota, ListaNotas } from '@/paginas/enotrace/NotasEstoque';
-import { FichaSaida, ListaSaidas, NovaSaida, RecolhimentoLote } from '@/paginas/enotrace/Saidas';
+} from '@/paginas/enotrace/ProducaoTerceiro'
+import { FichaContrato, ListaContratos, NovoContrato } from '@/paginas/enotrace/Contratos'
+import { PaginaDeclaracoes } from '@/paginas/enotrace/Declaracoes'
+import { PaginaAprovacoes } from '@/paginas/gestao/Aprovacoes'
+import { PaginaDiario } from '@/paginas/gestao/Diario'
+import { FichaAutocontrole, ListaAutocontrole } from '@/paginas/gestao/Autocontrole'
+import { PaginaFechamento } from '@/paginas/enotrace/Fechamento'
+import { PaginaHistoria } from '@/paginas/enotrace/Historia'
+import { FichaNota, ListaNotas } from '@/paginas/enotrace/NotasEstoque'
+import { FichaSaida, ListaSaidas, NovaSaida, RecolhimentoLote } from '@/paginas/enotrace/Saidas'
 import {
   EtiquetasDocumentos,
   FichaDocumento,
   ListaDocumentos,
   NovoDocumento,
   TiposDocumento,
-} from '@/paginas/gestao/Documentos';
-import { ListasGestao } from '@/paginas/gestao/Listas';
-import { FichaPessoa, ListaPessoas, NovaPessoa } from '@/paginas/gestao/Pessoas';
-import { MeuPerfil, PreferenciasUsuario, Seguranca } from '@/paginas/eu/Eu';
-import { PaginaInicio } from '@/paginas/Inicio';
-import { Cliente, ListaClientes, NovoCliente, SegundoFator } from '@/paginas/plataforma/Plataforma';
-import { PaginaCatalogosPlataforma } from '@/paginas/plataforma/Catalogos';
-import { PaginaConfiguracoesPlataforma } from '@/paginas/plataforma/Configuracoes';
-import { PaginaFaturas } from '@/paginas/plataforma/Faturas';
-import { PaginaIntegracoes } from '@/paginas/plataforma/Integracoes';
-import { PaginaEnvios, PaginaModelos } from '@/paginas/plataforma/Mensagens';
-import { PaginaSuporte } from '@/paginas/plataforma/Suporte';
-import { PaginaChamados, SuportePublico } from '@/paginas/Suporte';
-import { PaginaPainel as PainelPlataforma } from '@/paginas/plataforma/Painel';
-import { PaginaAdicionais, PaginaPlanos } from '@/paginas/plataforma/Planos';
-import { PaginaRegras } from '@/paginas/plataforma/Regras';
-import { ConfirmarEmail, Entrar, EsqueciSenha, RedefinirSenha } from '@/paginas/publicas';
+} from '@/paginas/gestao/Documentos'
+import { ListasGestao } from '@/paginas/gestao/Listas'
+import { FichaPessoa, ListaPessoas, NovaPessoa } from '@/paginas/gestao/Pessoas'
+import { MeuPerfil, PreferenciasUsuario, Seguranca } from '@/paginas/eu/Eu'
+import { PaginaInicio } from '@/paginas/Inicio'
+import { Cliente, ListaClientes, NovoCliente, SegundoFator } from '@/paginas/plataforma/Plataforma'
+import { PaginaCatalogosPlataforma } from '@/paginas/plataforma/Catalogos'
+import { PaginaConfiguracoesPlataforma } from '@/paginas/plataforma/Configuracoes'
+import { PaginaFaturas } from '@/paginas/plataforma/Faturas'
+import { PaginaIntegracoes } from '@/paginas/plataforma/Integracoes'
+import { PaginaEnvios, PaginaModelos } from '@/paginas/plataforma/Mensagens'
+import { PaginaSuporte } from '@/paginas/plataforma/Suporte'
+import { PaginaChamados, SuportePublico } from '@/paginas/Suporte'
+import { PaginaPainel as PainelPlataforma } from '@/paginas/plataforma/Painel'
+import { PaginaAdicionais, PaginaPlanos } from '@/paginas/plataforma/Planos'
+import { PaginaRegras } from '@/paginas/plataforma/Regras'
+import { ConfirmarEmail, Entrar, EsqueciSenha, RedefinirSenha } from '@/paginas/publicas'
 
 function Carregando() {
-  return <p className="p-8 text-center text-sm text-muted-foreground">Carregando…</p>;
+  return <p className="p-8 text-center text-sm text-muted-foreground">Carregando…</p>
 }
 
 function AreaAutenticada() {
-  const { data: s, isLoading, isError, error } = useSessao();
-  const local = useLocation();
-  const navegar = useNavigate();
-  const atualizar = useAtualizarSessao();
+  const { data: s, isLoading, isError, error } = useSessao()
+  const local = useLocation()
+  const navegar = useNavigate()
+  const atualizar = useAtualizarSessao()
   const troca = useMutation({
     mutationFn: (contexto: 'empresa' | 'plataforma') =>
       api.post<EstadoSessao>('/api/auth/contexto', { contexto }),
     onSuccess: atualizar,
-  });
-  const trocando = troca.isPending;
-  const querPlataforma = local.pathname.startsWith('/plataforma');
-  const ehPerfilPessoal = local.pathname.startsWith('/eu/');
+  })
+  const trocando = troca.isPending
+  const querPlataforma = local.pathname.startsWith('/plataforma')
+  const ehPerfilPessoal = local.pathname.startsWith('/eu/')
 
   // O endereço decide a área: entrar num link da Administração muda o contexto, e vice-versa.
   useEffect(() => {
-    if (!s || trocando || troca.isError || ehPerfilPessoal) return;
-    const alvo = querPlataforma ? 'plataforma' : 'empresa';
-    if (s.contexto === alvo) return;
-    if (alvo === 'plataforma' && !s.equipe) return void navegar('/inicio', { replace: true });
+    if (!s || trocando || troca.isError || ehPerfilPessoal) return
+    const alvo = querPlataforma ? 'plataforma' : 'empresa'
+    if (s.contexto === alvo) return
+    if (alvo === 'plataforma' && !s.equipe) return void navegar('/inicio', { replace: true })
     if (alvo === 'empresa' && !s.empresas.length)
-      return void navegar('/plataforma/clientes', { replace: true });
-    troca.mutate(alvo);
-  }, [s, querPlataforma, ehPerfilPessoal, trocando, navegar, troca]);
+      return void navegar('/plataforma/clientes', { replace: true })
+    troca.mutate(alvo)
+  }, [s, querPlataforma, ehPerfilPessoal, trocando, navegar, troca])
 
-  if (isLoading || trocando) return <Carregando />;
-  if (isError) return <Aviso tom="erro">{(error as Error).message}</Aviso>;
+  if (isLoading || trocando) return <Carregando />
+  if (isError) return <Aviso tom="erro">{(error as Error).message}</Aviso>
   if (!s)
     return (
       <Navigate to={`/entrar?volta=${encodeURIComponent(local.pathname + local.search)}`} replace />
-    );
+    )
 
   if (s.contexto === 'plataforma') {
     if (!ehPerfilPessoal && !s.equipe?.segundoFatorValido) {
@@ -171,14 +166,14 @@ function AreaAutenticada() {
         <Estrutura sessao={s}>
           <SegundoFator sessao={s} />
         </Estrutura>
-      );
+      )
     }
-    return <Estrutura sessao={s} />;
+    return <Estrutura sessao={s} />
   }
   if (!s.empresa) {
     // Equipe da plataforma sem empresa vai direto para a Administração.
-    if (!s.empresas.length && s.equipe) return <Navigate to="/plataforma/clientes" replace />;
-    return <EscolherEmpresa sessao={s} />;
+    if (!s.empresas.length && s.equipe) return <Navigate to="/plataforma/clientes" replace />
+    return <EscolherEmpresa sessao={s} />
   }
   // Empresa bloqueada: o Master vê a assinatura (o que está em aberto) e exporta os dados; os
   // demais, só o aviso (administracao.md, Inadimplência e bloqueio).
@@ -191,10 +186,10 @@ function AreaAutenticada() {
             for regularizada; fale com ele.
           </Aviso>
         </Estrutura>
-      );
+      )
     }
     if (!['/config/assinatura', '/config/exportar', '/suporte/chamados'].includes(local.pathname)) {
-      return <Navigate to="/config/assinatura" replace />;
+      return <Navigate to="/config/assinatura" replace />
     }
   }
   if (s.empresa.precisaEstabelecimento && !ehPerfilPessoal) {
@@ -202,15 +197,15 @@ function AreaAutenticada() {
       <Estrutura sessao={s}>
         <CriarPrimeiroEstabelecimento sessao={s} />
       </Estrutura>
-    );
+    )
   }
-  return <Estrutura sessao={s} />;
+  return <Estrutura sessao={s} />
 }
 
 function EscolherEmpresaRota() {
-  const { data: s } = useSessao();
-  if (!s) return <Navigate to="/entrar" replace />;
-  return <EscolherEmpresa sessao={s} />;
+  const { data: s } = useSessao()
+  if (!s) return <Navigate to="/entrar" replace />
+  return <EscolherEmpresa sessao={s} />
 }
 
 function NaoEncontrada() {
@@ -218,7 +213,7 @@ function NaoEncontrada() {
     <div className="mx-auto max-w-md p-8">
       <Aviso tom="alerta">Página não encontrada.</Aviso>
     </div>
-  );
+  )
 }
 
 export const rotas = createBrowserRouter([
@@ -368,4 +363,4 @@ export const rotas = createBrowserRouter([
       { path: '*', element: <NaoEncontrada /> },
     ],
   },
-]);
+])

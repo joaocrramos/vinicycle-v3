@@ -10,8 +10,8 @@ import {
   CHAVES_SENTIDO_CONTRATO,
   CHAVES_TIPO_PERDA_TOLERADA,
   CHAVES_UNIDADE_PAGAMENTO_PRODUTO,
-} from '@vinicycle/shared';
-import { sql } from 'drizzle-orm';
+} from '@vinicycle/shared'
+import { sql } from 'drizzle-orm'
 import {
   type AnyPgColumn,
   boolean,
@@ -25,25 +25,25 @@ import {
   text,
   unique,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento } from './acesso';
-import { marca, produto } from './cantina';
-import { alteracao, criacao, emLista, id, inativacao } from './comum';
-import { documento, pessoa } from './gestao';
-import { empresa } from './plataforma';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento } from './acesso'
+import { marca, produto } from './cantina'
+import { alteracao, criacao, emLista, id, inativacao } from './comum'
+import { documento, pessoa } from './gestao'
+import { empresa } from './plataforma'
 
 function daEmpresa(
   coluna: AnyPgColumn,
   empresaId: AnyPgColumn,
   alvo: { id: AnyPgColumn; empresaId: AnyPgColumn },
 ) {
-  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] });
+  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] })
 }
 
 const empresaId = () =>
   uuid('empresa_id')
     .notNull()
-    .references(() => empresa.id);
+    .references(() => empresa.id)
 
 export const contratoTerceirizacao = pgTable(
   'contrato_terceirizacao',
@@ -134,7 +134,7 @@ export const contratoTerceirizacao = pgTable(
       sql`prefixo_lote is null or prefixo_lote ~ '^[A-Z0-9]{1,6}$'`,
     ),
   ],
-);
+)
 
 /** Itens de preço do serviço, só registrados (serviço, armazenagem por mês, envase por garrafa…). */
 export const contratoTerceirizacaoPreco = pgTable(
@@ -153,7 +153,7 @@ export const contratoTerceirizacaoPreco = pgTable(
     index('contrato_terceirizacao_preco_contrato').on(t.contratoId, t.ordem),
     check('contrato_terceirizacao_preco_valor', sql`valor >= 0`),
   ],
-);
+)
 
 /** Marcas do contrato. Quando prestamos o serviço, a marca é da contraparte. */
 export const contratoTerceirizacaoMarca = pgTable(
@@ -170,7 +170,7 @@ export const contratoTerceirizacaoMarca = pgTable(
     unique('contrato_terceirizacao_marca_unica').on(t.contratoId, t.marcaId),
     index('contrato_terceirizacao_marca_marca').on(t.marcaId),
   ],
-);
+)
 
 /** Produtos do contrato (de uma das marcas do mesmo dono). */
 export const contratoTerceirizacaoProduto = pgTable(
@@ -187,4 +187,4 @@ export const contratoTerceirizacaoProduto = pgTable(
     unique('contrato_terceirizacao_produto_unico').on(t.contratoId, t.produtoId),
     index('contrato_terceirizacao_produto_produto').on(t.produtoId),
   ],
-);
+)

@@ -1,5 +1,5 @@
 // Esquemas de entrada usados pela interface e pela API (as mesmas regras nos dois lados).
-import { z } from 'zod';
+import { z } from 'zod'
 import {
   ATIVIDADES_MAPA,
   CATEGORIAS_ANEXO,
@@ -11,72 +11,72 @@ import {
   SITUACOES_RECIPIENTE,
   SITUACOES_SIVIBE,
   USOS_LOCAL,
-} from './dominios';
+} from './dominios'
 import {
   diaVencimentoValido,
   FORMAS_PAGAMENTO,
   MENSAGEM_DIA_VENCIMENTO,
   preferenciaCanais,
-} from './comercial';
-import { fichaComDocumento, fichaEntrada } from './ficha';
+} from './comercial'
+import { fichaComDocumento, fichaEntrada } from './ficha'
 import {
   CHAVES_EMBALAGEM_GRANEL,
   CHAVES_TIPO_ENTRADA_GRANEL,
   CHAVES_TIPO_OPERACAO,
   CHAVES_TIPO_SAIDA_GRANEL,
   UNIDADES_DOSE,
-} from './producao';
-import { ACOES, type CodigoModulo } from './permissoes';
-import { CHAVES_MOTIVO_TITULARIDADE } from './terceiros';
+} from './producao'
+import { ACOES, type CodigoModulo } from './permissoes'
+import { CHAVES_MOTIVO_TITULARIDADE } from './terceiros'
 
-export const SENHA_MINIMO = 10;
+export const SENHA_MINIMO = 10
 
-export const email = z.string().trim().toLowerCase().pipe(z.email('E-mail inválido').max(254));
+export const email = z.string().trim().toLowerCase().pipe(z.email('E-mail inválido').max(254))
 
 export const senhaNova = z
   .string()
   .min(SENHA_MINIMO, `A senha precisa ter pelo menos ${SENHA_MINIMO} caracteres`)
-  .max(128, 'A senha pode ter no máximo 128 caracteres');
+  .max(128, 'A senha pode ter no máximo 128 caracteres')
 
-export const entrar = z.object({ email, senha: z.string().min(1, 'Informe a senha').max(128) });
+export const entrar = z.object({ email, senha: z.string().min(1, 'Informe a senha').max(128) })
 
-export const esqueciSenha = z.object({ email });
+export const esqueciSenha = z.object({ email })
 
-export const redefinirSenha = z.object({ token: z.string().min(10).max(200), senha: senhaNova });
+export const redefinirSenha = z.object({ token: z.string().min(10).max(200), senha: senhaNova })
 
 export const codigoSegundoFator = z.object({
   codigo: z.string().regex(/^\d{6}$/, 'O código tem 6 dígitos'),
-});
+})
 
 export const trocarContexto = z.object({
   empresaId: z.uuid().optional(),
   /** null = "Todos" os estabelecimentos permitidos. */
   estabelecimentoId: z.uuid().nullable().optional(),
   contexto: z.enum(['empresa', 'plataforma']).optional(),
-});
+})
 
 export const aceitarConvite = z.object({
   /** Só para quem ainda não tem cadastro (P8). */
   ficha: fichaEntrada.optional(),
   senha: z.string().min(1).max(128),
   aceiteTermos: z.boolean().optional(),
-});
+})
 
 export const trocarSenha = z.object({
   codigo: z.string().regex(/^\d{6}$/, 'O código tem 6 dígitos'),
   senha: senhaNova,
-});
+})
 
 /** Troca de e-mail (P10): confirma a senha atual; o novo endereço recebe o link de confirmação. */
 export const trocarEmail = z.object({
   email,
   senha: z.string().min(1, 'Informe a sua senha').max(128),
-});
+})
 
-export const confirmarEmail = z.object({ token: z.string().min(20).max(200) });
+export const confirmarEmail = z.object({ token: z.string().min(20).max(200) })
 
 /** Passagem de bastão (administracao.md): o perfil que o Master atual passa a ter. */
-export const passarBastao = z.object({ perfilAnteriorId: z.uuid('Escolha o seu novo perfil') });
+export const passarBastao = z.object({ perfilAnteriorId: z.uuid('Escolha o seu novo perfil') })
 
 /** Troca pelo suporte: o e-mail designado, o perfil do Master anterior (vazio = inativar) e o motivo. */
 export const designarMaster = z.object({
@@ -86,10 +86,10 @@ export const designarMaster = z.object({
     .nullable()
     .or(z.literal('').transform(() => null)),
   motivo: z.string().trim().min(10, 'Descreva o motivo (mínimo de 10 caracteres)').max(500),
-});
+})
 
 /** Aceite do bastão: com a sessão do escolhido aberta, a senha é dispensada. */
-export const aceitarBastao = aceitarConvite.extend({ senha: z.string().max(128).optional() });
+export const aceitarBastao = aceitarConvite.extend({ senha: z.string().max(128).optional() })
 
 export const preferenciasUsuario = z.object({
   tema: z.enum(['claro', 'escuro', 'sistema']).optional(),
@@ -99,8 +99,8 @@ export const preferenciasUsuario = z.object({
   menuRecolhido: z.boolean().optional(),
   /** Avisos também por WhatsApp e SMS, além do e-mail e da tela (P20; ciclo 12). */
   canais: preferenciaCanais.optional(),
-});
-export type PreferenciasUsuario = z.infer<typeof preferenciasUsuario>;
+})
+export type PreferenciasUsuario = z.infer<typeof preferenciasUsuario>
 
 // Empresa (Configurações › Empresa; Administração › Clientes)
 
@@ -108,7 +108,7 @@ const corHex = z
   .string()
   .regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida')
   .nullable()
-  .optional();
+  .optional()
 
 export const dadosEmpresa = z.object({
   ficha: fichaComDocumento,
@@ -121,7 +121,7 @@ export const dadosEmpresa = z.object({
   contatoFinanceiroTelefone: z.string().trim().max(30).nullable().optional(),
   regimeTributario: z.enum(['simples', 'presumido', 'real']).nullable().optional(),
   versao: z.number().int().optional(),
-});
+})
 
 export const novaEmpresa = dadosEmpresa.extend({
   emailMaster: email,
@@ -137,7 +137,7 @@ export const novaEmpresa = dadosEmpresa.extend({
     .nullable()
     .optional(),
   formaPagamento: z.enum(FORMAS_PAGAMENTO).nullable().optional(),
-});
+})
 
 // Estabelecimento (P12)
 
@@ -167,7 +167,7 @@ export const dadosEstabelecimento = z.object({
   /** Classes oficiais de produto que o estabelecimento elabora (códigos). */
   produtosElaborados: z.array(z.string().max(40)).max(30).default([]),
   versao: z.number().int().optional(),
-});
+})
 
 // Local
 
@@ -176,7 +176,7 @@ const MODULOS_COM_ESTOQUE = [
   'VITITRACK',
   'ENOTUR',
   'ENOMESA',
-] as const satisfies readonly CodigoModulo[];
+] as const satisfies readonly CodigoModulo[]
 
 export const dadosLocal = z
   .object({
@@ -194,13 +194,13 @@ export const dadosLocal = z
         code: 'custom',
         path: ['moduloEstoque'],
         message: 'Informe o módulo do estoque',
-      });
+      })
     }
   })
   .transform((l) => ({
     ...l,
     moduloEstoque: l.uso === 'recipientes' ? null : (l.moduloEstoque ?? null),
-  }));
+  }))
 
 // Usuários e perfis (P8, P27)
 
@@ -208,26 +208,26 @@ export const novoConvite = z.object({
   email,
   perfilId: z.uuid(),
   estabelecimentos: z.array(z.uuid()).default([]),
-});
+})
 
 export const alterarVinculo = z.object({
   perfilId: z.uuid(),
   estabelecimentos: z.array(z.uuid()).default([]),
-});
+})
 
-export const motivo = z.object({ motivo: z.string().trim().min(3, 'Informe o motivo').max(500) });
+export const motivo = z.object({ motivo: z.string().trim().min(3, 'Informe o motivo').max(500) })
 
 export const dadosPerfil = z.object({
   nome: z.string().trim().min(1, 'Informe o nome').max(80),
   descricao: z.string().trim().max(500).nullable().optional(),
   copiarDe: z.uuid().optional(),
-});
+})
 
 export const gradePerfil = z.object({
   permissoes: z
     .array(z.object({ funcionalidade: z.string().max(80), acao: z.enum(ACOES) }))
     .max(2000),
-});
+})
 
 // Anexos (P15)
 
@@ -236,7 +236,7 @@ export const novoAnexo = z.object({
   registroId: z.uuid(),
   categoria: z.enum(CATEGORIAS_ANEXO),
   descricao: z.string().trim().max(500).optional(),
-});
+})
 
 export const filtroAuditoria = z.object({
   usuarioId: z.uuid().optional(),
@@ -244,7 +244,7 @@ export const filtroAuditoria = z.object({
   acao: z.string().max(60).optional(),
   de: z.iso.date().optional(),
   ate: z.iso.date().optional(),
-});
+})
 
 // Pessoas (P2; gestao.md, Pessoas)
 
@@ -252,13 +252,13 @@ export const filtroAuditoria = z.object({
 export const placa = z
   .string()
   .transform((v) => v.replace(/[^0-9a-zA-Z]/g, '').toUpperCase())
-  .refine((v) => /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(v), 'Placa inválida (ex.: ABC1D23)');
+  .refine((v) => /^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(v), 'Placa inválida (ex.: ABC1D23)')
 
 const dataOpcional = z.iso
   .date()
   .nullable()
   .optional()
-  .or(z.literal('').transform(() => null));
+  .or(z.literal('').transform(() => null))
 
 export const dadosPessoa = z
   .object({
@@ -323,11 +323,11 @@ export const dadosPessoa = z
         code: 'custom',
         path: ['ficha', 'documento'],
         message: 'Informe o documento',
-      });
+      })
     }
-  });
+  })
 
-export type DadosPessoa = z.output<typeof dadosPessoa>;
+export type DadosPessoa = z.output<typeof dadosPessoa>
 
 // Documentos (gestao.md, Documentos)
 
@@ -335,7 +335,7 @@ const dataDoc = z.iso
   .date()
   .nullable()
   .optional()
-  .or(z.literal('').transform(() => null));
+  .or(z.literal('').transform(() => null))
 
 export const versaoDocumento = z
   .object({
@@ -349,7 +349,7 @@ export const versaoDocumento = z
   .refine((v) => !v.emissao || !v.vencimento || v.vencimento >= v.emissao, {
     path: ['vencimento'],
     message: 'O vencimento não pode ser antes da emissão',
-  });
+  })
 
 export const dadosDocumento = z.object({
   tipoDocumentoId: z.uuid('Escolha o tipo'),
@@ -375,9 +375,9 @@ export const dadosDocumento = z.object({
   observacoes: z.string().trim().max(4000).nullable().optional(),
   etiquetas: z.array(z.uuid()).max(30).default([]),
   versao: z.number().int().optional(),
-});
+})
 
-export const novoDocumento = dadosDocumento.extend({ primeiraVersao: versaoDocumento });
+export const novoDocumento = dadosDocumento.extend({ primeiraVersao: versaoDocumento })
 
 export const dadosEtiqueta = z.object({
   nome: z.string().trim().min(1, 'Informe o nome').max(60),
@@ -386,12 +386,12 @@ export const dadosEtiqueta = z.object({
     .regex(/^#[0-9a-fA-F]{6}$/)
     .nullable()
     .optional(),
-});
+})
 
 // Cadastros da cantina (cantina.md; 03-modelo-de-dados.md, 2.4 e 2.5)
 
 const decimal = (casas: number, mensagem: string) =>
-  z.string().regex(new RegExp(`^\\d+(\\.\\d{1,${casas}})?$`), mensagem);
+  z.string().regex(new RegExp(`^\\d+(\\.\\d{1,${casas}})?$`), mensagem)
 const textoOpc = (max: number) =>
   z
     .string()
@@ -399,7 +399,7 @@ const textoOpc = (max: number) =>
     .max(max)
     .nullable()
     .optional()
-    .or(z.literal('').transform(() => null));
+    .or(z.literal('').transform(() => null))
 
 export const dadosRecipiente = z.object({
   codigo: z.string().trim().min(1, 'Informe o código').max(30),
@@ -424,12 +424,12 @@ export const dadosRecipiente = z.object({
   anoPrimeiroUso: z.number().int().min(1900).max(2200).nullable().optional(),
   observacoes: textoOpc(2000),
   versao: z.number().int().optional(),
-});
+})
 
 export const situacaoRecipiente = z.object({
   situacao: z.enum(SITUACOES_RECIPIENTE),
   motivo: z.string().trim().max(500).nullable().optional(),
-});
+})
 
 export const dadosItemEstoque = z
   .object({
@@ -474,9 +474,9 @@ export const dadosItemEstoque = z
         code: 'custom',
         path: ['insumo', 'tipoInsumoId'],
         message: 'Escolha o tipo de insumo',
-      });
+      })
     }
-  });
+  })
 
 export const dadosMarca = z.object({
   nome: z.string().trim().min(1, 'Informe o nome').max(120),
@@ -487,7 +487,7 @@ export const dadosMarca = z.object({
     .optional()
     .or(z.literal('').transform(() => null)),
   versao: z.number().int().optional(),
-});
+})
 
 export const dadosProduto = z.object({
   nome: z.string().trim().min(1, 'Informe o nome').max(200),
@@ -504,7 +504,7 @@ export const dadosProduto = z.object({
     .or(z.literal('').transform(() => null)),
   observacoes: textoOpc(2000),
   versao: z.number().int().optional(),
-});
+})
 
 export const dadosRotulo = z.object({
   versao: z.string().trim().min(1, 'Informe a versão do rótulo').max(40),
@@ -525,11 +525,11 @@ export const dadosRotulo = z.object({
     .optional()
     .or(z.literal('').transform(() => null)),
   observacoes: textoOpc(2000),
-});
+})
 
 export const dadosFormato = z.object({
   volumeMl: z.number().int().min(1, 'Informe o volume').max(100000),
-});
+})
 
 export const fichaEmbalagemEntrada = z.object({
   itens: z
@@ -543,7 +543,7 @@ export const fichaEmbalagemEntrada = z.object({
       }),
     )
     .max(50),
-});
+})
 
 export const parametrosAnaliseEmpresa = z.object({
   parametros: z
@@ -567,7 +567,7 @@ export const parametrosAnaliseEmpresa = z.object({
       }),
     )
     .max(200),
-});
+})
 
 export const rendimentosPadrao = z.object({
   itens: z
@@ -586,7 +586,7 @@ export const rendimentosPadrao = z.object({
       }),
     )
     .max(200),
-});
+})
 
 export const ciclosSafra = z.object({
   ciclos: z
@@ -597,7 +597,7 @@ export const ciclosSafra = z.object({
       }),
     )
     .max(12),
-});
+})
 
 export const periodicidadesHigienizacao = z.object({
   itens: z
@@ -605,14 +605,14 @@ export const periodicidadesHigienizacao = z.object({
       z.object({ tipoRecipienteId: z.uuid(), intervaloDias: z.number().int().min(1).max(3650) }),
     )
     .max(100),
-});
+})
 
 const decimalRegra = z
   .string()
   .regex(/^-?\d+(\.\d{1,4})?$/, 'Número inválido')
   .nullable()
   .optional()
-  .or(z.literal('').transform(() => null));
+  .or(z.literal('').transform(() => null))
 
 /** Nova versão de regra regulatória (P16): a anterior da mesma chave e abrangência se encerra. */
 export const novaRegra = z
@@ -648,7 +648,7 @@ export const novaRegra = z
   .refine((d) => (d.abrangencia === 'nacional') === !d.abrangenciaCodigo, {
     path: ['abrangenciaCodigo'],
     message: 'Informe a UF ou a IG; na nacional, deixe vazio',
-  });
+  })
 
 // Produção (cantina.md, Projeto de vinho) -------------------------------------------------------
 
@@ -656,12 +656,12 @@ const decimalOpc = (casas: number, mensagem: string) =>
   decimal(casas, mensagem)
     .nullable()
     .optional()
-    .or(z.literal('').transform(() => null));
+    .or(z.literal('').transform(() => null))
 const uuidOpc = z
   .uuid()
   .nullable()
   .optional()
-  .or(z.literal('').transform(() => null));
+  .or(z.literal('').transform(() => null))
 
 /** Dados do projeto. Na criação rápida (dentro da recepção), basta nome, safra e produto. */
 export const dadosProjeto = z.object({
@@ -684,19 +684,19 @@ export const dadosProjeto = z.object({
   variedades: z.array(z.uuid()).max(50).default([]),
   observacoes: textoOpc(2000),
   versao: z.number().int().optional(),
-});
+})
 
 /** Situações que o enólogo muda à mão; as demais mudam sozinhas (cantina.md, Situações). */
 export const mudarSituacaoProjeto = z.object({
   situacao: z.enum(['em_producao', 'pronto_envase', 'encerrado', 'cancelado']),
   motivo: z.string().trim().max(500).nullable().optional(),
-});
+})
 
 const insumoPrevisto = z.object({
   itemEstoqueId: z.uuid('Escolha o insumo'),
   dose: decimal(4, 'Dose inválida').refine((v) => Number(v) > 0, 'Dose inválida'),
   unidade: z.string().trim().min(1, 'Informe a unidade').max(20),
-});
+})
 
 /** Passo do plano do projeto (cantina.md, Plano do projeto). */
 export const etapaPlano = z.object({
@@ -705,7 +705,7 @@ export const etapaPlano = z.object({
   recipienteId: uuidOpc,
   observacao: textoOpc(500),
   insumos: z.array(insumoPrevisto).max(20).default([]),
-});
+})
 
 /** Modelo de plano com dias relativos: dia 0 = desengace (cantina.md, Modelos de plano). */
 export const dadosModeloPlano = z.object({
@@ -722,14 +722,14 @@ export const dadosModeloPlano = z.object({
     )
     .max(60),
   versao: z.number().int().optional(),
-});
+})
 
 export const aplicarModeloPlano = z.object({
   modeloId: z.uuid('Escolha o modelo'),
   dataDia0: z.iso.date('Informe a data do dia 0'),
-});
+})
 
-export const mudarEtapaLote = z.object({ etapa: z.string().min(1).max(40) });
+export const mudarEtapaLote = z.object({ etapa: z.string().min(1).max(40) })
 
 /** Vinhedo próprio ou do produtor: cadastro mínimo em 2026 (cantina.md, Recepção, Origem). */
 export const dadosPropriedade = z.object({
@@ -763,7 +763,7 @@ export const dadosPropriedade = z.object({
     )
     .max(200),
   versao: z.number().int().optional(),
-});
+})
 
 // Recepção da uva (cantina.md, Recepção) ---------------------------------------------------------
 
@@ -776,7 +776,7 @@ const pesagem = z
   .refine((p) => Number(p.brutoKg) > Number(p.taraKg), {
     path: ['brutoKg'],
     message: 'O bruto precisa ser maior que a tara',
-  });
+  })
 
 /** Item por variedade: o °Brix é obrigatório na confirmação; o rascunho pode esperar a medição. */
 const itemRomaneio = z.object({
@@ -805,7 +805,7 @@ const itemRomaneio = z.object({
     .or(z.literal('').transform(() => null)),
   observacoes: textoOpc(500),
   pesagens: z.array(pesagem).max(50).default([]),
-});
+})
 
 /** Romaneio em rascunho; confirmado, não se edita (P13). */
 export const dadosRomaneio = z
@@ -849,9 +849,9 @@ export const dadosRomaneio = z
   .refine((d) => d.origem !== 'fornecedor' || !!d.fornecedorId, {
     path: ['fornecedorId'],
     message: 'Escolha o fornecedor',
-  });
+  })
 
-export const confirmacao = z.object({ cientes: z.array(z.string().max(200)).max(50).default([]) });
+export const confirmacao = z.object({ cientes: z.array(z.string().max(200)).max(50).default([]) })
 
 // Operações da cantina (cantina.md, Desengace, esmagamento e prensagem) --------------------------
 
@@ -859,7 +859,7 @@ export const confirmacao = z.object({ cientes: z.array(z.string().max(200)).max(
 const loteDestino = z.union([
   z.object({ id: z.uuid() }),
   z.object({ novo: z.string().regex(/^[A-Z]$/, 'Use uma letra (A, B…)') }),
-]);
+])
 
 /**
  * Insumo aplicado numa operação (cantina.md, Adição de insumo): o lote é obrigatório quando o item
@@ -885,7 +885,7 @@ const insumoAplicado = z
   .refine((i) => !!i.itemId !== !!i.descricao, {
     path: ['itemId'],
     message: 'Escolha o insumo do estoque ou descreva o insumo não estocado',
-  });
+  })
 
 const comumOperacao = {
   executadoEm: z.iso.datetime({ offset: true, message: 'Informe data e hora' }),
@@ -909,14 +909,11 @@ const comumOperacao = {
   /** Insumos aplicados junto (ex.: SO₂ e enzimas no desengace) e o local de onde saem. */
   insumos: z.array(insumoAplicado).max(50).default([]),
   localEstoqueId: uuidOpc,
-};
+}
 
-const kgPositivo = decimal(1, 'Peso inválido').refine((v) => Number(v) > 0, 'Peso inválido');
-const litrosOpc = decimalOpc(2, 'Volume inválido');
-const litrosPositivo = decimal(2, 'Volume inválido').refine(
-  (v) => Number(v) > 0,
-  'Volume inválido',
-);
+const kgPositivo = decimal(1, 'Peso inválido').refine((v) => Number(v) > 0, 'Peso inválido')
+const litrosOpc = decimalOpc(2, 'Volume inválido')
+const litrosPositivo = decimal(2, 'Volume inválido').refine((v) => Number(v) > 0, 'Volume inválido')
 
 /**
  * Desengace/esmagamento: consome kg dos itens do romaneio e põe o mosto nos recipientes com litros
@@ -951,7 +948,7 @@ export const desengace = z
   .refine((d) => new Set(d.destinos.map((x) => x.recipienteId)).size === d.destinos.length, {
     path: ['destinos'],
     message: 'O mesmo recipiente aparece duas vezes',
-  });
+  })
 
 /**
  * Prensagem (cantina.md): a partir de um recipiente com massa, ou direto da uva do romaneio. Cada
@@ -988,11 +985,11 @@ export const prensagem = z
   .refine((d) => !!d.origemRecipienteId || !!d.projetoId, {
     path: ['projetoId'],
     message: 'Escolha o projeto',
-  });
+  })
 
 // Trasfega e perda (cantina.md, Trasfega e corte; Operações) ------------------------------------
 
-const unicos = (ids: string[]) => new Set(ids).size === ids.length;
+const unicos = (ids: string[]) => new Set(ids).size === ids.length
 
 /**
  * Trasfega: move o vinho de um lote entre recipientes, com várias origens e vários destinos. Cada
@@ -1012,7 +1009,7 @@ const origensMistura = z
     }),
   )
   .min(1, 'Escolha a origem')
-  .max(30);
+  .max(30)
 
 const misturaValida = <
   T extends { origens: Array<{ recipienteId: string }>; destinos: Array<{ recipienteId: string }> },
@@ -1031,7 +1028,7 @@ const misturaValida = <
     .refine(
       (d) => !d.destinos.some((x) => d.origens.some((o) => o.recipienteId === x.recipienteId)),
       { path: ['destinos'], message: 'Um recipiente não pode ser origem e destino' },
-    );
+    )
 
 /**
  * Trasfega: move o vinho de um lote entre recipientes, com várias origens e vários destinos. Cada
@@ -1058,7 +1055,7 @@ export const trasfega = misturaValida(
       .min(1, 'Escolha o destino')
       .max(30),
   }),
-);
+)
 
 /**
  * Corte (cantina.md, Trasfega e corte): mistura de lotes diferentes. Cada destino incorpora a um
@@ -1087,7 +1084,7 @@ export const corte = misturaValida(
       })
       .nullish(),
   }),
-);
+)
 
 /**
  * Atesto em lote (cantina.md, Fermentação, chaptalização, álcool e atesto): uma origem completa
@@ -1112,7 +1109,7 @@ export const atesto = misturaValida(
       .min(1, 'Escolha as barricas')
       .max(200),
   }),
-);
+)
 
 /** Adição de insumo avulsa: um ou mais insumos, cada um num recipiente. */
 export const adicaoInsumo = z
@@ -1121,7 +1118,7 @@ export const adicaoInsumo = z
   .refine((d) => d.insumos.every((i) => !!i.recipienteId), {
     path: ['insumos'],
     message: 'Escolha o recipiente de cada insumo',
-  });
+  })
 
 /**
  * Chaptalização (cantina.md, Fermentação, chaptalização…): açúcar num recipiente, em kg ou g/L,
@@ -1144,7 +1141,7 @@ export const chaptalizacao = z
   .refine((d) => !!d.itemId !== !!d.descricao, {
     path: ['itemId'],
     message: 'Escolha o açúcar do estoque ou descreva',
-  });
+  })
 
 /**
  * Tratamento (clarificação, filtração, estabilização…): insumos, perdas e os parâmetros técnicos
@@ -1169,7 +1166,7 @@ export const tratamento = z.object({
     .array(z.object({ parametroId: z.uuid(), valor: z.string().trim().min(1).max(200) }))
     .max(30)
     .default([]),
-});
+})
 
 /** Parâmetro técnico de um tipo de tratamento, configurado pela empresa (P29). */
 export const parametroTratamento = z.object({
@@ -1177,7 +1174,7 @@ export const parametroTratamento = z.object({
   nome: z.string().trim().min(1, 'Informe o nome').max(80),
   unidade: textoOpc(20),
   obrigatorio: z.boolean().default(false),
-});
+})
 
 /** Início ou fim de uma fermentação do lote que está no recipiente (cantina.md, Fermentações). */
 export const fermentacao = z.object({
@@ -1185,7 +1182,7 @@ export const fermentacao = z.object({
   tipoFermentacao: z.enum(['alcoolica', 'malolatica']),
   evento: z.enum(['inicio', 'fim']),
   recipienteId: z.uuid('Escolha o recipiente'),
-});
+})
 
 /** Leitura de densidade e temperatura durante a fermentação (análise interna). */
 export const leituraFermentacao = z
@@ -1203,7 +1200,7 @@ export const leituraFermentacao = z
   .refine((d) => !!d.densidade || !!d.temperatura, {
     path: ['densidade'],
     message: 'Informe a densidade ou a temperatura',
-  });
+  })
 
 /** Perda avulsa (vazamento, descarte, amostra…), com motivo da lista "motivo_perda". */
 export const perda = z
@@ -1229,7 +1226,7 @@ export const perda = z
   .refine((d) => d.itens.every((i) => i.esvaziar || (i.litros && Number(i.litros) > 0)), {
     path: ['itens'],
     message: 'Informe os litros perdidos',
-  });
+  })
 
 // Granel (cantina.md, Granel e GLT) ---------------------------------------------------------------
 
@@ -1252,7 +1249,7 @@ const documentoGranel = {
     .nullable()
     .optional()
     .or(z.literal('').transform(() => null)),
-};
+}
 
 /**
  * Entrada de granel: vinho de fora num ou mais recipientes, num lote novo ou incorporado a um lote
@@ -1308,7 +1305,7 @@ export const entradaGranel = z
       !d.composicao.length ||
       Math.round(d.composicao.reduce((t, c) => t + Number(c.percentual) * 100, 0)) === 10000,
     { path: ['composicao'], message: 'Os percentuais da composição somam 100%' },
-  );
+  )
 
 /** Saída de granel: litros de um ou mais recipientes para fora, com nota, partes e GLT. */
 export const saidaGranel = z
@@ -1335,7 +1332,7 @@ export const saidaGranel = z
   .refine((d) => d.itens.every((i) => i.esvaziar || (i.litros && Number(i.litros) > 0)), {
     path: ['itens'],
     message: 'Informe os litros que saíram',
-  });
+  })
 
 /** Confirmação do recebimento (na GLT), marcada depois da entrada. */
 export const recebimentoGranel = z.object({
@@ -1343,7 +1340,7 @@ export const recebimentoGranel = z.object({
     .date()
     .nullable()
     .or(z.literal('').transform(() => null)),
-});
+})
 
 // Laboratório (cantina.md, Análises e Laboratório) ------------------------------------------------
 
@@ -1352,7 +1349,7 @@ const resultadoAnalise = z.object({
   parametroId: z.uuid(),
   valor: z.string().regex(/^-?\d+(\.\d{1,6})?$/, 'Valor inválido'),
   unidade: z.string().min(1).max(20),
-});
+})
 
 /**
  * Análise interna ou laudo externo de um lote, pelo recipiente (o lote que está nele na hora da
@@ -1378,7 +1375,7 @@ export const dadosAnalise = z
   .refine((d) => new Set(d.resultados.map((r) => r.parametroId)).size === d.resultados.length, {
     path: ['resultados'],
     message: 'O mesmo parâmetro aparece duas vezes',
-  });
+  })
 
 /** Pedido de análise externa: a amostra coletada, com o laboratório e o prazo do laudo. */
 export const dadosAmostra = z
@@ -1398,7 +1395,7 @@ export const dadosAmostra = z
   .refine((d) => !!d.recipienteId || !!d.loteId, {
     path: ['recipienteId'],
     message: 'Escolha o recipiente ou o lote',
-  });
+  })
 
 // Higienização e manutenção de recipiente (cantina.md, Recipientes) -----------------------------
 
@@ -1422,7 +1419,7 @@ export const higienizacao = z
   .refine((d) => unicos(d.recipientes), {
     path: ['recipientes'],
     message: 'O mesmo recipiente aparece duas vezes',
-  });
+  })
 
 // Inventário da cantina (cantina.md, Inventário; 03-modelo-de-dados.md, 2.5) --------------------
 
@@ -1431,7 +1428,7 @@ export const novoInventario = z.object({
   contadoEm: z.iso.datetime({ offset: true, message: 'Informe data e hora' }),
   localId: uuidOpc,
   observacao: textoOpc(2000),
-});
+})
 
 /** Contagem salva: o medido de cada recipiente (vazio = não contado) e o motivo da diferença. */
 export const contagemInventario = z.object({
@@ -1447,13 +1444,13 @@ export const contagemInventario = z.object({
       }),
     )
     .max(2000),
-});
+})
 
 /** Confirmação: os ajustes saem de uma vez, numa só operação (cantina.md, Inventário). */
 export const confirmarInventario = z.object({
   cientes: z.array(z.string().max(200)).max(2000).default([]),
   responsavelId: uuidOpc,
-});
+})
 
 // Rascunho e estorno (cantina.md, Regras comuns das operações; 03-modelo-de-dados.md, 4.5) -------
 
@@ -1470,19 +1467,15 @@ export const rascunhoOperacao = z.object({
     .record(z.string(), z.unknown())
     .refine((f) => JSON.stringify(f).length <= 200_000, 'Rascunho grande demais'),
   versao: z.number().int().optional(),
-});
+})
 
 export const estornoOperacao = z.object({
   motivo: z.string().trim().min(3, 'Informe o motivo').max(500),
-});
+})
 
 // Engarrafamento (cantina.md, Engarrafamento; 03-modelo-de-dados.md, 2.5) ----------------------
 
-const garrafas = z
-  .number()
-  .int()
-  .min(0, 'Garrafas inválidas')
-  .max(10_000_000, 'Garrafas inválidas');
+const garrafas = z.number().int().min(0, 'Garrafas inválidas').max(10_000_000, 'Garrafas inválidas')
 
 /** Previsão do envase: garrafas e materiais pela ficha de embalagem, e o que falta no estoque. */
 export const previsaoEnvase = z.object({
@@ -1496,7 +1489,7 @@ export const previsaoEnvase = z.object({
     .min(1, 'Escolha ao menos um formato')
     .max(10),
   localMateriaisId: uuidOpc,
-});
+})
 
 /** Ordem de engarrafamento: projeto, produto e rótulo, formatos, recipientes de origem e locais. */
 export const dadosOrdemEngarrafamento = z
@@ -1523,7 +1516,7 @@ export const dadosOrdemEngarrafamento = z
   .refine((d) => unicos(d.recipientes), {
     path: ['recipientes'],
     message: 'O mesmo recipiente aparece duas vezes',
-  });
+  })
 
 /**
  * Produção do dia: litros tirados de cada recipiente, garrafas por formato e o consumo real de cada
@@ -1560,19 +1553,19 @@ export const producaoEngarrafamento = z.object({
     )
     .max(100)
     .default([]),
-});
+})
 
 // Estoque (ambiente-cliente.md, Estoque; 03-modelo-de-dados.md, 2.4) ------------------------------
 
 const quantidadePositiva = decimal(3, 'Quantidade inválida').refine(
   (v) => Number(v) > 0,
   'Quantidade inválida',
-);
+)
 const dataOpc = z.iso
   .date()
   .nullable()
   .optional()
-  .or(z.literal('').transform(() => null));
+  .or(z.literal('').transform(() => null))
 
 /** Lote do fabricante: o existente (pelo código) ou um novo, com fabricação e validade. */
 const loteDoFabricante = z
@@ -1584,7 +1577,7 @@ const loteDoFabricante = z
   .refine((l) => !l.fabricacao || !l.validade || l.fabricacao <= l.validade, {
     path: ['validade'],
     message: 'A validade é antes da fabricação',
-  });
+  })
 
 /** Entrada manual, com o número da nota; o XML da NF-e entra no ciclo 5. */
 export const entradaEstoque = z.object({
@@ -1604,7 +1597,7 @@ export const entradaEstoque = z.object({
     )
     .min(1, 'Informe ao menos um item')
     .max(100),
-});
+})
 
 /**
  * Conferência da NF-e no estoque (ambiente-cliente.md, Entrada por NF-e): cada item da nota vai a
@@ -1634,13 +1627,13 @@ export const conferenciaNfe = z.object({
       }),
     )
     .max(990),
-});
+})
 
 /** Lançamento da nota conferida: a data da entrada e os "cientes". */
 export const lancamentoNfe = z.object({
   executadoEm: z.iso.datetime({ offset: true, message: 'Informe data e hora' }),
   cientes: z.array(z.string().max(200)).max(200).default([]),
-});
+})
 
 /**
  * Saída de produto (cantina.md, Saídas de produto): tipo da lista configurável, local, documento,
@@ -1675,7 +1668,7 @@ export const saidaProduto = z.object({
     )
     .min(1, 'Informe ao menos um item')
     .max(200),
-});
+})
 
 /** Devolução de uma saída: as garrafas voltam ao mesmo lote, no local escolhido. */
 export const devolucaoSaida = z.object({
@@ -1693,7 +1686,7 @@ export const devolucaoSaida = z.object({
     )
     .min(1, 'Informe o que voltou')
     .max(200),
-});
+})
 
 /** Ajuste de inventário (± a diferença) ou descarte (vencido, avariado), com motivo. */
 export const ajusteEstoque = z.object({
@@ -1708,7 +1701,7 @@ export const ajusteEstoque = z.object({
     .regex(/^-?\d+(\.\d{1,3})?$/, 'Quantidade inválida')
     .refine((v) => Number(v) !== 0, 'Quantidade inválida'),
   motivo: z.string().trim().min(3, 'Informe o motivo').max(500),
-});
+})
 
 /** Transferência entre locais do mesmo estabelecimento. */
 export const transferenciaEstoque = z
@@ -1730,7 +1723,7 @@ export const transferenciaEstoque = z
   .refine((d) => d.origemLocalId !== d.destinoLocalId, {
     path: ['destinoLocalId'],
     message: 'Escolha outro local',
-  });
+  })
 
 /**
  * Transferência de titularidade a granel (cantina.md, Mistura entre titulares; Pagamento em
@@ -1757,4 +1750,4 @@ export const titularidade = z.object({
     )
     .min(1, 'Escolha ao menos um recipiente')
     .max(30),
-});
+})

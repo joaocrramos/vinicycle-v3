@@ -1,23 +1,23 @@
 // EnoTrace › Terceiros › Produção em terceiro, o "vinho cigano" (cantina.md, Produção em terceiro;
 // 04, roteiro do ciclo 10, bloco 5): remessas à cantina (uva, granel, insumos e embalagens) e os
 // retornos parciais, com as perdas informadas pela cantina e o que ainda está com ela.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatarDecimal, ORIGENS_UVA_REMESSA } from '@vinicycle/shared';
-import { Plus, Trash2, Undo2 } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { BotaoIcone } from '@/componentes/AcoesLinha';
-import { Anexos } from '@/componentes/Anexos';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
-import { useItens, useLocais, useLotes } from './Estoque';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { formatarDecimal, ORIGENS_UVA_REMESSA } from '@vinicycle/shared'
+import { Plus, Trash2, Undo2 } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { BotaoIcone } from '@/componentes/AcoesLinha'
+import { Anexos } from '@/componentes/Anexos'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
+import { useItens, useLocais, useLotes } from './Estoque'
 import {
   agora,
   chaveRef,
@@ -27,35 +27,35 @@ import {
   type RefLote,
   useProjetos,
   useRecipientes,
-} from './operacoes/comum';
-import { useVariedadesEmUso } from './Projetos';
+} from './operacoes/comum'
+import { useVariedadesEmUso } from './Projetos'
 
-const F = 'enotrace.operacoes';
-const L = (v: string | number | null | undefined) => `${formatarDecimal(String(v ?? 0), 2)} L`;
+const F = 'enotrace.operacoes'
+const L = (v: string | number | null | undefined) => `${formatarDecimal(String(v ?? 0), 2)} L`
 const ANDAMENTO: Record<string, { rotulo: string; tom: 'sucesso' | 'alerta' | 'neutro' | 'erro' }> =
   {
     aguardando: { rotulo: 'Aguardando retorno', tom: 'alerta' },
     retorno_parcial: { rotulo: 'Retorno parcial', tom: 'alerta' },
     concluida: { rotulo: 'Concluída', tom: 'sucesso' },
     estornada: { rotulo: 'Estornada', tom: 'neutro' },
-  };
+  }
 
 interface Resumo {
-  id: string;
-  executadoEm: string;
-  nfNumero: string | null;
-  projetoId: string;
-  projeto: string;
-  cantinaId: string;
-  cantina: string;
-  kgUva: string;
-  litrosGranel: string;
-  litrosRetornados: string;
-  perdasInformadas: string;
-  numeroRetornos: number;
-  rendimento: string | null;
-  andamento: keyof typeof ANDAMENTO;
-  situacao: 'lancada' | 'estornada';
+  id: string
+  executadoEm: string
+  nfNumero: string | null
+  projetoId: string
+  projeto: string
+  cantinaId: string
+  cantina: string
+  kgUva: string
+  litrosGranel: string
+  litrosRetornados: string
+  perdasInformadas: string
+  numeroRetornos: number
+  rendimento: string | null
+  andamento: keyof typeof ANDAMENTO
+  situacao: 'lancada' | 'estornada'
 }
 
 function useCantinas() {
@@ -63,22 +63,22 @@ function useCantinas() {
     queryKey: ['pessoas-opcoes', 'cantina_prestadora'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=cantina_prestadora'),
-  });
+  })
 }
 
 const mensagem = (e: unknown) =>
   e instanceof ErroApi && e.campos.length
     ? `${e.message} ${e.campos.map((c) => c.mensagem).join(' ')}`
-    : (e as Error).message;
+    : (e as Error).message
 
 export function ListaRemessas() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
   const lista = useQuery({
     queryKey: ['remessas-terceiro'],
     queryFn: () => api.get<Resumo[]>('/api/terceiros/remessas'),
-  });
+  })
   return (
     <Pagina
       titulo="Produção em terceiro"
@@ -124,26 +124,26 @@ export function ListaRemessas() {
         </ul>
       </Cartao>
     </Pagina>
-  );
+  )
 }
 
 // Nova remessa ------------------------------------------------------------------------------------
 
 interface ItemRemessa {
-  tipo: 'uva' | 'granel' | 'insumo';
-  variedadeId: string;
-  safra: string;
-  kg: string | null;
-  origemUva: 'parcela' | 'romaneio' | 'fornecedor';
-  parcelaId: string;
-  romaneioItemId: string;
-  fornecedorId: string;
-  operacaoId: string;
-  itemId: string;
-  loteItemId: string;
-  quantidade: string | null;
-  localOrigemId: string;
-  localDestinoId: string;
+  tipo: 'uva' | 'granel' | 'insumo'
+  variedadeId: string
+  safra: string
+  kg: string | null
+  origemUva: 'parcela' | 'romaneio' | 'fornecedor'
+  parcelaId: string
+  romaneioItemId: string
+  fornecedorId: string
+  operacaoId: string
+  itemId: string
+  loteItemId: string
+  quantidade: string | null
+  localOrigemId: string
+  localDestinoId: string
 }
 const itemVazio = (tipo: ItemRemessa['tipo']): ItemRemessa => ({
   tipo,
@@ -160,7 +160,7 @@ const itemVazio = (tipo: ItemRemessa['tipo']): ItemRemessa => ({
   quantidade: null,
   localOrigemId: '',
   localDestinoId: '',
-});
+})
 
 function LinhaRemessa({
   i,
@@ -169,16 +169,16 @@ function LinhaRemessa({
   set,
   remover,
 }: {
-  i: ItemRemessa;
-  n: number;
-  projetoId: string;
-  set: (p: Partial<ItemRemessa>) => void;
-  remover: () => void;
+  i: ItemRemessa
+  n: number
+  projetoId: string
+  set: (p: Partial<ItemRemessa>) => void
+  remover: () => void
 }) {
-  const variedades = useVariedadesEmUso();
-  const itens = useItens();
-  const locais = useLocais();
-  const lotes = useLotes(i.tipo === 'insumo' ? i.itemId : '', i.localOrigemId || undefined);
+  const variedades = useVariedadesEmUso()
+  const itens = useItens()
+  const locais = useLocais()
+  const lotes = useLotes(i.tipo === 'insumo' ? i.itemId : '', i.localOrigemId || undefined)
   const propriedades = useQuery({
     queryKey: ['propriedades-opcoes', ''],
     queryFn: () =>
@@ -186,28 +186,28 @@ function LinhaRemessa({
         '/api/propriedades/opcoes',
       ),
     enabled: i.tipo === 'uva' && i.origemUva === 'parcela',
-  });
+  })
   const uvas = useQuery({
     queryKey: ['uva-a-processar'],
     queryFn: () =>
       api.get<
         Array<{
-          itemId: string;
-          romaneio: string;
-          variedadeId: string;
-          variedade: string;
-          liquidoKg: string;
-          consumidoKg: string;
+          itemId: string
+          romaneio: string
+          variedadeId: string
+          variedade: string
+          liquidoKg: string
+          consumidoKg: string
         }>
       >('/api/romaneios/uva-a-processar'),
     enabled: i.tipo === 'uva' && i.origemUva === 'romaneio',
-  });
+  })
   const fornecedores = useQuery({
     queryKey: ['pessoas-opcoes', 'produtor_uva'],
     queryFn: () =>
       api.get<Array<{ id: string; nome: string }>>('/api/pessoas/opcoes?papel=produtor_uva'),
     enabled: i.tipo === 'uva' && i.origemUva === 'fornecedor',
-  });
+  })
   const saidas = useQuery({
     queryKey: ['granel-para-remessa', projetoId],
     queryFn: () =>
@@ -215,10 +215,10 @@ function LinhaRemessa({
         `/api/terceiros/granel-para-remessa?projetoId=${projetoId}`,
       ),
     enabled: i.tipo === 'granel' && !!projetoId,
-  });
+  })
   const titulo = { uva: 'Uva', granel: 'Mosto ou vinho a granel', insumo: 'Insumo ou embalagem' }[
     i.tipo
-  ];
+  ]
   return (
     <div className="flex flex-col gap-3 border-b pb-4">
       <div className="flex items-center justify-between">
@@ -250,8 +250,8 @@ function LinhaRemessa({
                 id={`rm-rom-${n}`}
                 value={i.romaneioItemId}
                 onChange={(e) => {
-                  const u = uvas.data?.find((x) => x.itemId === e.target.value);
-                  set({ romaneioItemId: e.target.value, variedadeId: u?.variedadeId ?? '' });
+                  const u = uvas.data?.find((x) => x.itemId === e.target.value)
+                  set({ romaneioItemId: e.target.value, variedadeId: u?.variedadeId ?? '' })
                 }}
               >
                 <option value="">Escolha</option>
@@ -432,14 +432,14 @@ function LinhaRemessa({
         </div>
       )}
     </div>
-  );
+  )
 }
 
 export function NovaRemessa() {
-  const navegar = useNavigate();
-  const qc = useQueryClient();
-  const projetos = useProjetos();
-  const cantinas = useCantinas();
+  const navegar = useNavigate()
+  const qc = useQueryClient()
+  const projetos = useProjetos()
+  const cantinas = useCantinas()
   const [d, setD] = useState({
     executadoEm: agora(),
     projetoId: '',
@@ -449,22 +449,22 @@ export function NovaRemessa() {
     nfChave: '',
     observacao: '',
     itens: [itemVazio('uva')] as ItemRemessa[],
-  });
-  const [erro, setErro] = useState<string | null>(null);
+  })
+  const [erro, setErro] = useState<string | null>(null)
   const contratos = useQuery({
     queryKey: ['contratos-cantina', d.cantinaId],
     queryFn: async () =>
       (
         await api.get<{
-          itens: Array<{ id: string; numero: string | null; vigenciaInicio: string }>;
+          itens: Array<{ id: string; numero: string | null; vigenciaInicio: string }>
         }>(
           `/api/contratos-terceirizacao?tamanho=0&sentido=contratamos&contraparteId=${d.cantinaId}`,
         )
       ).itens,
     enabled: !!d.cantinaId,
-  });
+  })
   const setItem = (n: number, p: Partial<ItemRemessa>) =>
-    setD({ ...d, itens: d.itens.map((x, j) => (j === n ? { ...x, ...p } : x)) });
+    setD({ ...d, itens: d.itens.map((x, j) => (j === n ? { ...x, ...p } : x)) })
   return (
     <Pagina titulo="Nova remessa" trilha={['EnoTrace', 'Terceiros', 'Produção em terceiro']}>
       <Cartao>
@@ -573,7 +573,7 @@ export function NovaRemessa() {
       <div className="flex gap-2 border-t pt-4">
         <Botao
           onClick={async () => {
-            setErro(null);
+            setErro(null)
             try {
               const r = await api.post<{ id: string }>('/api/terceiros/remessas', {
                 executadoEm: doCampo(d.executadoEm),
@@ -606,11 +606,11 @@ export function NovaRemessa() {
                           localDestinoId: i.localDestinoId,
                         },
                 ),
-              });
-              await qc.invalidateQueries({ queryKey: ['remessas-terceiro'] });
-              navegar(`/enotrace/terceiros/remessas/${r.id}`);
+              })
+              await qc.invalidateQueries({ queryKey: ['remessas-terceiro'] })
+              navegar(`/enotrace/terceiros/remessas/${r.id}`)
             } catch (e) {
-              setErro(mensagem(e));
+              setErro(mensagem(e))
             }
           }}
         >
@@ -621,78 +621,78 @@ export function NovaRemessa() {
         </Botao>
       </div>
     </Pagina>
-  );
+  )
 }
 
 // Ficha da remessa ---------------------------------------------------------------------------------
 
 interface ItemFicha {
-  tipo: 'uva' | 'granel' | 'insumo';
-  kg: string | null;
-  safra: number | null;
-  origemUva: keyof typeof ORIGENS_UVA_REMESSA | null;
-  litros: string | null;
-  quantidade: string | null;
-  operacaoId: string | null;
-  operacao: string | null;
-  variedade: string | null;
-  parcela: string | null;
-  romaneio: string | null;
-  fornecedor: string | null;
-  item: string | null;
-  unidade: string | null;
-  lote: string | null;
-  local: string | null;
-  emPoder: string | null;
+  tipo: 'uva' | 'granel' | 'insumo'
+  kg: string | null
+  safra: number | null
+  origemUva: keyof typeof ORIGENS_UVA_REMESSA | null
+  litros: string | null
+  quantidade: string | null
+  operacaoId: string | null
+  operacao: string | null
+  variedade: string | null
+  parcela: string | null
+  romaneio: string | null
+  fornecedor: string | null
+  item: string | null
+  unidade: string | null
+  lote: string | null
+  local: string | null
+  emPoder: string | null
 }
 interface Retorno {
-  id: string;
-  executadoEm: string;
-  nfNumero: string | null;
-  glt: string | null;
-  perdasInformadas: string | null;
-  situacao: 'lancada' | 'estornada';
-  motivoEstorno: string | null;
+  id: string
+  executadoEm: string
+  nfNumero: string | null
+  glt: string | null
+  perdasInformadas: string | null
+  situacao: 'lancada' | 'estornada'
+  motivoEstorno: string | null
   itens: Array<{
-    tipo: 'granel' | 'engarrafado' | 'insumo_consumido';
-    litros: number | null;
-    garrafas: number | null;
-    quantidade: number | null;
-    operacaoId: string | null;
-    operacao: string | null;
-    lote: string | null;
-    produto: string | null;
-    item: string | null;
-  }>;
+    tipo: 'granel' | 'engarrafado' | 'insumo_consumido'
+    litros: number | null
+    garrafas: number | null
+    quantidade: number | null
+    operacaoId: string | null
+    operacao: string | null
+    lote: string | null
+    produto: string | null
+    item: string | null
+  }>
 }
 type Ficha = Resumo & {
-  observacao: string | null;
-  motivoEstorno: string | null;
-  itens: ItemFicha[];
-  retornos: Retorno[];
-};
+  observacao: string | null
+  motivoEstorno: string | null
+  itens: ItemFicha[]
+  retornos: Retorno[]
+}
 
 export function FichaRemessa() {
-  const { id = '' } = useParams();
-  const navegar = useNavigate();
-  const qc = useQueryClient();
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const [estornar, setEstornar] = useState(false);
-  const [estornarRetorno, setEstornarRetorno] = useState<string | null>(null);
+  const { id = '' } = useParams()
+  const navegar = useNavigate()
+  const qc = useQueryClient()
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const [estornar, setEstornar] = useState(false)
+  const [estornarRetorno, setEstornarRetorno] = useState<string | null>(null)
   const q = useQuery({
     queryKey: ['remessa-terceiro', id],
     queryFn: () => api.get<Ficha>(`/api/terceiros/remessas/${id}`),
-  });
+  })
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const r = q.data;
-  const recarregar = () => qc.invalidateQueries({ queryKey: ['remessa-terceiro', id] });
-  const lancada = r.situacao === 'lancada';
+    )
+  const r = q.data
+  const recarregar = () => qc.invalidateQueries({ queryKey: ['remessa-terceiro', id] })
+  const lancada = r.situacao === 'lancada'
   return (
     <Pagina
       titulo={`Remessa para ${r.cantina}`}
@@ -709,8 +709,8 @@ export function FichaRemessa() {
               onClick={async () => {
                 await api.post(`/api/terceiros/remessas/${id}/concluir`, {
                   concluida: r.andamento !== 'concluida',
-                });
-                await recarregar();
+                })
+                await recarregar()
               }}
             >
               {r.andamento === 'concluida' ? 'Reabrir' : 'Marcar como concluída'}
@@ -848,8 +848,8 @@ export function FichaRemessa() {
         descricao="Os insumos voltam ao local de origem. A saída de granel se estorna em Operações."
         rotuloBotao="Estornar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/terceiros/remessas/${id}/estorno`, { motivo });
-          await recarregar();
+          await api.post(`/api/terceiros/remessas/${id}/estorno`, { motivo })
+          await recarregar()
         }}
       />
       <PedirMotivo
@@ -859,28 +859,28 @@ export function FichaRemessa() {
         descricao="A entrada de granel e as garrafas que voltaram são desfeitas."
         rotuloBotao="Estornar"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/terceiros/retornos/${estornarRetorno}/estorno`, { motivo });
-          await recarregar();
+          await api.post(`/api/terceiros/retornos/${estornarRetorno}/estorno`, { motivo })
+          await recarregar()
         }}
       />
     </Pagina>
-  );
+  )
 }
 
 // Novo retorno ------------------------------------------------------------------------------------
 
 interface ItemRetorno {
-  tipo: 'granel' | 'engarrafado' | 'insumo_consumido';
-  recipienteId: string;
-  litros: string | null;
-  lote: RefLote | null;
-  formatoId: string;
-  garrafas: string;
-  loteComercial: string;
-  localId: string;
-  itemId: string;
-  loteItemId: string;
-  quantidade: string | null;
+  tipo: 'granel' | 'engarrafado' | 'insumo_consumido'
+  recipienteId: string
+  litros: string | null
+  lote: RefLote | null
+  formatoId: string
+  garrafas: string
+  loteComercial: string
+  localId: string
+  itemId: string
+  loteItemId: string
+  quantidade: string | null
 }
 const retornoVazio = (tipo: ItemRetorno['tipo']): ItemRetorno => ({
   tipo,
@@ -894,41 +894,41 @@ const retornoVazio = (tipo: ItemRetorno['tipo']): ItemRetorno => ({
   itemId: '',
   loteItemId: '',
   quantidade: null,
-});
+})
 
 export function NovoRetorno() {
-  const { id = '' } = useParams();
-  const navegar = useNavigate();
-  const qc = useQueryClient();
-  const recipientes = useRecipientes();
-  const locais = useLocais();
-  const itens = useItens();
+  const { id = '' } = useParams()
+  const navegar = useNavigate()
+  const qc = useQueryClient()
+  const recipientes = useRecipientes()
+  const locais = useLocais()
+  const itens = useItens()
   const remessa = useQuery({
     queryKey: ['remessa-terceiro', id],
     queryFn: () => api.get<Ficha>(`/api/terceiros/remessas/${id}`),
-  });
+  })
   const composicao = useQuery({
     queryKey: ['remessa-composicao', id],
     queryFn: () =>
       api.get<Array<{ variedadeId: string; safra: number | null; percentual: string }>>(
         `/api/terceiros/remessas/${id}/composicao`,
       ),
-  });
-  const variedades = useVariedadesEmUso();
+  })
+  const variedades = useVariedadesEmUso()
   const formatos = useQuery({
     queryKey: ['formatos-proprios'],
     queryFn: async () => {
       const produtos = (
         await api.get<{ itens: Array<{ id: string; nome: string }> }>('/api/produtos?tamanho=0')
-      ).itens;
+      ).itens
       const fichas = await Promise.all(
         produtos.map((p) =>
           api.get<{
-            titularId: string | null;
-            formatos: Array<{ id: string; volumeMl: number; ativo: boolean }>;
+            titularId: string | null
+            formatos: Array<{ id: string; volumeMl: number; ativo: boolean }>
           }>(`/api/produtos/${p.id}`),
         ),
-      );
+      )
       return produtos.flatMap((p, n) =>
         fichas[n]!.titularId
           ? []
@@ -936,9 +936,9 @@ export function NovoRetorno() {
               id: f.id,
               nome: `${p.nome} ${f.volumeMl} mL`,
             })),
-      );
+      )
     },
-  });
+  })
   const [d, setD] = useState({
     executadoEm: agora(),
     nfNumero: '',
@@ -947,15 +947,15 @@ export function NovoRetorno() {
     perdasInformadas: null as string | null,
     observacao: '',
     itens: [retornoVazio('granel')] as ItemRetorno[],
-  });
-  const [erro, setErro] = useState<string | null>(null);
-  const [avisos, setAvisos] = useState<Array<{ codigo: string; mensagem: string }>>([]);
-  const [cientes, setCientes] = useState<string[]>([]);
+  })
+  const [erro, setErro] = useState<string | null>(null)
+  const [avisos, setAvisos] = useState<Array<{ codigo: string; mensagem: string }>>([])
+  const [cientes, setCientes] = useState<string[]>([])
   const setItem = (n: number, p: Partial<ItemRetorno>) =>
-    setD({ ...d, itens: d.itens.map((x, j) => (j === n ? { ...x, ...p } : x)) });
-  if (!remessa.data) return <p className="text-sm text-muted-foreground">Carregando…</p>;
-  const r = remessa.data;
-  const nomeVar = (v: string) => variedades.data?.find((x) => x.id === v)?.nome ?? 'variedade';
+    setD({ ...d, itens: d.itens.map((x, j) => (j === n ? { ...x, ...p } : x)) })
+  if (!remessa.data) return <p className="text-sm text-muted-foreground">Carregando…</p>
+  const r = remessa.data
+  const nomeVar = (v: string) => variedades.data?.find((x) => x.id === v)?.nome ?? 'variedade'
   return (
     <Pagina
       titulo={`Retorno de ${r.cantina}`}
@@ -1071,12 +1071,12 @@ export function NovoRetorno() {
                       onChange={(e) => setItem(n, { lote: daChave(e.target.value) })}
                     >
                       {(() => {
-                        const rec = recipientes.data?.find((x) => x.id === i.recipienteId);
+                        const rec = recipientes.data?.find((x) => x.id === i.recipienteId)
                         return rec?.lote ? (
                           <option value={`id:${rec.lote.id}`}>
                             Incorporar ao lote {rec.lote.codigo}
                           </option>
-                        ) : null;
+                        ) : null
                       })()}
                       {LETRAS.map((l) => (
                         <option key={l} value={`novo:${l}`}>
@@ -1229,7 +1229,7 @@ export function NovoRetorno() {
       <div className="flex gap-2 border-t pt-4">
         <Botao
           onClick={async () => {
-            setErro(null);
+            setErro(null)
             try {
               await api.post('/api/terceiros/retornos', {
                 executadoEm: doCampo(d.executadoEm),
@@ -1265,16 +1265,16 @@ export function NovoRetorno() {
                           localId: i.localId,
                         },
                 ),
-              });
-              await qc.invalidateQueries({ queryKey: ['remessa-terceiro', id] });
-              await qc.invalidateQueries({ queryKey: ['remessas-terceiro'] });
-              navegar(`/enotrace/terceiros/remessas/${id}`);
+              })
+              await qc.invalidateQueries({ queryKey: ['remessa-terceiro', id] })
+              await qc.invalidateQueries({ queryKey: ['remessas-terceiro'] })
+              navegar(`/enotrace/terceiros/remessas/${id}`)
             } catch (e) {
               if (e instanceof ErroApi && e.codigo === 'ciente_pendente') {
-                const det = e.detalhes as { avisos?: Array<{ codigo: string; mensagem: string }> };
-                setAvisos(det?.avisos ?? []);
-                setErro('Confirme que está ciente dos avisos e lance de novo.');
-              } else setErro(mensagem(e));
+                const det = e.detalhes as { avisos?: Array<{ codigo: string; mensagem: string }> }
+                setAvisos(det?.avisos ?? [])
+                setErro('Confirme que está ciente dos avisos e lance de novo.')
+              } else setErro(mensagem(e))
             }
           }}
         >
@@ -1285,5 +1285,5 @@ export function NovoRetorno() {
         </Botao>
       </div>
     </Pagina>
-  );
+  )
 }

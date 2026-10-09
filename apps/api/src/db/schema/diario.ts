@@ -10,19 +10,19 @@ import {
   text,
   unique,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento } from './acesso';
-import { recipiente } from './cantina';
-import { alteracao, criacao, id, inativacao } from './comum';
-import { empresa } from './plataforma';
-import { parcela, projeto } from './producao';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento } from './acesso'
+import { recipiente } from './cantina'
+import { alteracao, criacao, id, inativacao } from './comum'
+import { empresa } from './plataforma'
+import { parcela, projeto } from './producao'
 
 function daEmpresa(
   coluna: AnyPgColumn,
   empresaId: AnyPgColumn,
   alvo: { id: AnyPgColumn; empresaId: AnyPgColumn },
 ) {
-  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] });
+  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] })
 }
 
 export const diarioNota = pgTable(
@@ -53,4 +53,4 @@ export const diarioNota = pgTable(
     index('diario_nota_recipiente').on(t.recipienteId),
     index('diario_nota_parcela').on(t.parcelaId),
   ],
-);
+)

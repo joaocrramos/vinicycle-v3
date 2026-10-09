@@ -1,7 +1,7 @@
 // Administração › Suporte (administracao.md, Suporte): a fila dos chamados com o semáforo do prazo
 // da primeira resposta, a conversa (com notas internas), a situação, os prazos por plano ou
 // cliente e o resumo por categoria e por prazo.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   NOMES_PRIORIDADE,
   NOMES_SITUACAO_CHAMADO,
@@ -9,36 +9,36 @@ import {
   type PrioridadeChamado,
   SITUACOES_CHAMADO,
   type SituacaoChamado,
-} from '@vinicycle/shared';
-import { CircleAlert, CircleCheck, Clock } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
-import { type Conversa, EtiquetaSituacaoChamado, Mensagens } from '../Suporte';
+} from '@vinicycle/shared'
+import { CircleAlert, CircleCheck, Clock } from 'lucide-react'
+import { useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
+import { type Conversa, EtiquetaSituacaoChamado, Mensagens } from '../Suporte'
 
-type Semaforo = 'respondido' | 'verde' | 'amarelo' | 'vermelho';
+type Semaforo = 'respondido' | 'verde' | 'amarelo' | 'vermelho'
 interface LinhaChamado {
-  id: string;
-  numero: number;
-  empresaId: string | null;
-  cliente: string | null;
-  solicitante: string;
-  origem: 'sistema' | 'publico';
-  assunto: string;
-  categoria: string;
-  prioridade: PrioridadeChamado;
-  situacao: SituacaoChamado;
-  criadoEm: string;
-  prazoEm: string;
-  semaforo: Semaforo;
+  id: string
+  numero: number
+  empresaId: string | null
+  cliente: string | null
+  solicitante: string
+  origem: 'sistema' | 'publico'
+  assunto: string
+  categoria: string
+  prioridade: PrioridadeChamado
+  situacao: SituacaoChamado
+  criadoEm: string
+  prazoEm: string
+  semaforo: Semaforo
 }
 
 /** Estado com ícone e texto, nunca só a cor. */
@@ -57,56 +57,56 @@ function Prazo({ semaforo, prazoEm }: { semaforo: Semaforo; prazoEm: string }) {
       icone: <CircleAlert className="size-4 text-destructive" />,
       texto: `Atrasado desde ${formatarDataHora(prazoEm)}`,
     },
-  }[semaforo];
+  }[semaforo]
   return (
     <span className="inline-flex items-center gap-1 whitespace-nowrap">
       {m.icone}
       {m.texto}
     </span>
-  );
+  )
 }
 
 function DetalheEquipe({ id, aoFechar }: { id: string; aoFechar: () => void }) {
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
   const q = useQuery({
     queryKey: ['chamado-equipe', id],
     queryFn: () =>
       api.get<
         Conversa & {
-          empresaId: string | null;
-          cliente: string | null;
-          origem: 'sistema' | 'publico';
-          documentoInformado: string | null;
-          prazoEm: string;
-          semaforo: Semaforo;
+          empresaId: string | null
+          cliente: string | null
+          origem: 'sistema' | 'publico'
+          documentoInformado: string | null
+          prazoEm: string
+          semaforo: Semaforo
         }
       >(`/api/plataforma/chamados/${id}`),
-  });
+  })
   const categorias = useQuery({
     queryKey: ['config-plataforma'],
     queryFn: () => api.get<{ chamadoCategorias: string[] }>('/api/plataforma/configuracoes'),
     enabled: pode(s, 'plataforma.configuracoes', 'visualizar'),
-  });
-  const [texto, setTexto] = useState('');
-  const [interna, setInterna] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-  const podeEditar = pode(s, 'plataforma.suporte', 'editar');
+  })
+  const [texto, setTexto] = useState('')
+  const [interna, setInterna] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+  const podeEditar = pode(s, 'plataforma.suporte', 'editar')
   const recarregar = () =>
     Promise.all([
       qc.invalidateQueries({ queryKey: ['chamado-equipe', id] }),
       qc.invalidateQueries({ queryKey: ['lista'] }),
-    ]);
+    ])
   const executar = async (f: () => Promise<unknown>) => {
-    setErro(null);
+    setErro(null)
     try {
-      await f();
-      await recarregar();
+      await f()
+      await recarregar()
     } catch (e) {
-      setErro((e as Error).message);
+      setErro((e as Error).message)
     }
-  };
-  const c = q.data;
+  }
+  const c = q.data
   return (
     <Dialogo
       aberto
@@ -238,8 +238,8 @@ function DetalheEquipe({ id, aoFechar }: { id: string; aoFechar: () => void }) {
                       await api.post(`/api/plataforma/chamados/${id}/mensagens`, {
                         texto,
                         interna,
-                      });
-                      setTexto('');
+                      })
+                      setTexto('')
                     })
                   }
                 >
@@ -256,42 +256,42 @@ function DetalheEquipe({ id, aoFechar }: { id: string; aoFechar: () => void }) {
         </div>
       )}
     </Dialogo>
-  );
+  )
 }
 
 interface Prazos {
-  padrao: Record<PrioridadeChamado, number>;
+  padrao: Record<PrioridadeChamado, number>
   excecoes: Array<{
-    id: string;
-    planoId: string | null;
-    empresaId: string | null;
-    prioridade: PrioridadeChamado;
-    horas: number;
-    plano: string | null;
-    cliente: string | null;
-  }>;
+    id: string
+    planoId: string | null
+    empresaId: string | null
+    prioridade: PrioridadeChamado
+    horas: number
+    plano: string | null
+    cliente: string | null
+  }>
 }
 
 function DialogoPrazos({ aoFechar }: { aoFechar: () => void }) {
-  const qc = useQueryClient();
+  const qc = useQueryClient()
   const prazos = useQuery({
     queryKey: ['chamados-prazos'],
     queryFn: () => api.get<Prazos>('/api/plataforma/chamados-prazos'),
-  });
+  })
   const planos = useQuery({
     queryKey: ['planos-plataforma'],
     queryFn: () => api.get<Array<{ id: string; nome: string }>>('/api/plataforma/planos?todos=1'),
-  });
+  })
   const clientes = useQuery({
     queryKey: ['clientes-curto'],
     queryFn: () =>
       api.get<{ itens: Array<{ id: string; nome: string; nomeFantasia: string | null }> }>(
         '/api/plataforma/empresas?tamanho=100',
       ),
-  });
-  const [alvo, setAlvo] = useState('');
-  const [horas, setHoras] = useState<Partial<Record<PrioridadeChamado, string>>>({});
-  const [erro, setErro] = useState<string | null>(null);
+  })
+  const [alvo, setAlvo] = useState('')
+  const [horas, setHoras] = useState<Partial<Record<PrioridadeChamado, string>>>({})
+  const [erro, setErro] = useState<string | null>(null)
   return (
     <Dialogo
       aberto
@@ -303,7 +303,7 @@ function DialogoPrazos({ aoFechar }: { aoFechar: () => void }) {
         <Botao
           disabled={!alvo}
           onClick={async () => {
-            const [tipo, id] = alvo.split(':');
+            const [tipo, id] = alvo.split(':')
             try {
               await api.put('/api/plataforma/chamados-prazos', {
                 planoId: tipo === 'plano' ? id : null,
@@ -311,12 +311,12 @@ function DialogoPrazos({ aoFechar }: { aoFechar: () => void }) {
                 horas: Object.fromEntries(
                   PRIORIDADES_CHAMADO.map((p) => [p, horas[p] ? Number(horas[p]) : null]),
                 ),
-              });
-              await qc.invalidateQueries({ queryKey: ['chamados-prazos'] });
-              setAlvo('');
-              setHoras({});
+              })
+              await qc.invalidateQueries({ queryKey: ['chamados-prazos'] })
+              setAlvo('')
+              setHoras({})
             } catch (e) {
-              setErro((e as Error).message);
+              setErro((e as Error).message)
             }
           }}
         >
@@ -343,13 +343,13 @@ function DialogoPrazos({ aoFechar }: { aoFechar: () => void }) {
             id="pz-alvo"
             value={alvo}
             onChange={(e) => {
-              setAlvo(e.target.value);
-              const [tipo, id] = e.target.value.split(':');
+              setAlvo(e.target.value)
+              const [tipo, id] = e.target.value.split(':')
               const atuais =
                 prazos.data?.excecoes.filter(
                   (x) => (tipo === 'plano' ? x.planoId : x.empresaId) === id,
-                ) ?? [];
-              setHoras(Object.fromEntries(atuais.map((x) => [x.prioridade, String(x.horas)])));
+                ) ?? []
+              setHoras(Object.fromEntries(atuais.map((x) => [x.prioridade, String(x.horas)])))
             }}
           >
             <option value="">Escolha um plano ou um cliente</option>
@@ -391,27 +391,27 @@ function DialogoPrazos({ aoFechar }: { aoFechar: () => void }) {
         )}
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function PaginaSuporte() {
-  const { data: s } = useSessao();
-  const [params, setParams] = useSearchParams();
-  const [prazos, setPrazos] = useState(false);
+  const { data: s } = useSessao()
+  const [params, setParams] = useSearchParams()
+  const [prazos, setPrazos] = useState(false)
   const resumo = useQuery({
     queryKey: ['chamados-resumo'],
     queryFn: () =>
       api.get<
         Array<{
-          categoria: string;
-          total: number;
-          abertos: number;
-          noPrazo: number;
-          foraDoPrazo: number;
+          categoria: string
+          total: number
+          abertos: number
+          noPrazo: number
+          foraDoPrazo: number
         }>
       >('/api/plataforma/chamados-resumo'),
-  });
-  const aberto = params.get('chamado');
+  })
+  const aberto = params.get('chamado')
   return (
     <Pagina
       titulo="Suporte"
@@ -542,5 +542,5 @@ export function PaginaSuporte() {
       {aberto && <DetalheEquipe id={aberto} aoFechar={() => setParams({})} />}
       {prazos && <DialogoPrazos aoFechar={() => setPrazos(false)} />}
     </Pagina>
-  );
+  )
 }

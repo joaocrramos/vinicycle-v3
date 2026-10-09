@@ -4,24 +4,24 @@
 //   ano; mudanças só por retificação;
 // - apoio ao SIVIBE (IN MAPA 59/2020): uva própria, comprada e de terceiros do ano.
 // Cada tabela sai em CSV; a página se imprime pelo navegador.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { formatarDecimal, NOMES_SITUACAO_SIVIBE, ORIGENS_UVA_REMESSA } from '@vinicycle/shared';
-import { Download, Printer } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
-import { useSearchParams } from 'react-router';
-import { Anexos } from '@/componentes/Anexos';
-import { PedirMotivo } from '@/componentes/PedirMotivo';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api, ErroApi } from '@/lib/api';
-import { baixarCsv, type CelulaCsv } from '@/lib/csv';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { formatarDataHora } from '@/lib/utils';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { formatarDecimal, NOMES_SITUACAO_SIVIBE, ORIGENS_UVA_REMESSA } from '@vinicycle/shared'
+import { Download, Printer } from 'lucide-react'
+import { type ReactNode, useState } from 'react'
+import { useSearchParams } from 'react-router'
+import { Anexos } from '@/componentes/Anexos'
+import { PedirMotivo } from '@/componentes/PedirMotivo'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api, ErroApi } from '@/lib/api'
+import { baixarCsv, type CelulaCsv } from '@/lib/csv'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { formatarDataHora } from '@/lib/utils'
 
-type Tipo = 'anual_mapa' | 'sivibe';
+type Tipo = 'anual_mapa' | 'sivibe'
 type Colunas = Record<
   | 'inicial'
   | 'producao'
@@ -33,135 +33,135 @@ type Colunas = Record<
   | 'internos'
   | 'final',
   string
->;
+>
 interface Aviso {
-  codigo: string;
-  mensagem: string;
+  codigo: string
+  mensagem: string
 }
 interface Anual {
-  ano: number;
+  ano: number
   granel: Array<{
-    titularId: string | null;
-    titular: string | null;
-    classe: string | null;
-    cor: string | null;
-    litros: Colunas;
-  }>;
+    titularId: string | null
+    titular: string | null
+    classe: string | null
+    cor: string | null
+    litros: Colunas
+  }>
   /** Vinho que voltou da cantina contratada, já incluído nas entradas (ciclo 10). */
-  retornosTerceiro?: { granelLitros: string; engarrafadoLitros: string; garrafas: number };
+  retornosTerceiro?: { granelLitros: string; engarrafadoLitros: string; garrafas: number }
   /** Garrafas em processo (espumante na garrafa), em litros; ausente nas declarações antigas. */
   emProcesso?: {
-    inicial: string;
-    tiragens: string;
-    perdas: string;
-    finalizadas: string;
-    final: string;
-  };
+    inicial: string
+    tiragens: string
+    perdas: string
+    finalizadas: string
+    final: string
+  }
   engarrafado: Array<{
-    titularId: string | null;
-    titular: string | null;
-    produto: string;
-    marca: string | null;
-    classe: string | null;
-    registroMapa: string | null;
-    volumeMl: number | null;
-    garrafas: Record<keyof Colunas, number>;
-    litros: Record<keyof Colunas, string | null>;
-  }>;
+    titularId: string | null
+    titular: string | null
+    produto: string
+    marca: string | null
+    classe: string | null
+    registroMapa: string | null
+    volumeMl: number | null
+    garrafas: Record<keyof Colunas, number>
+    litros: Record<keyof Colunas, string | null>
+  }>
   totais: Array<{
-    titularId: string | null;
-    titular: string | null;
-    granel: { inicial: string; producao: string; final: string };
-    engarrafado: { inicial: string; producao: string; final: string };
-  }>;
-  avisos: Aviso[];
-  calculadoEm: string;
+    titularId: string | null
+    titular: string | null
+    granel: { inicial: string; producao: string; final: string }
+    engarrafado: { inicial: string; producao: string; final: string }
+  }>
+  avisos: Aviso[]
+  calculadoEm: string
 }
 interface PessoaUva {
-  pessoaId: string | null;
-  nome: string | null;
-  documento: string | null;
-  numeroSivibe: string | null;
-  situacaoCadastro: keyof typeof NOMES_SITUACAO_SIVIBE | null;
-  declaracaoAnoAnterior: boolean | null;
-  propriedade: string | null;
-  variedade: string;
-  codigoOficial: string | null;
-  kg: string;
-  notas: string[];
+  pessoaId: string | null
+  nome: string | null
+  documento: string | null
+  numeroSivibe: string | null
+  situacaoCadastro: keyof typeof NOMES_SITUACAO_SIVIBE | null
+  declaracaoAnoAnterior: boolean | null
+  propriedade: string | null
+  variedade: string
+  codigoOficial: string | null
+  kg: string
+  notas: string[]
 }
 interface Sivibe {
-  ano: number;
+  ano: number
   propria: Array<{
-    propriedade: string | null;
-    numeroSivibe: string | null;
-    municipio: string | null;
-    uf: string | null;
-    parcela: string | null;
-    areaHa: string | null;
-    variedade: string;
-    codigoOficial: string | null;
-    ciclo: string | null;
-    kg: string;
-    romaneios: number;
-  }>;
-  compradas: PessoaUva[];
-  terceiros: PessoaUva[];
+    propriedade: string | null
+    numeroSivibe: string | null
+    municipio: string | null
+    uf: string | null
+    parcela: string | null
+    areaHa: string | null
+    variedade: string
+    codigoOficial: string | null
+    ciclo: string | null
+    kg: string
+    romaneios: number
+  }>
+  compradas: PessoaUva[]
+  terceiros: PessoaUva[]
   /** Uva enviada para processamento por terceiros (ciclo 10); ausente nas declarações antigas. */
   enviadas?: Array<{
-    cantina: string;
-    documento: string | null;
-    variedade: string;
-    codigoOficial: string | null;
-    origem: string;
-    kg: string;
-    notas: string[];
-  }>;
-  avisos: Aviso[];
-  calculadoEm: string;
+    cantina: string
+    documento: string | null
+    variedade: string
+    codigoOficial: string | null
+    origem: string
+    kg: string
+    notas: string[]
+  }>
+  avisos: Aviso[]
+  calculadoEm: string
 }
 interface Declaracao<N> {
-  ano: number;
-  tipo: Tipo;
-  terminou: boolean;
-  instantaneo: boolean;
+  ano: number
+  tipo: Tipo
+  terminou: boolean
+  instantaneo: boolean
   registro: {
-    id: string;
-    situacao: 'declarada' | 'em_retificacao' | 'retificada';
-    protocolo: string;
-    declaradaEm: string;
-    declaradaPor: string | null;
-  } | null;
+    id: string
+    situacao: 'declarada' | 'em_retificacao' | 'retificada'
+    protocolo: string
+    declaradaEm: string
+    declaradaPor: string | null
+  } | null
   retificacoes: Array<{
-    id: string;
-    motivo: string;
-    abertaEm: string;
-    abertaPor: string | null;
-    protocoloAnterior: string;
-    concluidaEm: string | null;
-    protocolo: string | null;
-  }>;
-  numeros: N;
+    id: string
+    motivo: string
+    abertaEm: string
+    abertaPor: string | null
+    protocoloAnterior: string
+    concluidaEm: string | null
+    protocolo: string | null
+  }>
+  numeros: N
 }
 
 const L = (v: string | null | undefined) =>
-  v === null || v === undefined ? '—' : formatarDecimal(v, 2);
-const KG = (v: string) => formatarDecimal(v, 1);
-const G = (n: number) => n.toLocaleString('pt-BR');
-const nomeTitular = (t: string | null) => (t ? `Para terceiro: ${t}` : 'Vinificação própria');
+  v === null || v === undefined ? '—' : formatarDecimal(v, 2)
+const KG = (v: string) => formatarDecimal(v, 1)
+const G = (n: number) => n.toLocaleString('pt-BR')
+const nomeTitular = (t: string | null) => (t ? `Para terceiro: ${t}` : 'Vinificação própria')
 const SITUACAO: Record<string, { texto: string; tom: 'sucesso' | 'alerta' | 'neutro' }> = {
   declarada: { texto: 'Entregue', tom: 'sucesso' },
   retificada: { texto: 'Entregue (retificada)', tom: 'sucesso' },
   em_retificacao: { texto: 'Em retificação', tom: 'alerta' },
-};
+}
 
 export function PaginaDeclaracoes() {
-  const [params, setParams] = useSearchParams();
-  const hoje = new Date();
-  const padrao = hoje.getMonth() < 3 ? hoje.getFullYear() - 1 : hoje.getFullYear();
-  const ano = Number(params.get('ano')) || padrao;
-  const anos = Array.from({ length: 4 }, (_, i) => hoje.getFullYear() - 3 + i);
-  if (!anos.includes(ano)) anos.push(ano);
+  const [params, setParams] = useSearchParams()
+  const hoje = new Date()
+  const padrao = hoje.getMonth() < 3 ? hoje.getFullYear() - 1 : hoje.getFullYear()
+  const ano = Number(params.get('ano')) || padrao
+  const anos = Array.from({ length: 4 }, (_, i) => hoje.getFullYear() - 3 + i)
+  if (!anos.includes(ano)) anos.push(ano)
   return (
     <Pagina
       titulo="Declarações"
@@ -209,7 +209,7 @@ export function PaginaDeclaracoes() {
         </ConteudoAba>
       </Abas>
     </Pagina>
-  );
+  )
 }
 
 /** Situação, avisos com "ciente", entrega, recibo e retificação: igual nos dois tipos. */
@@ -218,40 +218,40 @@ function Bloco<N extends { avisos: Aviso[]; calculadoEm: string }>({
   tipo,
   children,
 }: {
-  ano: number;
-  tipo: Tipo;
-  children: (n: N, d: Declaracao<N>) => ReactNode;
+  ano: number
+  tipo: Tipo
+  children: (n: N, d: Declaracao<N>) => ReactNode
 }) {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
-  const qc = useQueryClient();
-  const [cientes, setCientes] = useState<string[]>([]);
-  const [protocolo, setProtocolo] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
-  const [retificando, setRetificando] = useState(false);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
+  const qc = useQueryClient()
+  const [cientes, setCientes] = useState<string[]>([])
+  const [protocolo, setProtocolo] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
+  const [retificando, setRetificando] = useState(false)
   const q = useQuery({
     queryKey: ['declaracao', ano, tipo],
     queryFn: () => api.get<Declaracao<N>>(`/api/declaracoes/${ano}/${tipo}`),
-  });
-  const d = q.data;
-  if (q.error) return <Aviso tom="erro">{(q.error as Error).message}</Aviso>;
-  if (!d) return <p className="text-sm text-muted-foreground">Calculando…</p>;
-  const r = d.registro;
-  const anual = tipo === 'anual_mapa';
-  const podeConfirmar = pode(s, 'enotrace.declaracoes', 'confirmar');
-  const aberta = !r || r.situacao === 'em_retificacao';
-  const faltaCiente = d.numeros.avisos.some((a) => !cientes.includes(a.codigo));
+  })
+  const d = q.data
+  if (q.error) return <Aviso tom="erro">{(q.error as Error).message}</Aviso>
+  if (!d) return <p className="text-sm text-muted-foreground">Calculando…</p>
+  const r = d.registro
+  const anual = tipo === 'anual_mapa'
+  const podeConfirmar = pode(s, 'enotrace.declaracoes', 'confirmar')
+  const aberta = !r || r.situacao === 'em_retificacao'
+  const faltaCiente = d.numeros.avisos.some((a) => !cientes.includes(a.codigo))
   const enviar = async (url: string) => {
-    setErro(null);
+    setErro(null)
     try {
-      await api.post(url, { protocolo, cientes });
-      setProtocolo('');
-      setCientes([]);
-      await qc.invalidateQueries({ queryKey: ['declaracao', ano, tipo] });
+      await api.post(url, { protocolo, cientes })
+      setProtocolo('')
+      setCientes([])
+      await qc.invalidateQueries({ queryKey: ['declaracao', ano, tipo] })
     } catch (e) {
-      setErro(e instanceof ErroApi ? e.message : (e as Error).message);
+      setErro(e instanceof ErroApi ? e.message : (e as Error).message)
     }
-  };
+  }
   return (
     <>
       <div className="flex flex-wrap items-center gap-3">
@@ -385,13 +385,13 @@ function Bloco<N extends { avisos: Aviso[]; calculadoEm: string }>({
         }
         rotuloBotao="Abrir"
         aoConfirmar={async (motivo) => {
-          await api.post(`/api/declaracoes/${ano}/${tipo}/retificacao`, { motivo });
-          setRetificando(false);
-          await qc.invalidateQueries({ queryKey: ['declaracao', ano, tipo] });
+          await api.post(`/api/declaracoes/${ano}/${tipo}/retificacao`, { motivo })
+          setRetificando(false)
+          await qc.invalidateQueries({ queryKey: ['declaracao', ano, tipo] })
         }}
       />
     </>
-  );
+  )
 }
 
 /** Tabela com cabeçalho do cartão e botão de CSV. */
@@ -404,13 +404,13 @@ function Tabela({
   csv,
   vazio,
 }: {
-  titulo: string;
-  descricao?: string;
-  arquivo: string;
-  cabecalho: Array<{ texto: string; numero?: boolean }>;
-  linhas: ReactNode[][];
-  csv: CelulaCsv[][];
-  vazio: string;
+  titulo: string
+  descricao?: string
+  arquivo: string
+  cabecalho: Array<{ texto: string; numero?: boolean }>
+  linhas: ReactNode[][]
+  csv: CelulaCsv[][]
+  vazio: string
 }) {
   return (
     <Cartao>
@@ -470,14 +470,14 @@ function Tabela({
         </table>
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 function NumerosAnuais({ n, ano }: { n: Anual; ano: number }) {
-  const ini = `Em 31/12/${ano - 1}`;
-  const fim = `Em 31/12/${ano}`;
+  const ini = `Em 31/12/${ano - 1}`
+  const fim = `Em 31/12/${ano}`
   const outros = (c: Record<string, string | null>) =>
-    (Number(c.perdas ?? 0) + Number(c.ajustes ?? 0) + Number(c.internos ?? 0)).toFixed(2);
+    (Number(c.perdas ?? 0) + Number(c.ajustes ?? 0) + Number(c.internos ?? 0)).toFixed(2)
   return (
     <>
       <div className="grid gap-3 md:grid-cols-2">
@@ -605,7 +605,7 @@ function NumerosAnuais({ n, ano }: { n: Anual; ano: number }) {
               {G(g.garrafas[k])}
               <span className="block text-xs text-muted-foreground">{L(g.litros[k])} L</span>
             </>
-          );
+          )
           return [
             g.titular ?? 'Própria',
             g.marca ?? '—',
@@ -622,7 +622,7 @@ function NumerosAnuais({ n, ano }: { n: Anual; ano: number }) {
               <span className="block text-xs text-muted-foreground">{L(outros(g.litros))} L</span>
             </>,
             <strong key="f">{par('final')}</strong>,
-          ];
+          ]
         })}
         csv={n.engarrafado.map((g) => [
           g.titular ?? 'Própria',
@@ -641,7 +641,7 @@ function NumerosAnuais({ n, ano }: { n: Anual; ano: number }) {
         vazio="Sem produto engarrafado no ano."
       />
     </>
-  );
+  )
 }
 
 function NumerosSivibe({ n }: { n: Sivibe }) {
@@ -688,7 +688,7 @@ function NumerosSivibe({ n }: { n: Sivibe }) {
       ])}
       vazio="Nenhuma no ano."
     />
-  );
+  )
   return (
     <>
       <Tabela
@@ -778,5 +778,5 @@ function NumerosSivibe({ n }: { n: Sivibe }) {
         />
       )}
     </>
-  );
+  )
 }

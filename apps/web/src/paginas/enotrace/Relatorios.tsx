@@ -1,36 +1,36 @@
 // EnoTrace › Relatórios da cantina. Por ora, a evaporação por barrica e período (cantina.md,
 // Atesto em lote: "o relatório de evaporação mostra a perda de cada barrica por período").
-import { useQuery } from '@tanstack/react-query';
-import { formatarDecimal } from '@vinicycle/shared';
-import { useState } from 'react';
-import { Link } from 'react-router';
-import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Campo, Entrada } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { litros } from './Projetos';
+import { useQuery } from '@tanstack/react-query'
+import { formatarDecimal } from '@vinicycle/shared'
+import { useState } from 'react'
+import { Link } from 'react-router'
+import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Campo, Entrada } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { litros } from './Projetos'
 
 interface LinhaEvaporacao {
-  recipienteId: string;
-  recipiente: string;
-  tipo: string;
-  capacidade: string;
-  evaporacao: string;
-  atestos: number;
-  percentual: number;
+  recipienteId: string
+  recipiente: string
+  tipo: string
+  capacidade: string
+  evaporacao: string
+  atestos: number
+  percentual: number
 }
 
-const hoje = () => new Intl.DateTimeFormat('en-CA').format(new Date());
+const hoje = () => new Intl.DateTimeFormat('en-CA').format(new Date())
 
 function Evaporacao() {
-  const [de, setDe] = useState(() => `${hoje().slice(0, 4)}-01-01`);
-  const [ate, setAte] = useState(hoje);
+  const [de, setDe] = useState(() => `${hoje().slice(0, 4)}-01-01`)
+  const [ate, setAte] = useState(hoje)
   const q = useQuery({
     queryKey: ['relatorio-evaporacao', de, ate],
     queryFn: () => api.get<LinhaEvaporacao[]>(`/api/relatorios/evaporacao?de=${de}&ate=${ate}`),
     enabled: !!de && !!ate,
-  });
-  const total = (q.data ?? []).reduce((t, l) => t + Number(l.evaporacao), 0);
+  })
+  const total = (q.data ?? []).reduce((t, l) => t + Number(l.evaporacao), 0)
   return (
     <Cartao>
       <CabecalhoCartao
@@ -99,7 +99,7 @@ function Evaporacao() {
         {q.isError && <p className="text-sm text-destructive">{(q.error as Error).message}</p>}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 export function RelatoriosCantina() {
@@ -107,5 +107,5 @@ export function RelatoriosCantina() {
     <Pagina titulo="Relatórios da cantina" trilha={['EnoTrace']}>
       <Evaporacao />
     </Pagina>
-  );
+  )
 }

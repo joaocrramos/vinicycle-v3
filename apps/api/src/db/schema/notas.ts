@@ -1,6 +1,6 @@
 // Notas fiscais importadas (P11; 03-modelo-de-dados.md, 2.4): o sistema só guarda a referência e
 // lê o XML; não calcula imposto (FISCAL.md). A chave de acesso impede importar a nota duas vezes.
-import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm'
 import {
   check,
   date,
@@ -13,17 +13,17 @@ import {
   unique,
   uniqueIndex,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, local } from './acesso';
-import { itemEstoque } from './cantina';
-import { variedade } from './catalogos';
-import { alteracao, criacao, dataHora, emLista, id } from './comum';
-import { pessoa } from './gestao';
-import { empresa } from './plataforma';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento, local } from './acesso'
+import { itemEstoque } from './cantina'
+import { variedade } from './catalogos'
+import { alteracao, criacao, dataHora, emLista, id } from './comum'
+import { pessoa } from './gestao'
+import { empresa } from './plataforma'
 
-export const TIPOS_USO_NFE = ['compra', 'uva', 'venda', 'devolucao', 'remessa', 'retorno'] as const;
-export const SITUACOES_NFE = ['em_conferencia', 'lancada', 'descartada', 'estornada'] as const;
-export const ORIGENS_NFE = ['arquivo', 'sefaz'] as const;
+export const TIPOS_USO_NFE = ['compra', 'uva', 'venda', 'devolucao', 'remessa', 'retorno'] as const
+export const SITUACOES_NFE = ['em_conferencia', 'lancada', 'descartada', 'estornada'] as const
+export const ORIGENS_NFE = ['arquivo', 'sefaz'] as const
 
 export const nfe = pgTable(
   'nfe',
@@ -70,7 +70,7 @@ export const nfe = pgTable(
     check('nfe_origem', emLista('origem', ORIGENS_NFE)),
     check('nfe_situacao', emLista('situacao', SITUACOES_NFE)),
   ],
-);
+)
 
 export const nfeItem = pgTable(
   'nfe_item',
@@ -115,7 +115,7 @@ export const nfeItem = pgTable(
     unique('nfe_item_id_empresa').on(t.id, t.empresaId),
     uniqueIndex('nfe_item_numero').on(t.nfeId, t.numeroItem),
   ],
-);
+)
 
 /** Lembra a associação para as próximas notas do mesmo emitente (P11). */
 export const associacaoItem = pgTable(
@@ -157,4 +157,4 @@ export const associacaoItem = pgTable(
     check('associacao_item_sentido', emLista('sentido', ['entrada', 'saida'])),
     index('associacao_item_pessoa').on(t.pessoaId),
   ],
-);
+)

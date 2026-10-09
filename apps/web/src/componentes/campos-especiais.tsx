@@ -5,11 +5,11 @@ import {
   formatarTelefone,
   mascararDocumento,
   normalizarTelefone,
-} from '@vinicycle/shared';
-import type { ComponentProps } from 'react';
-import { Entrada } from './ui/campos';
+} from '@vinicycle/shared'
+import type { ComponentProps } from 'react'
+import { Entrada } from './ui/campos'
 
-type Base = Omit<ComponentProps<'input'>, 'value' | 'onChange'>;
+type Base = Omit<ComponentProps<'input'>, 'value' | 'onChange'>
 
 export function CampoDocumento({
   tipo,
@@ -17,9 +17,9 @@ export function CampoDocumento({
   aoMudar,
   ...props
 }: Base & {
-  tipo: 'cpf' | 'cnpj';
-  valor: string | null | undefined;
-  aoMudar: (v: string) => void;
+  tipo: 'cpf' | 'cnpj'
+  valor: string | null | undefined
+  aoMudar: (v: string) => void
 }) {
   return (
     <Entrada
@@ -30,7 +30,7 @@ export function CampoDocumento({
       onChange={(e) => aoMudar(e.target.value.replace(/[^0-9a-zA-Z]/g, '').toUpperCase())}
       {...props}
     />
-  );
+  )
 }
 
 /** Máscara +55 (00) 00000-0000; grava em formato internacional (E.164). */
@@ -39,20 +39,20 @@ export function CampoTelefone({
   aoMudar,
   ...props
 }: Base & { valor: string; aoMudar: (v: string) => void }) {
-  const exibido = valor.startsWith('+55') && valor.length >= 12 ? formatarTelefone(valor) : valor;
+  const exibido = valor.startsWith('+55') && valor.length >= 12 ? formatarTelefone(valor) : valor
   return (
     <Entrada
       inputMode="tel"
       placeholder="+55 (00) 00000-0000"
       value={exibido}
       onChange={(e) => {
-        const d = e.target.value.replace(/\D/g, '');
-        const nacional = d.startsWith('55') ? d.slice(2) : d;
-        aoMudar(nacional.length >= 10 ? normalizarTelefone(nacional) : e.target.value);
+        const d = e.target.value.replace(/\D/g, '')
+        const nacional = d.startsWith('55') ? d.slice(2) : d
+        aoMudar(nacional.length >= 10 ? normalizarTelefone(nacional) : e.target.value)
       }}
       {...props}
     />
-  );
+  )
 }
 
 export function CampoCep({
@@ -60,7 +60,7 @@ export function CampoCep({
   aoMudar,
   ...props
 }: Base & { valor: string; aoMudar: (v: string) => void }) {
-  const d = valor.replace(/\D/g, '').slice(0, 8);
+  const d = valor.replace(/\D/g, '').slice(0, 8)
   return (
     <Entrada
       inputMode="numeric"
@@ -69,7 +69,7 @@ export function CampoCep({
       onChange={(e) => aoMudar(e.target.value.replace(/\D/g, '').slice(0, 8))}
       {...props}
     />
-  );
+  )
 }
 
 /**
@@ -84,11 +84,11 @@ export function CampoNumero({
   permitirNegativo,
   ...props
 }: Base & {
-  valor: string | null | undefined;
-  aoMudar: (v: string | null) => void;
-  casas: number;
-  unidade?: string;
-  permitirNegativo?: boolean;
+  valor: string | null | undefined
+  aoMudar: (v: string | null) => void
+  casas: number
+  unidade?: string
+  permitirNegativo?: boolean
 }) {
   return (
     <div className="relative">
@@ -106,5 +106,5 @@ export function CampoNumero({
         </span>
       )}
     </div>
-  );
+  )
 }

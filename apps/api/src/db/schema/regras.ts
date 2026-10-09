@@ -1,6 +1,6 @@
 // Regras versionadas (P16) e ocorrências com "ciente" (P29): 03-modelo-de-dados.md, 1.7 e 2.3.
 // O sistema informa; o cliente decide. Uma regra nova é uma nova versão, nunca uma edição.
-import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm'
 import {
   check,
   date,
@@ -12,13 +12,13 @@ import {
   text,
   uniqueIndex,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento } from './acesso';
-import { criacao, dataHora, emLista, id } from './comum';
-import { empresa } from './plataforma';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento } from './acesso'
+import { criacao, dataHora, emLista, id } from './comum'
+import { empresa } from './plataforma'
 
-export const ABRANGENCIAS_REGRA = ['nacional', 'uf', 'ig'] as const;
-export const RESULTADOS_OCORRENCIA = ['alerta', 'bloqueio'] as const;
+export const ABRANGENCIAS_REGRA = ['nacional', 'uf', 'ig'] as const
+export const RESULTADOS_OCORRENCIA = ['alerta', 'bloqueio'] as const
 
 /** Limites, faixas, prazos e dizeres, com vigência, abrangência e fonte legal (P16). */
 export const regraRegulatoria = pgTable(
@@ -58,7 +58,7 @@ export const regraRegulatoria = pgTable(
     ),
     check('regra_regulatoria_vigencia', sql`vigente_ate is null or vigente_ate >= vigente_desde`),
   ],
-);
+)
 
 /**
  * Cada alerta dado num registro e o "ciente" de quem confirmou (P29). Guarda também os avisos
@@ -96,4 +96,4 @@ export const ocorrenciaRegra = pgTable(
     check('ocorrencia_regra_resultado', emLista('resultado', RESULTADOS_OCORRENCIA)),
     index('ocorrencia_regra_registro').on(t.entidade, t.registroId),
   ],
-);
+)

@@ -1,37 +1,37 @@
 // EnoTrace › Lote de produção: partes por recipiente, composição ponderada, genealogia, uva de
 // origem, etapas e o que o rótulo pode declarar (cantina.md, Composição e rótulo; 03-modelo-de-dados.md,
 // seções 4 e 5). Também o conteúdo e o livro de um recipiente.
-import { useQuery } from '@tanstack/react-query';
-import { type Composicao, formatarDecimal, TIPOS_OPERACAO } from '@vinicycle/shared';
-import { Link, useNavigate, useParams } from 'react-router';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Botao } from '@/componentes/ui/botao';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useReferencia } from '@/lib/referencia';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
-import { AnalisesDoLote } from './Laboratorio';
-import { formatarDataHora } from '@/lib/utils';
-import { ResumoComposicao } from './operacoes/comum';
-import { litros } from './Projetos';
+import { useQuery } from '@tanstack/react-query'
+import { type Composicao, formatarDecimal, TIPOS_OPERACAO } from '@vinicycle/shared'
+import { Link, useNavigate, useParams } from 'react-router'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Botao } from '@/componentes/ui/botao'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useReferencia } from '@/lib/referencia'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
+import { AnalisesDoLote } from './Laboratorio'
+import { formatarDataHora } from '@/lib/utils'
+import { ResumoComposicao } from './operacoes/comum'
+import { litros } from './Projetos'
 
 export interface Rotulo {
   varietal: Array<{
-    abrangencia: string;
-    minimo: number;
-    fonte: string;
-    variedades: Array<{ nome: string; percentual: number; pode: boolean }>;
-  }>;
+    abrangencia: string
+    minimo: number
+    fonte: string
+    variedades: Array<{ nome: string; percentual: number; pode: boolean }>
+  }>
   safra: null | {
-    minimo: number;
-    fonte: string;
-    safras: Array<{ safra: number | null; percentual: number; pode: boolean }>;
-  };
+    minimo: number
+    fonte: string
+    safras: Array<{ safra: number | null; percentual: number; pode: boolean }>
+  }
 }
 
-const pct = (n: number) => `${formatarDecimal(n.toFixed(2), 2)}%`;
+const pct = (n: number) => `${formatarDecimal(n.toFixed(2), 2)}%`
 
 /** O que o rótulo pode declarar: informa, não impede (P29). */
 export function CartaoRotulo({
@@ -39,9 +39,9 @@ export function CartaoRotulo({
   titulo = 'O que o rótulo pode declarar',
   descricao = 'Pela composição atual e pelas regras em vigor. O sistema informa; a decisão é da vinícola.',
 }: {
-  rotulo: Rotulo;
-  titulo?: string;
-  descricao?: string;
+  rotulo: Rotulo
+  titulo?: string
+  descricao?: string
 }) {
   return (
     <Cartao>
@@ -84,47 +84,47 @@ export function CartaoRotulo({
         )}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 // Recipiente -----------------------------------------------------------------------------------
 
 interface Conteudo {
-  volume: string;
-  capacidade: string;
+  volume: string
+  capacidade: string
   lote: {
-    id: string;
-    codigo: string;
-    etapa: string | null;
-    projetoId: string;
-    projeto: string;
-  } | null;
-  composicao: Composicao;
+    id: string
+    codigo: string
+    etapa: string | null
+    projetoId: string
+    projeto: string
+  } | null
+  composicao: Composicao
   movimentos: Array<{
-    executadoEm: string;
-    operacaoId: string;
-    operacao: string;
-    nomeOperacao: string;
-    situacaoOperacao: string;
-    nomeTipo: string;
-    lote: string;
-    litros: string;
-    estimado: boolean;
-    saldo: string;
-  }>;
+    executadoEm: string
+    operacaoId: string
+    operacao: string
+    nomeOperacao: string
+    situacaoOperacao: string
+    nomeTipo: string
+    lote: string
+    litros: string
+    estimado: boolean
+    saldo: string
+  }>
 }
 
 /** Conteúdo atual do recipiente e o livro: o volume é a soma dos lançamentos (seção 4). */
 export function ConteudoRecipiente({ id }: { id: string }) {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
   const q = useQuery({
     queryKey: ['recipiente-conteudo', id],
     queryFn: () => api.get<Conteudo>(`/api/recipientes/${id}/conteudo`),
-  });
-  if (!q.data) return <p className="text-sm text-muted-foreground">Carregando…</p>;
-  const c = q.data;
-  const ocupacao = Math.min(100, (Number(c.volume) / Number(c.capacidade)) * 100);
+  })
+  if (!q.data) return <p className="text-sm text-muted-foreground">Carregando…</p>
+  const c = q.data
+  const ocupacao = Math.min(100, (Number(c.volume) / Number(c.capacidade)) * 100)
   return (
     <div className="flex flex-col gap-4">
       <Cartao>
@@ -194,50 +194,50 @@ export function ConteudoRecipiente({ id }: { id: string }) {
         </ul>
       </Cartao>
     </div>
-  );
+  )
 }
 
 // Lote -----------------------------------------------------------------------------------------
 
 interface Lote {
-  id: string;
-  codigo: string;
-  projetoId: string;
-  projeto: string;
-  titular: string | null;
-  tipo: 'propria' | 'terceiro';
-  etapa: string | null;
-  origem: string;
-  safra: number | null;
-  ciclo: string | null;
-  rendimentoReal: string | null;
-  situacao: 'ativo' | 'sem_saldo';
-  volume: string;
+  id: string
+  codigo: string
+  projetoId: string
+  projeto: string
+  titular: string | null
+  tipo: 'propria' | 'terceiro'
+  etapa: string | null
+  origem: string
+  safra: number | null
+  ciclo: string | null
+  rendimentoReal: string | null
+  situacao: 'ativo' | 'sem_saldo'
+  volume: string
   partes: Array<{
-    recipienteId: string;
-    recipiente: string;
-    litros: string;
-    composicao: Composicao;
-  }>;
-  composicao: Composicao;
+    recipienteId: string
+    recipiente: string
+    litros: string
+    composicao: Composicao
+  }>
+  composicao: Composicao
   genealogia: Array<{
-    sentido: 'origem' | 'destino';
-    loteId: string;
-    codigo: string;
-    litros: string;
-    tipo: string;
-    operacao: string;
-    operacaoId: string;
-  }>;
+    sentido: 'origem' | 'destino'
+    loteId: string
+    codigo: string
+    litros: string
+    tipo: string
+    operacao: string
+    operacaoId: string
+  }>
   uva: Array<{
-    romaneio: string;
-    romaneioId: string;
-    variedade: string;
-    kg: string;
-    fornecedor: string | null;
-  }>;
-  etapas: Array<{ etapa: string; desde: string; por: string | null }>;
-  rotulo: Rotulo;
+    romaneio: string
+    romaneioId: string
+    variedade: string
+    kg: string
+    fornecedor: string | null
+  }>
+  etapas: Array<{ etapa: string; desde: string; por: string | null }>
+  rotulo: Rotulo
 }
 
 const ORIGENS: Record<string, string> = {
@@ -248,33 +248,33 @@ const ORIGENS: Record<string, string> = {
   retorno_terceiro: 'Retorno de terceiro',
   titularidade: 'Transferência de titularidade',
   carga_inicial: 'Carga inicial',
-};
+}
 const LIGACOES: Record<string, string> = {
   incorporacao: 'incorporação',
   corte: 'corte',
   lote_novo: 'lote novo',
   divisao: 'divisão',
   titularidade: 'transferência de titularidade',
-};
+}
 
 export function FichaLote() {
-  const { id = '' } = useParams();
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const { data: ref } = useReferencia();
-  const fuso = fusoAtivo(s);
-  const q = useQuery({ queryKey: ['lote', id], queryFn: () => api.get<Lote>(`/api/lotes/${id}`) });
+  const { id = '' } = useParams()
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const { data: ref } = useReferencia()
+  const fuso = fusoAtivo(s)
+  const q = useQuery({ queryKey: ['lote', id], queryFn: () => api.get<Lote>(`/api/lotes/${id}`) })
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const l = q.data;
+    )
+  const l = q.data
   const nomeEtapa = (c: string | null) =>
-    ref?.listas.etapa_producao?.find((e) => e.codigo === c)?.nome ?? c ?? '—';
-  const origens = l.genealogia.filter((g) => g.sentido === 'origem');
-  const destinos = l.genealogia.filter((g) => g.sentido === 'destino');
+    ref?.listas.etapa_producao?.find((e) => e.codigo === c)?.nome ?? c ?? '—'
+  const origens = l.genealogia.filter((g) => g.sentido === 'origem')
+  const destinos = l.genealogia.filter((g) => g.sentido === 'destino')
   return (
     <Pagina
       titulo={`Lote ${l.codigo}`}
@@ -399,7 +399,7 @@ export function FichaLote() {
         </ConteudoAba>
       </Abas>
     </Pagina>
-  );
+  )
 }
 
 /** Operações filtradas (de um lote, recipiente ou projeto). */
@@ -407,19 +407,19 @@ export function OperacoesDe({
   filtro,
   aoClicar,
 }: {
-  filtro: string;
-  aoClicar: (id: string) => void;
+  filtro: string
+  aoClicar: (id: string) => void
 }) {
-  const { data: s } = useSessao();
-  const fuso = fusoAtivo(s);
+  const { data: s } = useSessao()
+  const fuso = fusoAtivo(s)
   return (
     <TabelaDados<{
-      id: string;
-      codigo: string;
-      tipo: string;
-      executadoEm: string;
-      recipientes: string[];
-      lotes: string[];
+      id: string
+      codigo: string
+      tipo: string
+      executadoEm: string
+      recipientes: string[]
+      lotes: string[]
     }>
       tabela={`operacoes-${filtro.split('=')[0]}`}
       url={`/api/operacoes?${filtro}`}
@@ -448,5 +448,5 @@ export function OperacoesDe({
         { id: 'lotes', titulo: 'Lotes', celula: (o) => o.lotes.join(', ') },
       ]}
     />
-  );
+  )
 }

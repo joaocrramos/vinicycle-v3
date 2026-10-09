@@ -1,16 +1,16 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { StrictMode, useEffect } from 'react';
-import { createRoot } from 'react-dom/client';
-import { RouterProvider } from 'react-router';
-import { Toaster } from 'sonner';
-import './estilos.css';
-import './i18n';
-import { ErroApi } from './lib/api';
-import { useSessao } from './lib/sessao';
-import { aplicarTema, aplicarTemaSalvo, observarSistema } from './lib/tema';
-import { rotas } from './rotas';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { StrictMode, useEffect } from 'react'
+import { createRoot } from 'react-dom/client'
+import { RouterProvider } from 'react-router'
+import { Toaster } from 'sonner'
+import './estilos.css'
+import './i18n'
+import { ErroApi } from './lib/api'
+import { useSessao } from './lib/sessao'
+import { aplicarTema, aplicarTemaSalvo, observarSistema } from './lib/tema'
+import { rotas } from './rotas'
 
-aplicarTemaSalvo();
+aplicarTemaSalvo()
 
 const cliente = new QueryClient({
   defaultOptions: {
@@ -19,17 +19,17 @@ const cliente = new QueryClient({
       refetchOnWindowFocus: false,
     },
   },
-});
+})
 
 /** Aplica o tema e a paleta do usuário assim que a sessão carrega (P9). */
 function Tema() {
-  const { data } = useSessao();
-  const prefs = data?.usuario.preferencias;
+  const { data } = useSessao()
+  const prefs = data?.usuario.preferencias
   useEffect(() => {
-    if (prefs) aplicarTema(prefs);
-    return observarSistema(() => prefs);
-  }, [prefs]);
-  return null;
+    if (prefs) aplicarTema(prefs)
+    return observarSistema(() => prefs)
+  }, [prefs])
+  return null
 }
 
 createRoot(document.getElementById('raiz')!).render(
@@ -49,4 +49,4 @@ createRoot(document.getElementById('raiz')!).render(
       />
     </QueryClientProvider>
   </StrictMode>,
-);
+)

@@ -3,7 +3,7 @@
 // forma um lote de garrafas em processo; cada estágio (lista "estagio_espumante") registra a data e
 // as garrafas perdidas; no fim, as garrafas viram produto acabado num lote comercial. Charmat e Asti
 // seguem como vinho em recipiente (autoclave).
-import { sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm'
 import {
   type AnyPgColumn,
   check,
@@ -17,29 +17,29 @@ import {
   unique,
   uniqueIndex,
   uuid,
-} from 'drizzle-orm/pg-core';
-import { estabelecimento, local } from './acesso';
-import { produto } from './cantina';
-import { criacao, dataHora, id } from './comum';
-import { loteComercial } from './envase';
-import { empresa } from './plataforma';
-import { operacao, projeto } from './producao';
+} from 'drizzle-orm/pg-core'
+import { estabelecimento, local } from './acesso'
+import { produto } from './cantina'
+import { criacao, dataHora, id } from './comum'
+import { loteComercial } from './envase'
+import { empresa } from './plataforma'
+import { operacao, projeto } from './producao'
 
 function daEmpresa(
   coluna: AnyPgColumn,
   empresaId: AnyPgColumn,
   alvo: { id: AnyPgColumn; empresaId: AnyPgColumn },
 ) {
-  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] });
+  return foreignKey({ columns: [coluna, empresaId], foreignColumns: [alvo.id, alvo.empresaId] })
 }
 
 const empresaId = () =>
   uuid('empresa_id')
     .notNull()
-    .references(() => empresa.id);
+    .references(() => empresa.id)
 
-export const METODOS_GARRAFA = ['tradicional', 'ancestral'] as const;
-export const SITUACOES_ESPUMANTE = ['em_processo', 'finalizado', 'cancelado'] as const;
+export const METODOS_GARRAFA = ['tradicional', 'ancestral'] as const
+export const SITUACOES_ESPUMANTE = ['em_processo', 'finalizado', 'cancelado'] as const
 
 /** Lote de tiragem: as garrafas em processo. */
 export const espumanteLote = pgTable(
@@ -88,7 +88,7 @@ export const espumanteLote = pgTable(
     check('espumante_lote_situacao', sql`situacao in ('em_processo', 'finalizado', 'cancelado')`),
     check('espumante_lote_garrafas', sql`garrafas_iniciais > 0 and volume_ml > 0`),
   ],
-);
+)
 
 /** Um estágio das garrafas em processo, com as perdas (garrafas quebradas). */
 export const espumanteEvento = pgTable(
@@ -115,4 +115,4 @@ export const espumanteEvento = pgTable(
     check('espumante_evento_anulacao', sql`(anulado_em is null) = (motivo_anulacao is null)`),
     index('espumante_evento_lote').on(t.loteId, t.executadoEm),
   ],
-);
+)

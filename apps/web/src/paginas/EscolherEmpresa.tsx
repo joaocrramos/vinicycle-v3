@@ -1,14 +1,14 @@
-import { useNavigate } from 'react-router';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso } from '@/componentes/ui/cartao';
-import { api } from '@/lib/api';
-import { type EstadoSessao, useAtualizarSessao } from '@/lib/sessao';
-import { TelaPublica } from './publicas';
+import { useNavigate } from 'react-router'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso } from '@/componentes/ui/cartao'
+import { api } from '@/lib/api'
+import { type EstadoSessao, useAtualizarSessao } from '@/lib/sessao'
+import { TelaPublica } from './publicas'
 
 /** Usuário com vínculo em mais de uma empresa escolhe em qual vai trabalhar (P8). */
 export function EscolherEmpresa({ sessao }: { sessao: EstadoSessao }) {
-  const atualizar = useAtualizarSessao();
-  const navegar = useNavigate();
+  const atualizar = useAtualizarSessao()
+  const navegar = useNavigate()
   return (
     <TelaPublica titulo="Escolha a empresa">
       {sessao.empresas.length === 0 ? (
@@ -23,10 +23,8 @@ export function EscolherEmpresa({ sessao }: { sessao: EstadoSessao }) {
                 variante="secundario"
                 className="h-auto w-full justify-between py-3"
                 onClick={async () => {
-                  atualizar(
-                    await api.post<EstadoSessao>('/api/auth/contexto', { empresaId: e.id }),
-                  );
-                  navegar('/inicio');
+                  atualizar(await api.post<EstadoSessao>('/api/auth/contexto', { empresaId: e.id }))
+                  navegar('/inicio')
                 }}
               >
                 <span className="font-medium">{e.nome}</span>
@@ -42,13 +40,13 @@ export function EscolherEmpresa({ sessao }: { sessao: EstadoSessao }) {
           onClick={async () => {
             atualizar(
               await api.post<EstadoSessao>('/api/auth/contexto', { contexto: 'plataforma' }),
-            );
-            navegar('/plataforma/clientes');
+            )
+            navegar('/plataforma/clientes')
           }}
         >
           Ir para a Administração da plataforma
         </Botao>
       )}
     </TelaPublica>
-  );
+  )
 }

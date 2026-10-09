@@ -1,28 +1,28 @@
 // Comum às telas de operação da cantina: prévia antes e depois por recipiente (cantina.md, Tela de
 // registro em passos), rascunho, cabeçalho (execução, responsável, etapa do plano), seletor de lote
 // e resíduos.
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   type Composicao,
   formatarDecimal,
   porVariedade,
   TIPOS_OPERACAO,
   type TipoOperacao,
-} from '@vinicycle/shared';
-import { Plus, Trash2 } from 'lucide-react';
-import { type ReactNode, useState } from 'react';
-import { Navigate, useNavigate, useSearchParams } from 'react-router';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { api, ErroApi } from '@/lib/api';
-import { nomeNaLista, useReferencia } from '@/lib/referencia';
-import { pode, useSessao } from '@/lib/sessao';
-import { CartaoRotulo, type Rotulo } from '../Lotes';
-import { litros, useEnologos } from '../Projetos';
+} from '@vinicycle/shared'
+import { Plus, Trash2 } from 'lucide-react'
+import { type ReactNode, useState } from 'react'
+import { Navigate, useNavigate, useSearchParams } from 'react-router'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { api, ErroApi } from '@/lib/api'
+import { nomeNaLista, useReferencia } from '@/lib/referencia'
+import { pode, useSessao } from '@/lib/sessao'
+import { CartaoRotulo, type Rotulo } from '../Lotes'
+import { litros, useEnologos } from '../Projetos'
 
-export const F = 'enotrace.operacoes';
+export const F = 'enotrace.operacoes'
 
 export const TIPOS_LIGACAO: Record<string, string> = {
   incorporacao: 'incorporação',
@@ -30,45 +30,45 @@ export const TIPOS_LIGACAO: Record<string, string> = {
   lote_novo: 'lote novo',
   divisao: 'divisão',
   titularidade: 'transferência de titularidade',
-};
-export const LETRAS = ['A', 'B', 'C', 'D', 'E'];
+}
+export const LETRAS = ['A', 'B', 'C', 'D', 'E']
 
 export const paraCampo = (iso: string) => {
-  const d = new Date(iso);
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
-};
-export const agora = () => paraCampo(new Date().toISOString());
+  const d = new Date(iso)
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+}
+export const agora = () => paraCampo(new Date().toISOString())
 /**
  * O campo de execução vai até o minuto. Se o minuto escolhido é o atual, vale o instante atual:
  * senão a operação lançada agora ficaria antes de outra lançada segundos antes, no mesmo minuto.
  */
 export const doCampo = (valor: string) => {
-  const escolhido = new Date(valor);
-  const agora = new Date();
-  const diferenca = agora.getTime() - escolhido.getTime();
-  return (diferenca >= 0 && diferenca < 60_000 ? agora : escolhido).toISOString();
-};
+  const escolhido = new Date(valor)
+  const agora = new Date()
+  const diferenca = agora.getTime() - escolhido.getTime()
+  return (diferenca >= 0 && diferenca < 60_000 ? agora : escolhido).toISOString()
+}
 
 /** Recipiente vindo do atalho do painel (`?recipiente=`), para abrir a operação já com ele. */
 export const recipienteDaUrl = () =>
-  new URLSearchParams(window.location.search).get('recipiente') ?? '';
+  new URLSearchParams(window.location.search).get('recipiente') ?? ''
 
 // Apoio ----------------------------------------------------------------------------------------
 
 export interface RecipienteSaldo {
-  id: string;
-  codigo: string;
-  tipo: string;
-  capacidadeLitros: string;
-  situacao: string;
-  volume: string;
+  id: string
+  codigo: string
+  tipo: string
+  capacidadeLitros: string
+  situacao: string
+  volume: string
   lote: {
-    id: string;
-    codigo: string;
-    projetoId: string;
-    titularId?: string | null;
-    titular?: string | null;
-  } | null;
+    id: string
+    codigo: string
+    projetoId: string
+    titularId?: string | null
+    titular?: string | null
+  } | null
 }
 
 export function useRecipientes() {
@@ -76,7 +76,7 @@ export function useRecipientes() {
     queryKey: ['recipientes-saldo'],
     queryFn: async () =>
       (await api.get<{ itens: RecipienteSaldo[] }>('/api/recipientes?tamanho=0')).itens,
-  });
+  })
 }
 
 export function useNomesVariedades() {
@@ -91,7 +91,7 @@ export function useNomesVariedades() {
         ).itens.map((v) => [v.id, v.nome]),
       ),
     staleTime: 10 * 60_000,
-  });
+  })
 }
 
 export function useProjetos() {
@@ -99,14 +99,14 @@ export function useProjetos() {
     queryKey: ['projetos-opcoes'],
     queryFn: () =>
       api.get<Array<{ id: string; codigo: string; nome: string }>>('/api/projetos/opcoes'),
-  });
+  })
 }
 
 export interface LoteProjeto {
-  id: string;
-  codigo: string;
-  situacao: string;
-  titularId?: string | null;
+  id: string
+  codigo: string
+  situacao: string
+  titularId?: string | null
 }
 
 export function useLotesDoProjeto(projetoId: string) {
@@ -114,23 +114,23 @@ export function useLotesDoProjeto(projetoId: string) {
     queryKey: ['projeto', projetoId],
     queryFn: () =>
       api.get<{
-        lotes: LoteProjeto[];
+        lotes: LoteProjeto[]
         plano: Array<{
-          id: string;
-          tipoOperacao: TipoOperacao;
-          dataPrevista: string;
-          executadas: unknown[];
-        }>;
-        enologoId: string | null;
+          id: string
+          tipoOperacao: TipoOperacao
+          dataPrevista: string
+          executadas: unknown[]
+        }>
+        enologoId: string | null
       }>(`/api/projetos/${projetoId}`),
     enabled: !!projetoId,
-  });
+  })
 }
 
 export function ResumoComposicao({ c }: { c: Composicao }) {
-  const nomes = useNomesVariedades();
-  const partes = porVariedade(c);
-  if (!partes.length) return <span className="text-muted-foreground">—</span>;
+  const nomes = useNomesVariedades()
+  const partes = porVariedade(c)
+  if (!partes.length) return <span className="text-muted-foreground">—</span>
   return (
     <span>
       {partes
@@ -142,14 +142,14 @@ export function ResumoComposicao({ c }: { c: Composicao }) {
       {c.chaptalizado && ' · chaptalizado'}
       {!!c.so2 && ` · SO₂ adicionado ${formatarDecimal(c.so2.toFixed(1), 1)} mg/L`}
     </span>
-  );
+  )
 }
 
-export type RefLote = { id: string } | { novo: string };
+export type RefLote = { id: string } | { novo: string }
 export const chaveRef = (r: RefLote | null | undefined) =>
-  !r ? '' : 'id' in r ? `id:${r.id}` : `novo:${r.novo}`;
+  !r ? '' : 'id' in r ? `id:${r.id}` : `novo:${r.novo}`
 export const daChave = (k: string): RefLote | null =>
-  !k ? null : k.startsWith('id:') ? { id: k.slice(3) } : { novo: k.slice(5) };
+  !k ? null : k.startsWith('id:') ? { id: k.slice(3) } : { novo: k.slice(5) }
 
 /** Lote de destino: incorporar ao lote do recipiente, ao de outro recipiente do projeto, ou novo. */
 export function SeletorLote({
@@ -161,14 +161,14 @@ export function SeletorLote({
   permitirMesmo,
   excluir,
 }: {
-  id: string;
+  id: string
   /** Lote já oferecido como "mesmo lote" (a massa da prensagem). */
-  excluir?: string;
-  recipiente: RecipienteSaldo | undefined;
-  lotes: LoteProjeto[];
-  valor: RefLote | null;
-  aoMudar: (r: RefLote | null) => void;
-  permitirMesmo?: string;
+  excluir?: string
+  recipiente: RecipienteSaldo | undefined
+  lotes: LoteProjeto[]
+  valor: RefLote | null
+  aoMudar: (r: RefLote | null) => void
+  permitirMesmo?: string
 }) {
   return (
     <Selecao id={id} value={chaveRef(valor)} onChange={(e) => aoMudar(daChave(e.target.value))}>
@@ -192,29 +192,29 @@ export function SeletorLote({
             </option>
           ))}
     </Selecao>
-  );
+  )
 }
 
 export interface Previa {
   recipientes: Array<{
-    recipienteId: string;
-    recipiente: string;
-    capacidade: string;
-    antes: { litros: string; loteId: string | null; composicao: Composicao };
-    depois: { litros: string; lote: RefLote | null; composicao: Composicao };
-  }>;
+    recipienteId: string
+    recipiente: string
+    capacidade: string
+    antes: { litros: string; loteId: string | null; composicao: Composicao }
+    depois: { litros: string; lote: RefLote | null; composicao: Composicao }
+  }>
   perdas: Array<{
-    recipienteId: string;
-    recipiente: string;
-    litros: string;
-    motivo: string | null;
-  }>;
+    recipienteId: string
+    recipiente: string
+    litros: string
+    motivo: string | null
+  }>
   /** Trasfega e corte: composição de cada lote que recebe vinho e o que o rótulo pode declarar. */
-  rotulos?: Array<{ lote: string; recipientes: string[]; composicao: Composicao; rotulo: Rotulo }>;
-  avisos: Array<{ codigo: string; mensagem: string; fonte?: string }>;
-  bloqueios: string[];
+  rotulos?: Array<{ lote: string; recipientes: string[]; composicao: Composicao; rotulo: Rotulo }>
+  avisos: Array<{ codigo: string; mensagem: string; fonte?: string }>
+  bloqueios: string[]
   /** Recipientes que esvaziam e passam a "aguardando higienização". */
-  higienizar?: Array<{ recipienteId: string; recipiente: string }>;
+  higienizar?: Array<{ recipienteId: string; recipiente: string }>
 }
 
 /** Prévia antes de confirmar: volume e composição de cada recipiente, avisos e bloqueios. */
@@ -223,11 +223,11 @@ export function MostrarPrevia({
   cientes,
   setCientes,
 }: {
-  previa: Previa;
-  cientes: string[];
-  setCientes: (c: string[]) => void;
+  previa: Previa
+  cientes: string[]
+  setCientes: (c: string[]) => void
 }) {
-  const { data: ref } = useReferencia();
+  const { data: ref } = useReferencia()
   return (
     <Cartao>
       <CabecalhoCartao titulo="Prévia" descricao="Como cada recipiente fica depois da operação." />
@@ -321,14 +321,14 @@ export function MostrarPrevia({
         ))}
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }
 
 /** Rascunho carregado: o formulário salvo pela metade (cantina.md, Regras comuns: rascunho). */
 export interface Rascunho {
-  id: string;
-  versao: number;
-  formulario: Record<string, unknown>;
+  id: string
+  versao: number
+  formulario: Record<string, unknown>
 }
 
 /**
@@ -336,8 +336,8 @@ export interface Rascunho {
  * salvar o primeiro rascunho só troca o endereço, sem recarregar o formulário.
  */
 export function ComRascunho({ children }: { children: (r: Rascunho | null) => ReactNode }) {
-  const [busca] = useSearchParams();
-  const [id] = useState(() => busca.get('rascunho'));
+  const [busca] = useSearchParams()
+  const [id] = useState(() => busca.get('rascunho'))
   const q = useQuery({
     queryKey: ['operacao', id],
     queryFn: () =>
@@ -346,50 +346,50 @@ export function ComRascunho({ children }: { children: (r: Rascunho | null) => Re
       ),
     enabled: !!id,
     staleTime: Infinity,
-  });
-  if (!id) return children(null);
+  })
+  if (!id) return children(null)
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  if (q.data.situacao !== 'rascunho') return <Navigate to={`/enotrace/operacoes/${id}`} replace />;
-  return children({ id: q.data.id, versao: q.data.versao, formulario: q.data.formulario });
+    )
+  if (q.data.situacao !== 'rascunho') return <Navigate to={`/enotrace/operacoes/${id}`} replace />
+  return children({ id: q.data.id, versao: q.data.versao, formulario: q.data.formulario })
 }
 
 /** Formulário salvo no rascunho: o estado da página, com o cabeçalho que a lista mostra. */
 export type Formulario = Record<string, unknown> & {
-  executadoEm: string;
-  projetoId?: string;
-  observacao?: string;
-};
+  executadoEm: string
+  projetoId?: string
+  observacao?: string
+}
 
 /** Prévia, rascunho e confirmação, comuns às operações. */
 export function useEnvio(tipo: TipoOperacao, rascunho: Rascunho | null) {
-  const navegar = useNavigate();
-  const qc = useQueryClient();
-  const [previa, setPrevia] = useState<Previa | null>(null);
-  const [cientes, setCientes] = useState<string[]>([]);
-  const [erro, setErro] = useState<string | null>(null);
-  const [salvo, setSalvo] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
-  const [atual, setAtual] = useState(rascunho && { id: rascunho.id, versao: rascunho.versao });
+  const navegar = useNavigate()
+  const qc = useQueryClient()
+  const [previa, setPrevia] = useState<Previa | null>(null)
+  const [cientes, setCientes] = useState<string[]>([])
+  const [erro, setErro] = useState<string | null>(null)
+  const [salvo, setSalvo] = useState<string | null>(null)
+  const [enviando, setEnviando] = useState(false)
+  const [atual, setAtual] = useState(rascunho && { id: rascunho.id, versao: rascunho.versao })
   const mensagem = (e: unknown) =>
     e instanceof ErroApi && e.campos.length
       ? `${e.message} ${e.campos.map((c) => c.mensagem).join(' ')}`
-      : (e as Error).message;
+      : (e as Error).message
   const executar = async (fn: () => Promise<void>) => {
-    setErro(null);
-    setEnviando(true);
+    setErro(null)
+    setEnviando(true)
     try {
-      await fn();
+      await fn()
     } catch (e) {
-      setErro(mensagem(e));
+      setErro(mensagem(e))
     } finally {
-      setEnviando(false);
+      setEnviando(false)
     }
-  };
+  }
   return {
     previa,
     cientes,
@@ -399,17 +399,17 @@ export function useEnvio(tipo: TipoOperacao, rascunho: Rascunho | null) {
     enviando,
     rascunho: atual,
     limpar: () => {
-      setPrevia(null);
-      setSalvo(null);
+      setPrevia(null)
+      setSalvo(null)
     },
     verPrevia: (corpo: unknown) =>
       executar(async () => {
         try {
-          setPrevia(await api.post<Previa>(`/api/operacoes/${tipo}/previa`, corpo));
-          setCientes([]);
+          setPrevia(await api.post<Previa>(`/api/operacoes/${tipo}/previa`, corpo))
+          setCientes([])
         } catch (e) {
-          setPrevia(null);
-          throw e;
+          setPrevia(null)
+          throw e
         }
       }),
     /** Não mexe em volume nem em estoque; a validação completa é na confirmação. */
@@ -421,27 +421,27 @@ export function useEnvio(tipo: TipoOperacao, rascunho: Rascunho | null) {
           projetoId: f.projetoId || null,
           observacao: f.observacao || null,
           formulario: f,
-        };
+        }
         if (atual) {
           const r = await api.put<{ versao: number }>(`/api/operacoes/rascunhos/${atual.id}`, {
             ...corpo,
             versao: atual.versao,
-          });
-          setAtual({ ...atual, versao: r.versao });
+          })
+          setAtual({ ...atual, versao: r.versao })
         } else {
-          const r = await api.post<{ id: string }>('/api/operacoes/rascunhos', corpo);
-          setAtual({ id: r.id, versao: 1 });
-          navegar(`?rascunho=${r.id}`, { replace: true });
+          const r = await api.post<{ id: string }>('/api/operacoes/rascunhos', corpo)
+          setAtual({ id: r.id, versao: 1 })
+          navegar(`?rascunho=${r.id}`, { replace: true })
         }
-        setSalvo(`Rascunho salvo às ${new Date().toLocaleTimeString('pt-BR').slice(0, 5)}.`);
-        await qc.invalidateQueries({ queryKey: ['lista'] });
+        setSalvo(`Rascunho salvo às ${new Date().toLocaleTimeString('pt-BR').slice(0, 5)}.`)
+        await qc.invalidateQueries({ queryKey: ['lista'] })
       }),
     descartar: () =>
       executar(async () => {
-        if (!atual || !window.confirm('Descartar este rascunho?')) return;
-        await api.post(`/api/operacoes/rascunhos/${atual.id}/descartar`);
-        await qc.invalidateQueries({ queryKey: ['lista'] });
-        navegar('/enotrace/operacoes', { replace: true });
+        if (!atual || !window.confirm('Descartar este rascunho?')) return
+        await api.post(`/api/operacoes/rascunhos/${atual.id}/descartar`)
+        await qc.invalidateQueries({ queryKey: ['lista'] })
+        navegar('/enotrace/operacoes', { replace: true })
       }),
     confirmar: (corpo: Record<string, unknown>) =>
       executar(async () => {
@@ -449,10 +449,10 @@ export function useEnvio(tipo: TipoOperacao, rascunho: Rascunho | null) {
           ...corpo,
           cientes,
           rascunhoId: atual?.id ?? null,
-        });
-        navegar(`/enotrace/operacoes/${r.operacaoId}`, { replace: true });
+        })
+        navegar(`/enotrace/operacoes/${r.operacaoId}`, { replace: true })
       }),
-  };
+  }
 }
 
 export function Rodape({
@@ -460,14 +460,14 @@ export function Rodape({
   corpo,
   formulario,
 }: {
-  envio: ReturnType<typeof useEnvio>;
-  corpo: () => Record<string, unknown>;
-  formulario: () => Formulario;
+  envio: ReturnType<typeof useEnvio>
+  corpo: () => Record<string, unknown>
+  formulario: () => Formulario
 }) {
-  const { data: s } = useSessao();
-  const p = envio.previa;
+  const { data: s } = useSessao()
+  const p = envio.previa
   const podeConfirmar =
-    !!p && !p.bloqueios.length && p.avisos.every((a) => envio.cientes.includes(a.codigo));
+    !!p && !p.bloqueios.length && p.avisos.every((a) => envio.cientes.includes(a.codigo))
   return (
     <div className="flex flex-col gap-3">
       {envio.erro && <Aviso tom="erro">{envio.erro}</Aviso>}
@@ -514,7 +514,7 @@ export function Rodape({
         correções, só por estorno.
       </p>
     </div>
-  );
+  )
 }
 
 export function Cabecalho({
@@ -523,16 +523,16 @@ export function Cabecalho({
   projetoId,
   tipo,
 }: {
-  d: { executadoEm: string; responsavelId: string; planoEtapaId: string; observacao: string };
-  set: (p: Partial<typeof d>) => void;
-  projetoId: string;
-  tipo: TipoOperacao;
+  d: { executadoEm: string; responsavelId: string; planoEtapaId: string; observacao: string }
+  set: (p: Partial<typeof d>) => void
+  projetoId: string
+  tipo: TipoOperacao
 }) {
-  const enologos = useEnologos();
-  const projeto = useLotesDoProjeto(projetoId);
+  const enologos = useEnologos()
+  const projeto = useLotesDoProjeto(projetoId)
   const etapas = (projeto.data?.plano ?? []).filter(
     (e) => e.tipoOperacao === tipo && !e.executadas.length,
-  );
+  )
   return (
     <>
       <Campo
@@ -591,15 +591,15 @@ export function Cabecalho({
         />
       </Campo>
     </>
-  );
+  )
 }
 
 export function Residuos({
   residuos,
   set,
 }: {
-  residuos: Array<{ tipo: 'engaco' | 'bagaco'; kg: string | null; destino: string }>;
-  set: (r: typeof residuos) => void;
+  residuos: Array<{ tipo: 'engaco' | 'bagaco'; kg: string | null; destino: string }>
+  set: (r: typeof residuos) => void
 }) {
   return (
     <Cartao>
@@ -666,5 +666,5 @@ export function Residuos({
         </div>
       </CorpoCartao>
     </Cartao>
-  );
+  )
 }

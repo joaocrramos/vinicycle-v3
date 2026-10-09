@@ -1,56 +1,56 @@
 // EnoTrace › Recipientes (cantina.md, Recipientes).
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   dadosRecipiente,
   formatarDecimal,
   NOMES_SITUACAO_RECIPIENTE,
   SITUACOES_RECIPIENTE,
-} from '@vinicycle/shared';
-import { Plus, Snowflake } from 'lucide-react';
-import { type FormEvent, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
-import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha';
-import { Anexos } from '@/componentes/Anexos';
-import { CampoNumero } from '@/componentes/campos-especiais';
-import { Historico } from '@/componentes/Historico';
-import { TabelaDados } from '@/componentes/TabelaDados';
-import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas';
-import { Botao } from '@/componentes/ui/botao';
-import { Aviso, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao';
-import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Dialogo } from '@/componentes/ui/dialogo';
-import { NotasDoDiario } from '@/paginas/gestao/Diario';
-import { Pagina } from '@/layout/Estrutura';
-import { api } from '@/lib/api';
-import { useFormulario } from '@/lib/formulario';
-import { useReferencia } from '@/lib/referencia';
-import { ConteudoRecipiente } from './Lotes';
-import { fusoAtivo, pode, useSessao } from '@/lib/sessao';
+} from '@vinicycle/shared'
+import { Plus, Snowflake } from 'lucide-react'
+import { type FormEvent, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router'
+import { AcoesLinha, colunaAcoes } from '@/componentes/AcoesLinha'
+import { Anexos } from '@/componentes/Anexos'
+import { CampoNumero } from '@/componentes/campos-especiais'
+import { Historico } from '@/componentes/Historico'
+import { TabelaDados } from '@/componentes/TabelaDados'
+import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
+import { Botao } from '@/componentes/ui/botao'
+import { Aviso, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
+import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Dialogo } from '@/componentes/ui/dialogo'
+import { NotasDoDiario } from '@/paginas/gestao/Diario'
+import { Pagina } from '@/layout/Estrutura'
+import { api } from '@/lib/api'
+import { useFormulario } from '@/lib/formulario'
+import { useReferencia } from '@/lib/referencia'
+import { ConteudoRecipiente } from './Lotes'
+import { fusoAtivo, pode, useSessao } from '@/lib/sessao'
 
-type Situacao = (typeof SITUACOES_RECIPIENTE)[number];
+type Situacao = (typeof SITUACOES_RECIPIENTE)[number]
 const TOM: Record<Situacao, 'sucesso' | 'alerta' | 'erro' | 'neutro'> = {
   ativo: 'sucesso',
   aguardando_higienizacao: 'alerta',
   manutencao: 'erro',
   inativo: 'neutro',
-};
+}
 
 interface Linha {
-  id: string;
-  codigo: string;
-  tipo: string;
-  capacidadeLitros: string;
-  possuiFrio: boolean;
-  local: string;
-  situacao: Situacao;
-  volume: string;
-  lote: { id: string; codigo: string } | null;
+  id: string
+  codigo: string
+  tipo: string
+  capacidadeLitros: string
+  possuiFrio: boolean
+  local: string
+  situacao: Situacao
+  volume: string
+  lote: { id: string; codigo: string } | null
 }
 
 interface TipoRecipiente {
-  id: string;
-  nome: string;
-  eBarrica: boolean;
+  id: string
+  nome: string
+  eBarrica: boolean
 }
 
 function useTiposRecipiente() {
@@ -59,7 +59,7 @@ function useTiposRecipiente() {
     queryFn: async () =>
       (await api.get<{ itens: TipoRecipiente[] }>('/api/catalogos/tipo_recipiente?tamanho=0'))
         .itens,
-  });
+  })
 }
 
 export function useLocaisRecipientes() {
@@ -71,15 +71,15 @@ export function useLocaisRecipientes() {
           '/api/locais?tamanho=0',
         )
       ).itens.filter((l) => l.uso !== 'estoque'),
-  });
+  })
 }
 
 export function ListaRecipientes() {
-  const navegar = useNavigate();
-  const { data: s } = useSessao();
-  const tipos = useTiposRecipiente();
-  const locais = useLocaisRecipientes();
-  const estab = s?.empresa?.estabelecimentoId;
+  const navegar = useNavigate()
+  const { data: s } = useSessao()
+  const tipos = useTiposRecipiente()
+  const locais = useLocaisRecipientes()
+  const estab = s?.empresa?.estabelecimentoId
   return (
     <Pagina
       titulo="Recipientes"
@@ -231,7 +231,7 @@ export function ListaRecipientes() {
         ]}
       />
     </Pagina>
-  );
+  )
 }
 
 const VAZIO = {
@@ -250,30 +250,30 @@ const VAZIO = {
   anoPrimeiroUso: null as number | null,
   observacoes: '',
   versao: undefined as number | undefined,
-};
+}
 
 function FormularioRecipiente({
   inicial,
   aoSalvar,
   somenteLeitura,
 }: {
-  inicial: typeof VAZIO;
-  aoSalvar: (d: unknown) => Promise<void>;
-  somenteLeitura?: boolean;
+  inicial: typeof VAZIO
+  aoSalvar: (d: unknown) => Promise<void>
+  somenteLeitura?: boolean
 }) {
-  const form = useFormulario(dadosRecipiente, inicial);
-  const { data: ref } = useReferencia();
-  const tipos = useTiposRecipiente();
-  const locais = useLocaisRecipientes();
-  const [salvo, setSalvo] = useState(false);
-  const v = form.valores as typeof VAZIO;
-  const barrica = tipos.data?.find((t) => t.id === v.tipoRecipienteId)?.eBarrica;
+  const form = useFormulario(dadosRecipiente, inicial)
+  const { data: ref } = useReferencia()
+  const tipos = useTiposRecipiente()
+  const locais = useLocaisRecipientes()
+  const [salvo, setSalvo] = useState(false)
+  const v = form.valores as typeof VAZIO
+  const barrica = tipos.data?.find((t) => t.id === v.tipoRecipienteId)?.eBarrica
   const opcoes = (lista: string) =>
     (ref?.listas[lista] ?? []).map((o) => (
       <option key={o.codigo} value={o.codigo}>
         {o.nome}
       </option>
-    ));
+    ))
   const texto = (
     c: keyof typeof VAZIO,
     rotulo: string,
@@ -288,21 +288,21 @@ function FormularioRecipiente({
         {...props}
       />
     </Campo>
-  );
+  )
   return (
     <form
       noValidate
       className="flex flex-col gap-5"
       onSubmit={async (ev: FormEvent) => {
-        ev.preventDefault();
-        setSalvo(false);
-        const d = form.validar();
-        if (!d) return;
+        ev.preventDefault()
+        setSalvo(false)
+        const d = form.validar()
+        if (!d) return
         try {
-          await aoSalvar(d);
-          setSalvo(true);
+          await aoSalvar(d)
+          setSalvo(true)
         } catch (e) {
-          form.erroDaApi(e);
+          form.erroDaApi(e)
         }
       }}
     >
@@ -454,11 +454,11 @@ function FormularioRecipiente({
         </div>
       )}
     </form>
-  );
+  )
 }
 
 export function NovoRecipiente() {
-  const navegar = useNavigate();
+  const navegar = useNavigate()
   return (
     <Pagina titulo="Novo recipiente" trilha={['EnoTrace', 'Cadastros', 'Recipientes']}>
       <Cartao>
@@ -466,14 +466,14 @@ export function NovoRecipiente() {
           <FormularioRecipiente
             inicial={VAZIO}
             aoSalvar={async (d) => {
-              const r = await api.post<{ id: string }>('/api/recipientes', d);
-              navegar(`/enotrace/recipientes/${r.id}`, { replace: true });
+              const r = await api.post<{ id: string }>('/api/recipientes', d)
+              navegar(`/enotrace/recipientes/${r.id}`, { replace: true })
             }}
           />
         </CorpoCartao>
       </Cartao>
     </Pagina>
-  );
+  )
 }
 
 function DialogoSituacao({
@@ -481,15 +481,15 @@ function DialogoSituacao({
   atual,
   aoFechar,
 }: {
-  id: string;
-  atual: Situacao;
-  aoFechar: () => void;
+  id: string
+  atual: Situacao
+  aoFechar: () => void
 }) {
-  const qc = useQueryClient();
-  const { data: s } = useSessao();
-  const [situacao, setSituacao] = useState<Situacao>(atual);
-  const [motivo, setMotivo] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
+  const qc = useQueryClient()
+  const { data: s } = useSessao()
+  const [situacao, setSituacao] = useState<Situacao>(atual)
+  const [motivo, setMotivo] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
   return (
     <Dialogo
       aberto
@@ -507,12 +507,12 @@ function DialogoSituacao({
                 await api.post(`/api/recipientes/${id}/situacao`, {
                   situacao,
                   motivo: motivo || null,
-                });
-                await qc.invalidateQueries({ queryKey: ['recipiente', id] });
-                await qc.invalidateQueries({ queryKey: ['historico', 'recipiente', id] });
-                aoFechar();
+                })
+                await qc.invalidateQueries({ queryKey: ['recipiente', id] })
+                await qc.invalidateQueries({ queryKey: ['historico', 'recipiente', id] })
+                aoFechar()
               } catch (e) {
-                setErro((e as Error).message);
+                setErro((e as Error).message)
               }
             }}
           >
@@ -543,34 +543,34 @@ function DialogoSituacao({
         </Campo>
       </div>
     </Dialogo>
-  );
+  )
 }
 
 export function FichaRecipiente() {
-  const { id = '' } = useParams();
-  const { data: s } = useSessao();
-  const qc = useQueryClient();
-  const [mudar, setMudar] = useState(false);
+  const { id = '' } = useParams()
+  const { data: s } = useSessao()
+  const qc = useQueryClient()
+  const [mudar, setMudar] = useState(false)
   const q = useQuery({
     queryKey: ['recipiente', id],
     queryFn: () =>
       api.get<
         typeof VAZIO & {
-          id: string;
-          situacao: Situacao;
-          motivoSituacao: string | null;
-          versao: number;
+          id: string
+          situacao: Situacao
+          motivoSituacao: string | null
+          versao: number
         }
       >(`/api/recipientes/${id}`),
-  });
-  const podeEditar = pode(s, 'enotrace.cadastros', 'editar');
+  })
+  const podeEditar = pode(s, 'enotrace.cadastros', 'editar')
   if (!q.data)
     return (
       <p className="text-sm text-muted-foreground">
         {q.isError ? (q.error as Error).message : 'Carregando…'}
       </p>
-    );
-  const r = q.data;
+    )
+  const r = q.data
   return (
     <Pagina
       titulo={`Recipiente ${r.codigo}`}
@@ -606,9 +606,9 @@ export function FichaRecipiente() {
                 inicial={{ ...VAZIO, ...r }}
                 somenteLeitura={!podeEditar}
                 aoSalvar={async (d) => {
-                  await api.put(`/api/recipientes/${id}`, d);
-                  await qc.invalidateQueries({ queryKey: ['recipiente', id] });
-                  await qc.invalidateQueries({ queryKey: ['historico', 'recipiente', id] });
+                  await api.put(`/api/recipientes/${id}`, d)
+                  await qc.invalidateQueries({ queryKey: ['recipiente', id] })
+                  await qc.invalidateQueries({ queryKey: ['historico', 'recipiente', id] })
                 }}
               />
             </CorpoCartao>
@@ -635,5 +635,5 @@ export function FichaRecipiente() {
       </Abas>
       {mudar && <DialogoSituacao id={id} atual={r.situacao} aoFechar={() => setMudar(false)} />}
     </Pagina>
-  );
+  )
 }

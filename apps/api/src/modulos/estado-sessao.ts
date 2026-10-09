@@ -1,58 +1,58 @@
 // Estado da sessão que a interface usa para montar a tela: usuário, empresas, empresa e
 // estabelecimento ativos, módulos e permissões efetivas (P8, P12, P25, P27).
-import { and, asc, eq, inArray } from 'drizzle-orm';
-import { definirContexto, emContexto, type Db, type Tx } from '../db/cliente';
-import * as s from '../db/schema';
+import { and, asc, eq, inArray } from 'drizzle-orm'
+import { definirContexto, emContexto, type Db, type Tx } from '../db/cliente'
+import * as s from '../db/schema'
 import {
   carregarAcessoEmpresa,
   carregarAcessoPlataforma,
   permissoesEfetivas,
-} from '../nucleo/permissoes';
-import { SEGUNDO_FATOR_VALIDADE_MS, type SessaoAtiva } from '../nucleo/sessoes';
-import { hoje } from './planos';
-import { faturaMaisAtrasada, prazosDaRegua } from './regua';
+} from '../nucleo/permissoes'
+import { SEGUNDO_FATOR_VALIDADE_MS, type SessaoAtiva } from '../nucleo/sessoes'
+import { hoje } from './planos'
+import { faturaMaisAtrasada, prazosDaRegua } from './regua'
 
 export interface EstadoSessao {
   usuario: {
-    id: string;
-    email: string;
-    nome: string;
-    avatarCor: string | null;
-    preferencias: unknown;
-  };
-  empresas: Array<{ id: string; nome: string; perfil: string; eMaster: boolean }>;
-  contexto: 'empresa' | 'plataforma';
+    id: string
+    email: string
+    nome: string
+    avatarCor: string | null
+    preferencias: unknown
+  }
+  empresas: Array<{ id: string; nome: string; perfil: string; eMaster: boolean }>
+  contexto: 'empresa' | 'plataforma'
   empresa: null | {
-    id: string;
-    nome: string;
-    situacao: string;
-    corMarca: string | null;
-    perfil: string;
-    eMaster: boolean;
-    modulos: string[];
-    permissoes: string[];
-    estabelecimentos: Array<{ id: string; nome: string; fuso: string }>;
-    estabelecimentoId: string | null;
+    id: string
+    nome: string
+    situacao: string
+    corMarca: string | null
+    perfil: string
+    eMaster: boolean
+    modulos: string[]
+    permissoes: string[]
+    estabelecimentos: Array<{ id: string; nome: string; fuso: string }>
+    estabelecimentoId: string | null
     /** Sem estabelecimento, a criação dele é obrigatória (administracao.md, Fluxo, passo 4). */
-    precisaEstabelecimento: boolean;
-    emTeste: boolean;
-    fimTeste: string | null;
+    precisaEstabelecimento: boolean
+    emTeste: boolean
+    fimTeste: string | null
     /** Fatura vencida mais antiga e os prazos da régua (faixa de aviso). */
     cobranca: null | {
-      numero: number;
-      vencimento: string;
-      somenteLeituraEm: string;
-      bloqueioEm: string;
-    };
-  };
+      numero: number
+      vencimento: string
+      somenteLeituraEm: string
+      bloqueioEm: string
+    }
+  }
   /** Personificação em curso (P28): a faixa fixa da tela. */
-  personificacao: null | { usuario: string; empresa: string; expiraEm: Date; membro: string };
+  personificacao: null | { usuario: string; empresa: string; expiraEm: Date; membro: string }
   equipe: null | {
-    perfil: string;
-    segundoFatorConfigurado: boolean;
-    segundoFatorValido: boolean;
-    permissoes: string[];
-  };
+    perfil: string
+    segundoFatorConfigurado: boolean
+    segundoFatorValido: boolean
+    permissoes: string[]
+  }
 }
 
 /** Estabelecimentos ativos que o vínculo permite (P12), em ordem de nome. */
@@ -72,7 +72,7 @@ export async function estabelecimentosDoVinculo(
         restritos.length ? inArray(s.estabelecimento.id, restritos) : undefined,
       ),
     )
-    .orderBy(asc(s.ficha.nome));
+    .orderBy(asc(s.ficha.nome))
 }
 
 export async function estadoSessao(db: Db, sessao: SessaoAtiva): Promise<EstadoSessao> {
@@ -88,7 +88,7 @@ export async function estadoSessao(db: Db, sessao: SessaoAtiva): Promise<EstadoS
       })
       .from(s.usuario)
       .innerJoin(s.ficha, eq(s.ficha.id, s.usuario.fichaId))
-      .where(eq(s.usuario.id, sessao.usuarioId));
+      .where(eq(s.usuario.id, sessao.usuarioId))
 
     const empresas = await tx
       .select({
@@ -103,12 +103,12 @@ export async function estadoSessao(db: Db, sessao: SessaoAtiva): Promise<EstadoS
       .innerJoin(s.ficha, eq(s.ficha.id, s.empresa.fichaId))
       .innerJoin(s.perfil, eq(s.perfil.id, s.vinculo.perfilId))
       .where(and(eq(s.vinculo.usuarioId, sessao.usuarioId), eq(s.vinculo.ativo, true)))
-      .orderBy(asc(s.ficha.nome));
+      .orderBy(asc(s.ficha.nome))
 
-    let empresa: EstadoSessao['empresa'] = null;
+    let empresa: EstadoSessao['empresa'] = null
     if (sessao.empresaId) {
-      await definirContexto(tx, { usuarioId: sessao.usuarioId, empresaId: sessao.empresaId });
-      const acesso = await carregarAcessoEmpresa(tx, sessao.usuarioId, sessao.empresaId);
+      await definirContexto(tx, { usuarioId: sessao.usuarioId, empresaId: sessao.empresaId })
+      const acesso = await carregarAcessoEmpresa(tx, sessao.usuarioId, sessao.empresaId)
       if (acesso) {
         const [e] = await tx
           .select({
@@ -119,25 +119,25 @@ export async function estadoSessao(db: Db, sessao: SessaoAtiva): Promise<EstadoS
           })
           .from(s.empresa)
           .innerJoin(s.ficha, eq(s.ficha.id, s.empresa.fichaId))
-          .where(eq(s.empresa.id, sessao.empresaId));
+          .where(eq(s.empresa.id, sessao.empresaId))
         const [assinatura] = await tx
           .select({ emTeste: s.assinatura.emTeste, fimTeste: s.assinatura.fimTeste })
           .from(s.assinatura)
           .where(
             and(eq(s.assinatura.empresaId, sessao.empresaId), eq(s.assinatura.situacao, 'vigente')),
-          );
+          )
         const estabelecimentos = await estabelecimentosDoVinculo(
           tx,
           sessao.empresaId,
           acesso.estabelecimentosRestritos,
-        );
+        )
         const [algum] = await tx
           .select({ id: s.estabelecimento.id })
           .from(s.estabelecimento)
           .where(eq(s.estabelecimento.empresaId, sessao.empresaId))
-          .limit(1);
-        const atrasada = await faturaMaisAtrasada(tx, sessao.empresaId, hoje());
-        const [cfg] = await tx.select().from(s.configPlataforma);
+          .limit(1)
+        const atrasada = await faturaMaisAtrasada(tx, sessao.empresaId, hoje())
+        const [cfg] = await tx.select().from(s.configPlataforma)
         empresa = {
           id: sessao.empresaId,
           nome: e!.nomeFantasia || e!.nome,
@@ -166,12 +166,12 @@ export async function estadoSessao(db: Db, sessao: SessaoAtiva): Promise<EstadoS
                 }),
               }
             : null,
-        };
+        }
       }
     }
 
-    const plat = await carregarAcessoPlataforma(tx, sessao.usuarioId);
-    const fator = sessao.segundoFatorEm?.getTime() ?? 0;
+    const plat = await carregarAcessoPlataforma(tx, sessao.usuarioId)
+    const fator = sessao.segundoFatorEm?.getTime() ?? 0
 
     return {
       usuario: {
@@ -207,6 +207,6 @@ export async function estadoSessao(db: Db, sessao: SessaoAtiva): Promise<EstadoS
               permissoes: permissoesEfetivas(plat),
             }
           : null,
-    };
-  });
+    }
+  })
 }

@@ -10,44 +10,44 @@ import {
   TIPOS_MOVIMENTO_ESTOQUE,
   type TipoMovimentoEstoque,
   transferenciaEstoque,
-} from '@vinicycle/shared';
-import { and, asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
-import type { FastifyInstance } from 'fastify';
-import { v7 as uuidv7 } from 'uuid';
-import { z } from 'zod';
-import * as s from '../db/schema';
-import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros';
-import { buscaTexto, listar } from '../nucleo/listagem';
-import { exigirMesAberto } from '../nucleo/periodo';
-import type { Aviso } from '../nucleo/regras';
-import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao';
-import { lerParametro } from './parametros';
+} from '@vinicycle/shared'
+import { and, asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import type { FastifyInstance } from 'fastify'
+import { v7 as uuidv7 } from 'uuid'
+import { z } from 'zod'
+import * as s from '../db/schema'
+import { ErroNaoEncontrado, ErroRegra } from '../nucleo/erros'
+import { buscaTexto, listar } from '../nucleo/listagem'
+import { exigirMesAberto } from '../nucleo/periodo'
+import type { Aviso } from '../nucleo/regras'
+import { type ContextoEmpresa, naEmpresa } from '../nucleo/requisicao'
+import { lerParametro } from './parametros'
 
-const F = 'enotrace.estoque';
-const MODULO = 'ENOTRACE';
+const F = 'enotrace.estoque'
+const MODULO = 'ENOTRACE'
 
 /** Milésimos inteiros: somas exatas, sem ponto flutuante. */
-const paraMil = (q: string | number) => Math.round(Number(q) * 1000);
-const deMil = (m: number) => (m / 1000).toFixed(3);
+const paraMil = (q: string | number) => Math.round(Number(q) * 1000)
+const deMil = (m: number) => (m / 1000).toFixed(3)
 const quantidadeBr = (m: number, unidade: string) =>
-  `${(m / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} ${unidade}`;
+  `${(m / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 3 })} ${unidade}`
 
 export interface MovimentoNovo {
-  localId: string;
-  itemId: string;
-  loteItemId?: string | null;
+  localId: string
+  itemId: string
+  loteItemId?: string | null
   /** Com sinal: + entra, − sai; na unidade base do item. */
-  quantidade: string;
-  tipo: TipoMovimentoEstoque;
-  motivo?: string | null;
-  documento?: string | null;
-  operacaoId?: string | null;
-  nfeId?: string | null;
-  estornoDeId?: string | null;
+  quantidade: string
+  tipo: TipoMovimentoEstoque
+  motivo?: string | null
+  documento?: string | null
+  operacaoId?: string | null
+  nfeId?: string | null
+  estornoDeId?: string | null
   /** Saída sem lote de item que controla lote (cantina.md, Saídas: "sem lote", com aviso de recall). */
-  semLote?: boolean;
+  semLote?: boolean
   /** Entrada de selo numerado feita pela faixa (Estoque › Selos): a numeração já foi conferida. */
-  faixaSelos?: boolean;
+  faixaSelos?: boolean
 }
 
 /**
@@ -59,22 +59,22 @@ export interface MovimentoNovo {
 export async function lancarEstoque(
   ctx: ContextoEmpresa,
   d: {
-    estabelecimentoId: string;
-    executadoEm: Date;
-    movimentos: MovimentoNovo[];
-    gravar?: boolean;
+    estabelecimentoId: string
+    executadoEm: Date
+    movimentos: MovimentoNovo[]
+    gravar?: boolean
     /** Trava os itens para atualizar (padrão: quando grava). */
-    travar?: boolean;
-    grupoId?: string;
+    travar?: boolean
+    grupoId?: string
   },
 ): Promise<{ grupoId: string; avisos: Aviso[]; ids: string[] }> {
-  const grupoId = d.grupoId ?? uuidv7();
-  const movs = d.movimentos.filter((m) => paraMil(m.quantidade) !== 0);
+  const grupoId = d.grupoId ?? uuidv7()
+  const movs = d.movimentos.filter((m) => paraMil(m.quantidade) !== 0)
   // Mês fechado não recebe lançamentos (P13); a prévia das operações já mostra o bloqueio.
   if (d.gravar !== false && movs.length)
-    await exigirMesAberto(ctx.tx, d.estabelecimentoId, d.executadoEm);
-  if (!movs.length) return { grupoId, avisos: [], ids: [] };
-  const itensIds = [...new Set(movs.map((m) => m.itemId))].sort();
+    await exigirMesAberto(ctx.tx, d.estabelecimentoId, d.executadoEm)
+  if (!movs.length) return { grupoId, avisos: [], ids: [] }
+  const itensIds = [...new Set(movs.map((m) => m.itemId))].sort()
   const itens = await ctx.tx
     .select({
       id: s.itemEstoque.id,
@@ -89,11 +89,11 @@ export async function lancarEstoque(
     .from(s.itemEstoque)
     .where(and(inArray(s.itemEstoque.id, itensIds), eq(s.itemEstoque.empresaId, ctx.empresaId)))
     .orderBy(asc(s.itemEstoque.id))
-    .for((d.travar ?? d.gravar !== false) ? 'update' : 'share');
-  if (itens.length !== itensIds.length) throw new ErroRegra('Item inválido.', 'item');
-  const item = (id: string) => itens.find((i) => i.id === id)!;
+    .for((d.travar ?? d.gravar !== false) ? 'update' : 'share')
+  if (itens.length !== itensIds.length) throw new ErroRegra('Item inválido.', 'item')
+  const item = (id: string) => itens.find((i) => i.id === id)!
 
-  const locaisIds = [...new Set(movs.map((m) => m.localId))];
+  const locaisIds = [...new Set(movs.map((m) => m.localId))]
   const locais = await ctx.tx
     .select({ id: s.local.id, nome: s.local.nome, modulo: s.local.moduloEstoque })
     .from(s.local)
@@ -104,18 +104,18 @@ export async function lancarEstoque(
         inArray(s.local.uso, ['estoque', 'ambos']),
         eq(s.local.ativo, true),
       ),
-    );
+    )
   if (locais.length !== locaisIds.length)
-    throw new ErroRegra('Escolha um local de estoque ativo deste estabelecimento.', 'local');
+    throw new ErroRegra('Escolha um local de estoque ativo deste estabelecimento.', 'local')
   // Cada módulo tem o seu estoque (ambiente-cliente.md, Estoque: um por módulo).
   for (const m of movs) {
-    const l = locais.find((x) => x.id === m.localId)!;
+    const l = locais.find((x) => x.id === m.localId)!
     if (l.modulo !== item(m.itemId).modulo)
-      throw new ErroRegra(`O local ${l.nome} é do estoque de outro módulo.`, 'local');
+      throw new ErroRegra(`O local ${l.nome} é do estoque de outro módulo.`, 'local')
   }
-  const nomeLocal = (id: string) => locais.find((l) => l.id === id)!.nome;
+  const nomeLocal = (id: string) => locais.find((l) => l.id === id)!.nome
 
-  const lotesIds = [...new Set(movs.flatMap((m) => (m.loteItemId ? [m.loteItemId] : [])))];
+  const lotesIds = [...new Set(movs.flatMap((m) => (m.loteItemId ? [m.loteItemId] : [])))]
   const lotes = lotesIds.length
     ? await ctx.tx
         .select({
@@ -125,15 +125,15 @@ export async function lancarEstoque(
         })
         .from(s.loteItem)
         .where(inArray(s.loteItem.id, lotesIds))
-    : [];
+    : []
   for (const m of movs) {
-    const i = item(m.itemId);
+    const i = item(m.itemId)
     if (m.loteItemId) {
-      const l = lotes.find((x) => x.id === m.loteItemId);
+      const l = lotes.find((x) => x.id === m.loteItemId)
       if (!l || l.itemId !== m.itemId || l.estab !== d.estabelecimentoId)
-        throw new ErroRegra(`Lote inválido para ${i.nome}.`, 'lote');
+        throw new ErroRegra(`Lote inválido para ${i.nome}.`, 'lote')
     } else if (i.controlaLote && !m.semLote) {
-      throw new ErroRegra(`${i.nome} controla lote: informe o lote.`, 'lote');
+      throw new ErroRegra(`${i.nome} controla lote: informe o lote.`, 'lote')
     }
     // Selo numerado entra pela faixa (do nº X ao Y), para a numeração não ter buraco nem repetição.
     if (
@@ -145,9 +145,9 @@ export async function lancarEstoque(
       throw new ErroRegra(
         `${i.nome} é numerado: dê entrada pela faixa, em Estoque › Selos.`,
         'selo_faixa',
-      );
+      )
     if (!i.ativo && paraMil(m.quantidade) > 0 && m.tipo !== 'estorno')
-      throw new ErroRegra(`${i.nome} está inativo e não recebe entradas.`, 'item_inativo');
+      throw new ErroRegra(`${i.nome} está inativo e não recebe entradas.`, 'item_inativo')
   }
 
   // Saldo de cada item em cada local, antes e depois.
@@ -164,38 +164,38 @@ export async function lancarEstoque(
         inArray(s.movimentoEstoque.localId, locaisIds),
       ),
     )
-    .groupBy(s.movimentoEstoque.itemId, s.movimentoEstoque.localId);
+    .groupBy(s.movimentoEstoque.itemId, s.movimentoEstoque.localId)
   const pares = new Map<
     string,
     { itemId: string; localId: string; antes: number; depois: number }
-  >();
+  >()
   for (const m of movs) {
-    const k = `${m.itemId}|${m.localId}`;
+    const k = `${m.itemId}|${m.localId}`
     if (!pares.has(k)) {
       const antes = paraMil(
         saldos.find((x) => x.itemId === m.itemId && x.localId === m.localId)?.total ?? 0,
-      );
-      pares.set(k, { itemId: m.itemId, localId: m.localId, antes, depois: antes });
+      )
+      pares.set(k, { itemId: m.itemId, localId: m.localId, antes, depois: antes })
     }
-    pares.get(k)!.depois += paraMil(m.quantidade);
+    pares.get(k)!.depois += paraMil(m.quantidade)
   }
-  const avisos: Aviso[] = [];
+  const avisos: Aviso[] = []
   for (const p of pares.values()) {
-    if (p.depois >= 0) continue;
-    const i = item(p.itemId);
+    if (p.depois >= 0) continue
+    const i = item(p.itemId)
     if (i.tipo === 'produto_acabado' || i.tipo === 'selo')
       throw new ErroRegra(
         `O saldo de ${i.nome} em ${nomeLocal(p.localId)} ficaria negativo. ${NOMES_TIPO_ITEM[i.tipo]} não fica negativo.`,
         'saldo_negativo',
-      );
+      )
     avisos.push({
       codigo: `estoque:${p.itemId}:${p.localId}`,
       mensagem: `O saldo de ${i.nome} em ${nomeLocal(p.localId)} fica negativo (${quantidadeBr(p.depois, i.unidade)}). Fica uma pendência de estoque, a resolver (pela nota ou por ajuste) antes do fechamento do mês.`,
-    });
+    })
   }
-  if (d.gravar === false) return { grupoId, avisos, ids: [] };
+  if (d.gravar === false) return { grupoId, avisos, ids: [] }
 
-  const ids = movs.map(() => uuidv7());
+  const ids = movs.map(() => uuidv7())
   await ctx.tx.insert(s.movimentoEstoque).values(
     movs.map((m, n) => ({
       id: ids[n]!,
@@ -216,12 +216,12 @@ export async function lancarEstoque(
       estornoDeId: m.estornoDeId ?? null,
       criadoPor: ctx.usuarioId,
     })),
-  );
+  )
 
   // Pendências: abre quando fica negativo; resolve quando volta a zero ou mais.
   for (const p of pares.values()) {
     const ultimo =
-      ids[movs.map((m) => `${m.itemId}|${m.localId}`).lastIndexOf(`${p.itemId}|${p.localId}`)]!;
+      ids[movs.map((m) => `${m.itemId}|${m.localId}`).lastIndexOf(`${p.itemId}|${p.localId}`)]!
     const aberta = (
       await ctx.tx
         .select({ id: s.pendenciaEstoque.id })
@@ -233,7 +233,7 @@ export async function lancarEstoque(
             eq(s.pendenciaEstoque.situacao, 'aberta'),
           ),
         )
-    )[0];
+    )[0]
     if (p.depois < 0 && !aberta) {
       await ctx.tx.insert(s.pendenciaEstoque).values({
         empresaId: ctx.empresaId,
@@ -244,15 +244,15 @@ export async function lancarEstoque(
         executadoEm: d.executadoEm,
         saldoApurado: deMil(p.depois),
         criadoPor: ctx.usuarioId,
-      });
+      })
     } else if (p.depois >= 0 && aberta) {
       await ctx.tx
         .update(s.pendenciaEstoque)
         .set({ situacao: 'resolvida', resolvidaPorId: ultimo, resolvidaEm: sql`now()` })
-        .where(eq(s.pendenciaEstoque.id, aberta.id));
+        .where(eq(s.pendenciaEstoque.id, aberta.id))
     }
   }
-  return { grupoId, avisos, ids };
+  return { grupoId, avisos, ids }
 }
 
 /** Lote do fabricante pelo código: o existente ou um novo (2.4, Lote de item). */
@@ -275,8 +275,8 @@ export async function obterLote(
         eq(s.loteItem.codigo, l.codigo),
         titularId ? eq(s.loteItem.titularId, titularId) : isNull(s.loteItem.titularId),
       ),
-    );
-  if (existente) return existente.id;
+    )
+  if (existente) return existente.id
   const [novo] = await ctx.tx
     .insert(s.loteItem)
     .values({
@@ -290,34 +290,34 @@ export async function obterLote(
       origem,
       criadoPor: ctx.usuarioId,
     })
-    .returning({ id: s.loteItem.id });
-  return novo!.id;
+    .returning({ id: s.loteItem.id })
+  return novo!.id
 }
 
 /** Situação da validade: vencendo dentro da maior antecedência dos avisos (Parâmetros, P20). */
 async function situacaoValidade(ctx: ContextoEmpresa) {
-  const { dias } = await lerParametro(ctx, 'avisos_validade');
-  const janela = Math.max(...dias);
+  const { dias } = await lerParametro(ctx, 'avisos_validade')
+  const janela = Math.max(...dias)
   return sql<string>`case when ${s.loteItem.validade} is null then 'sem_validade'
     when ${s.loteItem.validade} < current_date then 'vencido'
     when ${s.loteItem.validade} <= current_date + ${janela}::int then 'vencendo'
-    else 'valido' end`;
+    else 'valido' end`
 }
 
 function dataExecucao(iso: string): Date {
-  const d = new Date(iso);
+  const d = new Date(iso)
   if (d.getTime() > Date.now() + 5 * 60_000)
-    throw new ErroRegra('A data da execução não pode ser no futuro.', 'data_futura');
-  return d;
+    throw new ErroRegra('A data da execução não pode ser no futuro.', 'data_futura')
+  return d
 }
 
 export async function rotasEstoque(app: FastifyInstance): Promise<void> {
-  const { db } = app.deps;
+  const { db } = app.deps
 
   // Saldos por item no estabelecimento (ou num local), com lotes vencendo e pendências.
   app.get('/api/estoque', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
+      const estab = ctx.exigirEstabelecimento()
       const q = consultaListagem
         .extend({
           tipo: z.enum(['insumo', 'embalagem', 'produto_acabado', 'selo', 'outro']).optional(),
@@ -326,14 +326,14 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
             .enum(['com_saldo', 'abaixo_minimo', 'pendencia', 'vencendo', 'todos'])
             .default('todos'),
         })
-        .parse(req.query);
-      const doLocal = q.local ? sql`and m.local_id = ${q.local}` : sql``;
-      const saldo = sql<string>`coalesce((select sum(m.quantidade) from movimento_estoque m where m.item_id = item_estoque.id and m.estabelecimento_id = ${estab} ${doLocal}), 0)`;
+        .parse(req.query)
+      const doLocal = q.local ? sql`and m.local_id = ${q.local}` : sql``
+      const saldo = sql<string>`coalesce((select sum(m.quantidade) from movimento_estoque m where m.item_id = item_estoque.id and m.estabelecimento_id = ${estab} ${doLocal}), 0)`
       // Saldo de clientes de vinificação (lotes com titular): fica fora do estoque próprio.
-      const saldoTerceiros = sql<string>`coalesce((select sum(m.quantidade) from movimento_estoque m join lote_item l on l.id = m.lote_item_id where m.item_id = item_estoque.id and m.estabelecimento_id = ${estab} and l.titular_id is not null ${doLocal}), 0)`;
-      const { dias } = await lerParametro(ctx, 'avisos_validade');
-      const vencendo = sql<number>`(select count(*)::int from lote_item l where l.item_id = item_estoque.id and l.estabelecimento_id = ${estab} and l.validade <= current_date + ${Math.max(...dias)}::int and coalesce((select sum(m.quantidade) from movimento_estoque m where m.lote_item_id = l.id ${doLocal}), 0) > 0)`;
-      const pendencia = sql<boolean>`exists (select 1 from pendencia_estoque p where p.item_id = item_estoque.id and p.estabelecimento_id = ${estab} and p.situacao = 'aberta')`;
+      const saldoTerceiros = sql<string>`coalesce((select sum(m.quantidade) from movimento_estoque m join lote_item l on l.id = m.lote_item_id where m.item_id = item_estoque.id and m.estabelecimento_id = ${estab} and l.titular_id is not null ${doLocal}), 0)`
+      const { dias } = await lerParametro(ctx, 'avisos_validade')
+      const vencendo = sql<number>`(select count(*)::int from lote_item l where l.item_id = item_estoque.id and l.estabelecimento_id = ${estab} and l.validade <= current_date + ${Math.max(...dias)}::int and coalesce((select sum(m.quantidade) from movimento_estoque m where m.lote_item_id = l.id ${doLocal}), 0) > 0)`
+      const pendencia = sql<boolean>`exists (select 1 from pendencia_estoque p where p.item_id = item_estoque.id and p.estabelecimento_id = ${estab} and p.situacao = 'aberta')`
       const filtro = and(
         eq(s.itemEstoque.empresaId, ctx.empresaId),
         eq(s.itemEstoque.modulo, MODULO),
@@ -346,7 +346,7 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
         q.situacao === 'vencendo' ? sql`${vencendo} > 0` : undefined,
         q.situacao === 'todos' ? eq(s.itemEstoque.ativo, true) : undefined,
         buscaTexto(q.busca, [s.itemEstoque.nome, s.itemEstoque.codigoInterno]),
-      );
+      )
       return listar({
         consulta: q,
         ordenaveis: { nome: s.itemEstoque.nome, tipo: s.itemEstoque.tipo, saldo },
@@ -373,15 +373,15 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
             .orderBy(...ordem)
             .limit(limite)
             .offset(deslocamento),
-      });
+      })
     }),
-  );
+  )
 
   // Ficha do item no estoque: saldo por local e por lote, movimentos e pendências.
   app.get<{ Params: { id: string } }>('/api/estoque/itens/:id', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
-      const id = z.uuid().parse(req.params.id);
+      const estab = ctx.exigirEstabelecimento()
+      const id = z.uuid().parse(req.params.id)
       const [item] = await ctx.tx
         .select({
           id: s.itemEstoque.id,
@@ -393,14 +393,14 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
           controlaValidade: s.itemEstoque.controlaValidade,
         })
         .from(s.itemEstoque)
-        .where(and(eq(s.itemEstoque.id, id), eq(s.itemEstoque.empresaId, ctx.empresaId)));
-      if (!item) throw new ErroNaoEncontrado('Item não encontrado.');
+        .where(and(eq(s.itemEstoque.id, id), eq(s.itemEstoque.empresaId, ctx.empresaId)))
+      if (!item) throw new ErroNaoEncontrado('Item não encontrado.')
       const porLocal = await ctx.tx.execute<{ localId: string; local: string; saldo: string }>(sql`
         select l.id as "localId", l.nome as local, sum(m.quantidade) as saldo
         from movimento_estoque m join local l on l.id = m.local_id
         where m.item_id = ${id} and m.estabelecimento_id = ${estab}
-        group by l.id, l.nome having sum(m.quantidade) <> 0 order by l.nome`);
-      const situacao = await situacaoValidade(ctx);
+        group by l.id, l.nome having sum(m.quantidade) <> 0 order by l.nome`)
+      const situacao = await situacaoValidade(ctx)
       const lotes = await ctx.tx
         .select({
           id: s.loteItem.id,
@@ -419,7 +419,7 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
         })
         .from(s.loteItem)
         .where(and(eq(s.loteItem.itemId, id), eq(s.loteItem.estabelecimentoId, estab)))
-        .orderBy(asc(s.loteItem.validade), asc(s.loteItem.codigo));
+        .orderBy(asc(s.loteItem.validade), asc(s.loteItem.codigo))
       const movimentos = await ctx.tx
         .select({
           id: s.movimentoEstoque.id,
@@ -446,7 +446,7 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
           and(eq(s.movimentoEstoque.itemId, id), eq(s.movimentoEstoque.estabelecimentoId, estab)),
         )
         .orderBy(desc(s.movimentoEstoque.executadoEm), desc(s.movimentoEstoque.lancadoEm))
-        .limit(300);
+        .limit(300)
       const pendencias = await ctx.tx
         .select({
           id: s.pendenciaEstoque.id,
@@ -461,7 +461,7 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
         .where(
           and(eq(s.pendenciaEstoque.itemId, id), eq(s.pendenciaEstoque.estabelecimentoId, estab)),
         )
-        .orderBy(desc(s.pendenciaEstoque.criadoEm));
+        .orderBy(desc(s.pendenciaEstoque.criadoEm))
       return {
         ...item,
         saldo: porLocal.rows.reduce((t, l) => t + Number(l.saldo), 0).toFixed(3),
@@ -472,17 +472,17 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
           nomeTipo: TIPOS_MOVIMENTO_ESTOQUE[m.tipo as TipoMovimentoEstoque],
         })),
         pendencias,
-      };
+      }
     }),
-  );
+  )
 
   // Lotes de um item com saldo (para escolher na adição de insumo, no ajuste…).
   app.get('/api/estoque/lotes', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
-      const q = z.object({ item: z.uuid(), local: z.uuid().optional() }).parse(req.query);
-      const doLocal = q.local ? sql`and m.local_id = ${q.local}` : sql``;
-      const situacao = await situacaoValidade(ctx);
+      const estab = ctx.exigirEstabelecimento()
+      const q = z.object({ item: z.uuid(), local: z.uuid().optional() }).parse(req.query)
+      const doLocal = q.local ? sql`and m.local_id = ${q.local}` : sql``
+      const situacao = await situacaoValidade(ctx)
       return ctx.tx
         .select({
           id: s.loteItem.id,
@@ -497,14 +497,14 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
         })
         .from(s.loteItem)
         .where(and(eq(s.loteItem.itemId, q.item), eq(s.loteItem.estabelecimentoId, estab)))
-        .orderBy(asc(s.loteItem.validade), asc(s.loteItem.codigo));
+        .orderBy(asc(s.loteItem.validade), asc(s.loteItem.codigo))
     }),
-  );
+  )
 
   // Locais do estoque do EnoTrace no estabelecimento ativo.
   app.get('/api/estoque/locais', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
+      const estab = ctx.exigirEstabelecimento()
       return ctx.tx
         .select({ id: s.local.id, nome: s.local.nome, externo: s.local.externo })
         .from(s.local)
@@ -515,9 +515,9 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
             eq(s.local.ativo, true),
           ),
         )
-        .orderBy(asc(s.local.nome));
+        .orderBy(asc(s.local.nome))
     }),
-  );
+  )
 
   /**
    * Consulta inversa: em quais lotes de vinho entrou um lote de insumo (cantina.md, Adição de
@@ -525,18 +525,18 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
    */
   app.get<{ Params: { id: string } }>('/api/estoque/lotes/:id/usos', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const id = z.uuid().parse(req.params.id);
+      const id = z.uuid().parse(req.params.id)
       const r = await ctx.tx.execute<{
-        operacaoId: string;
-        operacao: string;
-        tipo: string;
-        executadoEm: string;
-        recipiente: string;
-        loteId: string;
-        lote: string;
-        dose: string;
-        unidade: string;
-        quantidade: string | null;
+        operacaoId: string
+        operacao: string
+        tipo: string
+        executadoEm: string
+        recipiente: string
+        loteId: string
+        lote: string
+        dose: string
+        unidade: string
+        quantidade: string | null
       }>(sql`
         select o.id as "operacaoId", o.codigo as operacao, o.tipo, o.executado_em as "executadoEm",
           r.codigo as recipiente, l.id as "loteId", l.codigo as lote, i.dose, i.unidade, i.quantidade
@@ -545,14 +545,14 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
           join recipiente r on r.id = i.recipiente_id
           join lote l on l.id = i.lote_id
         where i.lote_item_id = ${id} and i.empresa_id = ${ctx.empresaId} and o.situacao = 'confirmada'
-        order by o.executado_em desc`);
-      return r.rows;
+        order by o.executado_em desc`)
+      return r.rows
     }),
-  );
+  )
 
   app.get('/api/estoque/pendencias', async (req) =>
     naEmpresa(db, req, [F, 'visualizar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
+      const estab = ctx.exigirEstabelecimento()
       return ctx.tx
         .select({
           id: s.pendenciaEstoque.id,
@@ -572,35 +572,35 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
             eq(s.pendenciaEstoque.situacao, 'aberta'),
           ),
         )
-        .orderBy(asc(s.pendenciaEstoque.executadoEm));
+        .orderBy(asc(s.pendenciaEstoque.executadoEm))
     }),
-  );
+  )
 
   // Entrada manual, com o número da nota; o lote é o do fabricante (existente ou novo).
   app.post('/api/estoque/entradas', async (req) =>
     naEmpresa(db, req, [F, 'criar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
-      const d = entradaEstoque.parse(req.body);
-      const executadoEm = dataExecucao(d.executadoEm);
-      const movimentos: MovimentoNovo[] = [];
+      const estab = ctx.exigirEstabelecimento()
+      const d = entradaEstoque.parse(req.body)
+      const executadoEm = dataExecucao(d.executadoEm)
+      const movimentos: MovimentoNovo[] = []
       // Insumo do cliente (vinificação para terceiro): o lote separa o estoque dele do próprio.
-      const titularId = d.titularId ?? null;
+      const titularId = d.titularId ?? null
       if (titularId) {
         const [p] = await ctx.tx
           .select({ id: s.pessoa.id })
           .from(s.pessoa)
-          .where(and(eq(s.pessoa.id, titularId), eq(s.pessoa.empresaId, ctx.empresaId)));
-        if (!p) throw new ErroRegra('Titular inválido.', 'titularId');
+          .where(and(eq(s.pessoa.id, titularId), eq(s.pessoa.empresaId, ctx.empresaId)))
+        if (!p) throw new ErroRegra('Titular inválido.', 'titularId')
         if (d.itens.some((i) => !i.lote))
           throw new ErroRegra(
             'Item do cliente entra com lote: é ele que separa o estoque do cliente do próprio.',
             'lote',
-          );
+          )
       }
       for (const i of d.itens) {
         const loteItemId = i.lote
           ? await obterLote(ctx, estab, i.itemId, i.lote, 'entrada', titularId)
-          : null;
+          : null
         movimentos.push({
           localId: d.localId,
           itemId: i.itemId,
@@ -609,9 +609,9 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
           tipo: 'entrada',
           documento: d.documento ?? null,
           motivo: d.observacao ?? null,
-        });
+        })
       }
-      const r = await lancarEstoque(ctx, { estabelecimentoId: estab, executadoEm, movimentos });
+      const r = await lancarEstoque(ctx, { estabelecimentoId: estab, executadoEm, movimentos })
       await ctx.auditar({
         acao: 'criar',
         entidade: 'movimento_estoque',
@@ -622,17 +622,17 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
           titularId: d.titularId ?? null,
           itens: d.itens.length,
         },
-      });
-      return r;
+      })
+      return r
     }),
-  );
+  )
 
   // Ajuste de inventário (± a diferença) ou descarte, com motivo.
   app.post('/api/estoque/ajustes', async (req) =>
     naEmpresa(db, req, [F, 'editar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
-      const d = ajusteEstoque.parse(req.body);
-      const quantidade = d.tipo === 'descarte' ? `-${d.quantidade.replace('-', '')}` : d.quantidade;
+      const estab = ctx.exigirEstabelecimento()
+      const d = ajusteEstoque.parse(req.body)
+      const quantidade = d.tipo === 'descarte' ? `-${d.quantidade.replace('-', '')}` : d.quantidade
       const r = await lancarEstoque(ctx, {
         estabelecimentoId: estab,
         executadoEm: dataExecucao(d.executadoEm),
@@ -646,21 +646,21 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
             motivo: d.motivo,
           },
         ],
-      });
+      })
       await ctx.auditar({
         acao: 'criar',
         entidade: 'movimento_estoque',
         registroId: r.grupoId,
         dados: { tipo: d.tipo, quantidade, motivo: d.motivo },
-      });
-      return r;
+      })
+      return r
     }),
-  );
+  )
 
   app.post('/api/estoque/transferencias', async (req) =>
     naEmpresa(db, req, [F, 'criar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
-      const d = transferenciaEstoque.parse(req.body);
+      const estab = ctx.exigirEstabelecimento()
+      const d = transferenciaEstoque.parse(req.body)
       const r = await lancarEstoque(ctx, {
         estabelecimentoId: estab,
         executadoEm: dataExecucao(d.executadoEm),
@@ -680,16 +680,16 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
             tipo: 'transferencia' as const,
           },
         ]),
-      });
+      })
       await ctx.auditar({
         acao: 'criar',
         entidade: 'movimento_estoque',
         registroId: r.grupoId,
         dados: { tipo: 'transferencia', itens: d.itens.length },
-      });
-      return r;
+      })
+      return r
     }),
-  );
+  )
 
   /**
    * Estorno de um lançamento do estoque (entrada, ajuste, descarte, transferência): movimentos
@@ -697,9 +697,9 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
    */
   app.post<{ Params: { id: string } }>('/api/estoque/grupos/:id/estorno', async (req) =>
     naEmpresa(db, req, [F, 'estornar'], async (ctx) => {
-      const estab = ctx.exigirEstabelecimento();
-      const grupoId = z.uuid().parse(req.params.id);
-      const { motivo } = estornoOperacao.parse(req.body);
+      const estab = ctx.exigirEstabelecimento()
+      const grupoId = z.uuid().parse(req.params.id)
+      const { motivo } = estornoOperacao.parse(req.body)
       const movs = await ctx.tx
         .select()
         .from(s.movimentoEstoque)
@@ -708,14 +708,14 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
             eq(s.movimentoEstoque.grupoId, grupoId),
             eq(s.movimentoEstoque.estabelecimentoId, estab),
           ),
-        );
-      if (!movs.length) throw new ErroNaoEncontrado('Lançamento não encontrado.');
+        )
+      if (!movs.length) throw new ErroNaoEncontrado('Lançamento não encontrado.')
       if (movs.some((m) => m.operacaoId))
-        throw new ErroRegra('O consumo de uma operação se estorna com a operação.', 'operacao');
+        throw new ErroRegra('O consumo de uma operação se estorna com a operação.', 'operacao')
       if (movs.some((m) => m.nfeId))
-        throw new ErroRegra('A entrada de uma NF-e se estorna pela nota.', 'nfe');
+        throw new ErroRegra('A entrada de uma NF-e se estorna pela nota.', 'nfe')
       if (movs.some((m) => m.tipo === 'estorno'))
-        throw new ErroRegra('O estorno não se estorna: lance de novo.', 'estorno');
+        throw new ErroRegra('O estorno não se estorna: lance de novo.', 'estorno')
       const [ja] = await ctx.tx
         .select({ id: s.movimentoEstoque.id })
         .from(s.movimentoEstoque)
@@ -725,8 +725,8 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
             movs.map((m) => m.id),
           ),
         )
-        .limit(1);
-      if (ja) throw new ErroRegra('Este lançamento já foi estornado.', 'estorno');
+        .limit(1)
+      if (ja) throw new ErroRegra('Este lançamento já foi estornado.', 'estorno')
       const r = await lancarEstoque(ctx, {
         estabelecimentoId: estab,
         executadoEm: movs[0]!.executadoEm,
@@ -740,14 +740,14 @@ export async function rotasEstoque(app: FastifyInstance): Promise<void> {
           documento: m.documento,
           estornoDeId: m.id,
         })),
-      });
+      })
       await ctx.auditar({
         acao: 'estornar',
         entidade: 'movimento_estoque',
         registroId: grupoId,
         dados: { motivo },
-      });
-      return r;
+      })
+      return r
     }),
-  );
+  )
 }

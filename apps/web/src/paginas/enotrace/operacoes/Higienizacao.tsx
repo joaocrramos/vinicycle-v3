@@ -1,12 +1,12 @@
 // EnoTrace › Operações › Higienização / manutenção (cantina.md, Recipientes): operação sem volume,
 // em um ou mais recipientes, com o produto e a dose. Devolve o recipiente a "ativo". Base: higiene e
 // manutenção de equipamentos e utensílios (Decreto 12.709/2025, art. 120, IV).
-import { NOMES_SITUACAO_RECIPIENTE } from '@vinicycle/shared';
-import { useState } from 'react';
-import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao';
-import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos';
-import { Pagina } from '@/layout/Estrutura';
-import { litros } from '../Projetos';
+import { NOMES_SITUACAO_RECIPIENTE } from '@vinicycle/shared'
+import { useState } from 'react'
+import { CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
+import { Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
+import { Pagina } from '@/layout/Estrutura'
+import { litros } from '../Projetos'
 import {
   agora,
   Cabecalho,
@@ -17,15 +17,15 @@ import {
   Rodape,
   useEnvio,
   useRecipientes,
-} from './comum';
+} from './comum'
 
 export function PaginaHigienizacao() {
-  return <ComRascunho>{(r) => <Higienizacao rascunho={r} />}</ComRascunho>;
+  return <ComRascunho>{(r) => <Higienizacao rascunho={r} />}</ComRascunho>
 }
 
 function Higienizacao({ rascunho }: { rascunho: Rascunho | null }) {
-  const recipientes = useRecipientes();
-  const envio = useEnvio('higienizacao', rascunho);
+  const recipientes = useRecipientes()
+  const envio = useEnvio('higienizacao', rascunho)
   const [d, setD] = useState(() => ({
     executadoEm: agora(),
     responsavelId: '',
@@ -36,14 +36,14 @@ function Higienizacao({ rascunho }: { rascunho: Rascunho | null }) {
     produto: '',
     dose: '',
     ...rascunho?.formulario,
-  }));
+  }))
   const set = (p: Partial<typeof d>) => {
-    envio.limpar();
-    setD({ ...d, ...p });
-  };
-  const higienizar = d.tipoHigienizacao === 'higienizacao';
+    envio.limpar()
+    setD({ ...d, ...p })
+  }
+  const higienizar = d.tipoHigienizacao === 'higienizacao'
   // A higienização é com o recipiente vazio; a manutenção, em qualquer um.
-  const opcoes = (recipientes.data ?? []).filter((r) => !higienizar || !r.lote);
+  const opcoes = (recipientes.data ?? []).filter((r) => !higienizar || !r.lote)
   const corpo = () => ({
     executadoEm: doCampo(d.executadoEm),
     responsavelId: d.responsavelId || null,
@@ -52,7 +52,7 @@ function Higienizacao({ rascunho }: { rascunho: Rascunho | null }) {
     recipientes: d.recipientes,
     produto: d.produto || null,
     dose: d.dose || null,
-  });
+  })
   return (
     <Pagina titulo="Higienização / manutenção" trilha={['EnoTrace', 'Operações']}>
       <p className="text-sm text-muted-foreground">
@@ -122,5 +122,5 @@ function Higienizacao({ rascunho }: { rascunho: Rascunho | null }) {
       </Cartao>
       <Rodape envio={envio} corpo={corpo} formulario={() => d} />
     </Pagina>
-  );
+  )
 }
