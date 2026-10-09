@@ -19,6 +19,8 @@
     "test:watch": "echo \"there are no tests for this project\" && exit 0"
   },
   "dependencies": {
+    "@vinicycle/shared": "link:./packages/shared",
+    "@tailwindcss/vite": "^4.3.3",
     "@hookform/resolvers": "^5.4.0",
     "@tanstack/react-query": "^5.104.1",
     "@tanstack/react-table": "^9.2.4",
@@ -66,9 +68,9 @@
     "lucide-react": "^1.50.0",
     "next-themes": "^0.4.6",
     "pocketbase": "~0.26.9",
-    "react": "^19.2.7",
+    "react": "^19.3.0",
     "react-day-picker": "^9.14.0",
-    "react-dom": "^19.2.7",
+    "react-dom": "^19.3.0",
     "react-hook-form": "^7.80.0",
     "react-resizable-panels": "^3.0.6",
     "recharts": "^3.8.1",
@@ -83,8 +85,8 @@
   "devDependencies": {
     "@tailwindcss/typography": "^0.5.20",
     "@types/node": "^26.0.0",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.0.2",
     "autoprefixer": "^10.5.0",
     "magic-string": "^0.30.21",
