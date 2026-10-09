@@ -685,7 +685,7 @@ export function ListaOperacoes() {
         )
       }
     >
-      <TabelaDados<LinhaOperacao>
+      <TabelaDados
         tabela="operacoes"
         url="/api/operacoes"
         ordemPadrao={{ campo: 'executadoEm', direcao: 'desc' }}

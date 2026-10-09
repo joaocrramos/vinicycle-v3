@@ -474,7 +474,7 @@ export function PaginaItens() {
           Os itens de produto acabado nascem dos formatos de cada produto (EnoTrace › Produtos).
         </p>
       )}
-      <TabelaDados<Linha>
+      <TabelaDados
         key={t}
         tabela={`itens.${t}`}
         url={`/api/itens-estoque`}

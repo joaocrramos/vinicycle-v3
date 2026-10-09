@@ -124,7 +124,7 @@ export function ListaProjetos() {
         O projeto é o vinho que se pretende fazer: recebe as uvas, contém os lotes e termina no
         engarrafamento.
       </p>
-      <TabelaDados<LinhaProjeto>
+      <TabelaDados
         tabela="projetos"
         url="/api/projetos"
         ordemPadrao={{ campo: 'codigo', direcao: 'desc' }}
@@ -1191,14 +1191,7 @@ export function FichaProjeto() {
           <AbaPlano p={p} podeEditar={podeEditar && aberto} />
         </ConteudoAba>
         <ConteudoAba value="recepcoes">
-          <TabelaDados<{
-            id: string
-            codigo: string | null
-            chegadaEm: string
-            variedades: string[]
-            kg: string
-            aProcessar: string
-          }>
+          <TabelaDados
             tabela="romaneios-projeto"
             url={`/api/romaneios?projeto=${id}`}
             ordemPadrao={{ campo: 'chegadaEm', direcao: 'desc' }}

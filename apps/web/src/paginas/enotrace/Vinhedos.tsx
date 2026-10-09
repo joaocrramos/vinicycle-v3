@@ -273,7 +273,7 @@ export function PaginaVinhedos() {
         Propriedades e parcelas, próprias ou dos produtores de uva. A recepção usa a parcela e o
         número do SIVIBE da origem da uva.
       </p>
-      <TabelaDados<Linha>
+      <TabelaDados
         tabela="propriedades"
         url="/api/propriedades"
         ordemPadrao={{ campo: 'nome', direcao: 'asc' }}

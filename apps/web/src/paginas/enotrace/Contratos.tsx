@@ -75,7 +75,7 @@ export function ListaContratos() {
         Vinificação para terceiros (prestamos o serviço) e produção em terceiro (contratamos), com o
         texto do rótulo e as obrigações da IN MAPA 72/2018, art. 27.
       </p>
-      <TabelaDados<LinhaContrato>
+      <TabelaDados
         tabela="contratos-terceirizacao"
         url="/api/contratos-terceirizacao"
         ordemPadrao={{ campo: 'vigenciaInicio', direcao: 'desc' }}

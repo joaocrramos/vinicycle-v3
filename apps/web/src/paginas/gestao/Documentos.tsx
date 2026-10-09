@@ -122,7 +122,7 @@ export function ListaDocumentos() {
         Registros MAPA, licenças, alvarás, laudos, certificados e contratos, com vencimento. Os
         avisos por e-mail antes do vencimento chegam com a central de alertas.
       </p>
-      <TabelaDados<Linha>
+      <TabelaDados
         tabela="documentos"
         url="/api/documentos"
         ordemPadrao={{ campo: 'vencimento', direcao: 'asc' }}

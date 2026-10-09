@@ -151,7 +151,7 @@ export function ListaEstoque() {
           A pendência se resolve com a entrada da nota ou com um ajuste, antes do fechamento do mês.
         </Aviso>
       )}
-      <TabelaDados<LinhaEstoque>
+      <TabelaDados
         tabela="estoque"
         url="/api/estoque"
         ordemPadrao={{ campo: 'nome', direcao: 'asc' }}

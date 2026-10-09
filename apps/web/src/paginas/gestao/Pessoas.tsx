@@ -82,7 +82,7 @@ export function ListaPessoas() {
         Clientes, fornecedores, produtores de uva, funcionários, laboratórios, responsáveis
         técnicos… Quem tem mais de um papel é cadastrado uma vez só.
       </p>
-      <TabelaDados<Linha>
+      <TabelaDados
         tabela="pessoas"
         url="/api/pessoas"
         ordemPadrao={{ campo: 'nome', direcao: 'asc' }}

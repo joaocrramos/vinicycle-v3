@@ -98,7 +98,7 @@ export function ListaRecipientes() {
           Para cadastrar recipientes, escolha o estabelecimento no topo da tela.
         </Aviso>
       )}
-      <TabelaDados<Linha>
+      <TabelaDados
         key={estab ?? 'todos'}
         tabela="recipientes"
         url="/api/recipientes"

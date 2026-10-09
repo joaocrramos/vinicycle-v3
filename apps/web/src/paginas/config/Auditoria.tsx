@@ -47,7 +47,7 @@ export function PaginaAuditoria() {
         ser alterados.
       </p>
       <AcessosDoSuporte />
-      <TabelaDados<RegistroAuditoria & { ip: string | null }>
+      <TabelaDados
         tabela="auditoria"
         url="/api/auditoria"
         ordemPadrao={{ campo: 'ocorridoEm', direcao: 'desc' }}

@@ -69,7 +69,7 @@ export function ListaRecepcao() {
         Cada carga é um romaneio, com as variedades e as pesagens. Fica em rascunho até a
         confirmação.
       </p>
-      <TabelaDados<Linha>
+      <TabelaDados
         tabela="romaneios"
         url="/api/romaneios"
         ordemPadrao={{ campo: 'chegadaEm', direcao: 'desc' }}

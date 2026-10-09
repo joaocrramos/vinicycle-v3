@@ -198,13 +198,13 @@ export function PaginaDeclaracoes() {
           <Aba value="sivibe">Uvas (SIVIBE)</Aba>
         </ListaAbas>
         <ConteudoAba value="anual_mapa" className="flex flex-col gap-4">
-          <Bloco<Anual> key={`a${ano}`} ano={ano} tipo="anual_mapa">
-            {(n, d) => <NumerosAnuais n={n} ano={d.ano} />}
+          <Bloco key={`a${ano}`} ano={ano} tipo="anual_mapa">
+            {(n: Anual, d: Declaracao<Anual>) => <NumerosAnuais n={n} ano={d.ano} />}
           </Bloco>
         </ConteudoAba>
         <ConteudoAba value="sivibe" className="flex flex-col gap-4">
-          <Bloco<Sivibe> key={`s${ano}`} ano={ano} tipo="sivibe">
-            {(n) => <NumerosSivibe n={n} />}
+          <Bloco key={`s${ano}`} ano={ano} tipo="sivibe">
+            {(n: Sivibe) => <NumerosSivibe n={n} />}
           </Bloco>
         </ConteudoAba>
       </Abas>

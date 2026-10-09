@@ -459,7 +459,7 @@ export function PaginaUsuarios() {
           </ul>
         </Cartao>
       )}
-      <TabelaDados<Vinculo>
+      <TabelaDados
         tabela="usuarios"
         url="/api/usuarios"
         ordemPadrao={{ campo: 'nome', direcao: 'asc' }}

@@ -134,7 +134,7 @@ export function PaginaMarcas() {
         )
       }
     >
-      <TabelaDados<Marca>
+      <TabelaDados
         tabela="marcas"
         url="/api/marcas"
         ordemPadrao={{ campo: 'nome', direcao: 'asc' }}
@@ -243,7 +243,7 @@ export function ListaProdutos() {
         Vinhos comerciais: marca, denominação (classe, cor e açúcar), registro no MAPA, rótulos e
         formatos.
       </p>
-      <TabelaDados<LinhaProduto>
+      <TabelaDados
         tabela="produtos"
         url="/api/produtos"
         ordemPadrao={{ campo: 'nome', direcao: 'asc' }}

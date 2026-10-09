@@ -70,7 +70,7 @@ export function ListaEstabelecimentos() {
         )
       }
     >
-      <TabelaDados<Linha>
+      <TabelaDados
         tabela="estabelecimentos"
         url="/api/estabelecimentos"
         ordemPadrao={{ campo: 'nome', direcao: 'asc' }}

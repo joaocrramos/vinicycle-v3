@@ -413,14 +413,7 @@ export function OperacoesDe({
   const { data: s } = useSessao()
   const fuso = fusoAtivo(s)
   return (
-    <TabelaDados<{
-      id: string
-      codigo: string
-      tipo: string
-      executadoEm: string
-      recipientes: string[]
-      lotes: string[]
-    }>
+    <TabelaDados
       tabela={`operacoes-${filtro.split('=')[0]}`}
       url={`/api/operacoes?${filtro}`}
       ordemPadrao={{ campo: 'executadoEm', direcao: 'desc' }}

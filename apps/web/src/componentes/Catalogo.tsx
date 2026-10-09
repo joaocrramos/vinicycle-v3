@@ -293,7 +293,7 @@ export function Catalogo({
           aparecem aqui.
         </Aviso>
       )}
-      <TabelaDados<ItemCatalogo>
+      <TabelaDados
         key={config.catalogo}
         tabela={`${plataforma ? 'plataforma.' : ''}catalogo.${config.catalogo}`}
         url={url}

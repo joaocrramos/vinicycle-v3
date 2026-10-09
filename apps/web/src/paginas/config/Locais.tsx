@@ -193,7 +193,7 @@ export function PaginaLocais() {
           ? `Locais de ${nomeEstab}.`
           : 'Locais de todos os estabelecimentos. Para criar um local, escolha o estabelecimento no topo da tela.'}
       </p>
-      <TabelaDados<Local>
+      <TabelaDados
         key={estabAtivo ?? 'todos'}
         tabela="locais"
         url="/api/locais"
