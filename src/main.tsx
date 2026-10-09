@@ -4,6 +4,6 @@ import '../apps/web/src/main'
 
 // @skip-protected: Do not remove. Required for React rendering.
 const rootEl = document.getElementById('root')
-if (rootEl) {
+if (rootEl && !document.getElementById('raiz')) {
   createRoot(rootEl).render(null)
 }
