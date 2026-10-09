@@ -1,8 +1,8 @@
 {
   "name": "frontend-react-vite-ts-shadcn",
-  "entrypoint": "src/main.tsx",
+  "entrypoint": "apps/web/src/main.tsx",
   "routes": {
-    "file": "src/App.tsx",
+    "file": "apps/web/src/rotas.tsx",
     "format": "jsx"
   },
   "preventAI": [
@@ -32,6 +32,6 @@
     "README.md"
   ],
   "deployment": {
-    "lastDevBuildRef": "79c2e32"
+    "lastDevBuildRef": "d0da979"
   }
 }
