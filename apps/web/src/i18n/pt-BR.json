@@ -1,0 +1,39 @@
+{
+  "app": { "nome": "ViniCycle" },
+  "acoes": {
+    "salvar": "Salvar",
+    "cancelar": "Cancelar",
+    "voltar": "Voltar",
+    "novo": "Novo",
+    "editar": "Editar",
+    "inativar": "Inativar",
+    "reativar": "Reativar",
+    "confirmar": "Confirmar",
+    "entrar": "Entrar",
+    "sair": "Sair",
+    "exportar": "Exportar",
+    "buscar": "Buscar",
+    "remover": "Remover",
+    "adicionar": "Adicionar",
+    "continuar": "Continuar"
+  },
+  "tabela": {
+    "nenhum": "Nenhum registro encontrado.",
+    "total_zero": "0 registros",
+    "total_one": "{{count}} registro",
+    "total_other": "{{count}} registros",
+    "porPagina": "Por página",
+    "tudo": "Tudo",
+    "pagina": "Página {{pagina}} de {{total}}",
+    "anterior": "Anterior",
+    "proxima": "Próxima",
+    "carregando": "Carregando…"
+  },
+  "situacao": {
+    "ativos": "Ativos",
+    "inativos": "Inativos",
+    "todos": "Todos",
+    "ativo": "Ativo",
+    "inativo": "Inativo"
+  }
+}

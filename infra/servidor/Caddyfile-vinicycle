@@ -1,0 +1,12 @@
+# Blocos do ViniCycle no /etc/caddy/Caddyfile. O de app.vinicycle.com é incluído pelo
+# infra/servidor/ativar-endereco.sh; o de vinicycle.app (e www), pelo infra/servidor/redirecionar-app.sh,
+# depois que o DNS apontou para o servidor (conferido em 04/10/2026).
+# Como no ObraGrid, o Caddy só termina o TLS e repassa: a API entrega a interface e a própria API.
+app.vinicycle.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3100
+}
+
+vinicycle.app, www.vinicycle.app {
+	redir https://app.vinicycle.com{uri} permanent
+}

@@ -1,0 +1,1 @@
+ALTER TABLE "assinatura" ADD COLUMN "dia_vencimento_alterado_em" date;

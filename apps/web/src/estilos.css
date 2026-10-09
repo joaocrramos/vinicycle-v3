@@ -1,0 +1,165 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Tokens de design (P9). Nenhum componente usa cor fixa: tudo vem destes tokens.
+ * Cada paleta muda só o matiz da cor primária; claro e escuro redefinem o resto.
+ * Contraste mínimo WCAG AA (4,5:1) entre texto e fundo em todas as combinações.
+ */
+:root {
+  --matiz: 355; /* paleta "vinho" (padrão) */
+  --croma: 0.13;
+}
+
+/* Os tokens são recalculados em cada elemento com paleta própria (ex.: amostras de paleta). */
+:root,
+[data-paleta] {
+  --fundo: oklch(0.985 0.004 var(--matiz));
+  --superficie: oklch(1 0 0);
+  --superficie-2: oklch(0.96 0.008 var(--matiz));
+  --texto: oklch(0.22 0.02 var(--matiz));
+  --texto-suave: oklch(0.47 0.02 var(--matiz));
+  --borda: oklch(0.89 0.01 var(--matiz));
+  --primaria: oklch(0.42 var(--croma) var(--matiz));
+  --primaria-texto: oklch(0.99 0 0);
+  --destaque: oklch(0.93 0.03 var(--matiz));
+  --destaque-texto: oklch(0.3 0.08 var(--matiz));
+  --sucesso: oklch(0.5 0.12 150);
+  --sucesso-fundo: oklch(0.95 0.04 150);
+  --alerta: oklch(0.52 0.12 75);
+  --alerta-fundo: oklch(0.96 0.05 85);
+  --erro: oklch(0.52 0.19 27);
+  --erro-fundo: oklch(0.96 0.03 27);
+  --foco: oklch(0.55 var(--croma) var(--matiz));
+  --raio: 0.5rem;
+}
+
+.dark,
+.dark [data-paleta] {
+  --fundo: oklch(0.18 0.01 var(--matiz));
+  --superficie: oklch(0.22 0.012 var(--matiz));
+  --superficie-2: oklch(0.27 0.014 var(--matiz));
+  --texto: oklch(0.95 0.005 var(--matiz));
+  --texto-suave: oklch(0.74 0.015 var(--matiz));
+  --borda: oklch(0.34 0.015 var(--matiz));
+  --primaria: oklch(0.76 0.11 var(--matiz));
+  --primaria-texto: oklch(0.18 0.02 var(--matiz));
+  --destaque: oklch(0.3 0.04 var(--matiz));
+  --destaque-texto: oklch(0.9 0.04 var(--matiz));
+  --sucesso: oklch(0.75 0.13 150);
+  --sucesso-fundo: oklch(0.28 0.05 150);
+  --alerta: oklch(0.8 0.12 85);
+  --alerta-fundo: oklch(0.3 0.05 85);
+  --erro: oklch(0.72 0.16 27);
+  --erro-fundo: oklch(0.3 0.06 27);
+  --foco: oklch(0.7 0.11 var(--matiz));
+}
+
+[data-paleta='oliva'] {
+  --matiz: 125;
+  --croma: 0.1;
+}
+[data-paleta='terra'] {
+  --matiz: 50;
+  --croma: 0.11;
+}
+[data-paleta='azul'] {
+  --matiz: 250;
+  --croma: 0.12;
+}
+[data-paleta='grafite'] {
+  --matiz: 260;
+  --croma: 0.02;
+}
+
+@theme inline {
+  --color-background: var(--fundo);
+  --color-foreground: var(--texto);
+  --color-card: var(--superficie);
+  --color-card-foreground: var(--texto);
+  --color-popover: var(--superficie);
+  --color-popover-foreground: var(--texto);
+  --color-muted: var(--superficie-2);
+  --color-muted-foreground: var(--texto-suave);
+  --color-primary: var(--primaria);
+  --color-primary-foreground: var(--primaria-texto);
+  --color-accent: var(--destaque);
+  --color-accent-foreground: var(--destaque-texto);
+  --color-border: var(--borda);
+  --color-input: var(--borda);
+  --color-ring: var(--foco);
+  --color-success: var(--sucesso);
+  --color-success-muted: var(--sucesso-fundo);
+  --color-warning: var(--alerta);
+  --color-warning-muted: var(--alerta-fundo);
+  --color-destructive: var(--erro);
+  --color-destructive-muted: var(--erro-fundo);
+  --radius-sm: calc(var(--raio) - 2px);
+  --radius-md: var(--raio);
+  --radius-lg: calc(var(--raio) + 2px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family:
+      system-ui,
+      -apple-system,
+      'Segoe UI',
+      Roboto,
+      sans-serif;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+}
+
+/* Impressão (relatórios: fechamento do mês, história do lote): só o conteúdo, em fundo claro. */
+@media print {
+  header,
+  nav,
+  [data-sem-impressao] {
+    display: none !important;
+  }
+  html,
+  html.dark {
+    color-scheme: light;
+  }
+  body {
+    background: white;
+    color: black;
+  }
+  main {
+    padding: 0 !important;
+  }
+  /* No tema escuro, o papel sai com as cores do tema claro. */
+  .dark,
+  .dark [data-paleta] {
+    --fundo: oklch(1 0 0);
+    --superficie: oklch(1 0 0);
+    --superficie-2: oklch(0.96 0.008 var(--matiz));
+    --texto: oklch(0.22 0.02 var(--matiz));
+    --texto-suave: oklch(0.47 0.02 var(--matiz));
+    --borda: oklch(0.89 0.01 var(--matiz));
+    --primaria: oklch(0.42 var(--croma) var(--matiz));
+    --destaque: oklch(0.93 0.03 var(--matiz));
+    --destaque-texto: oklch(0.3 0.08 var(--matiz));
+    --sucesso: oklch(0.5 0.12 150);
+    --sucesso-fundo: oklch(0.95 0.04 150);
+    --alerta: oklch(0.52 0.12 75);
+    --alerta-fundo: oklch(0.96 0.05 85);
+    --erro: oklch(0.52 0.19 27);
+    --erro-fundo: oklch(0.96 0.03 27);
+  }
+}
