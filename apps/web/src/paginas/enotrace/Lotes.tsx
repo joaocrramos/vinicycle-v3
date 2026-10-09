@@ -4,7 +4,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { type Composicao, formatarDecimal, TIPOS_OPERACAO } from '@vinicycle/shared'
 import { Link, useNavigate, useParams } from 'react-router'
-import { TabelaDados } from '@/componentes/TabelaDados'
+import { type Coluna, TabelaDados } from '@/componentes/TabelaDados'
 import { Botao } from '@/componentes/ui/botao'
 import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
 import { CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
@@ -402,6 +402,15 @@ export function FichaLote() {
   )
 }
 
+interface LinhaOperacaoFiltrada {
+  id: string
+  codigo: string
+  executadoEm: string
+  tipo: string
+  recipientes: string[]
+  lotes: string[]
+}
+
 /** Operações filtradas (de um lote, recipiente ou projeto). */
 export function OperacoesDe({
   filtro,
@@ -412,34 +421,35 @@ export function OperacoesDe({
 }) {
   const { data: s } = useSessao()
   const fuso = fusoAtivo(s)
+  const colunas: Coluna<LinhaOperacaoFiltrada>[] = [
+    {
+      id: 'codigo',
+      titulo: 'Código',
+      ordenavel: true,
+      celula: (o) => <strong>{o.codigo}</strong>,
+    },
+    {
+      id: 'executadoEm',
+      titulo: 'Execução',
+      ordenavel: true,
+      celula: (o) => formatarDataHora(o.executadoEm, fuso),
+    },
+    {
+      id: 'tipo',
+      titulo: 'Operação',
+      ordenavel: true,
+      celula: (o) => TIPOS_OPERACAO[o.tipo as keyof typeof TIPOS_OPERACAO] ?? o.tipo,
+    },
+    { id: 'recipientes', titulo: 'Recipientes', celula: (o) => o.recipientes.join(', ') },
+    { id: 'lotes', titulo: 'Lotes', celula: (o) => o.lotes.join(', ') },
+  ]
   return (
     <TabelaDados
       tabela={`operacoes-${filtro.split('=')[0]}`}
       url={`/api/operacoes?${filtro}`}
       ordemPadrao={{ campo: 'executadoEm', direcao: 'desc' }}
       aoClicar={(o) => aoClicar(o.id)}
-      colunas={[
-        {
-          id: 'codigo',
-          titulo: 'Código',
-          ordenavel: true,
-          celula: (o) => <strong>{o.codigo}</strong>,
-        },
-        {
-          id: 'executadoEm',
-          titulo: 'Execução',
-          ordenavel: true,
-          celula: (o) => formatarDataHora(o.executadoEm, fuso),
-        },
-        {
-          id: 'tipo',
-          titulo: 'Operação',
-          ordenavel: true,
-          celula: (o) => TIPOS_OPERACAO[o.tipo as keyof typeof TIPOS_OPERACAO] ?? o.tipo,
-        },
-        { id: 'recipientes', titulo: 'Recipientes', celula: (o) => o.recipientes.join(', ') },
-        { id: 'lotes', titulo: 'Lotes', celula: (o) => o.lotes.join(', ') },
-      ]}
+      colunas={colunas}
     />
   )
 }

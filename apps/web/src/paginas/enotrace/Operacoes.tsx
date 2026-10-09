@@ -17,7 +17,7 @@ import { useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import { BotaoIcone } from '@/componentes/AcoesLinha'
 import { CampoNumero } from '@/componentes/campos-especiais'
-import { TabelaDados } from '@/componentes/TabelaDados'
+import { type Coluna, TabelaDados } from '@/componentes/TabelaDados'
 import { Botao } from '@/componentes/ui/botao'
 import { ConteudoMenu, GatilhoMenu, ItemMenu, Menu } from '@/componentes/ui/menu'
 import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
@@ -662,6 +662,72 @@ export function ListaOperacoes() {
   const navegar = useNavigate()
   const { data: s } = useSessao()
   const fuso = fusoAtivo(s)
+  const colunas: Coluna<LinhaOperacao>[] = [
+    {
+      id: 'codigo',
+      titulo: 'Código',
+      ordenavel: true,
+      celula: (o) =>
+        o.codigo ? (
+          <span className="flex flex-wrap items-center gap-2">
+            <strong className={o.situacao === 'estornada' ? 'line-through' : ''}>{o.codigo}</strong>
+            {o.situacao === 'estornada' && <Etiqueta tom="erro">Estornada</Etiqueta>}
+          </span>
+        ) : (
+          <Etiqueta tom="alerta">Rascunho</Etiqueta>
+        ),
+      exportar: (o) => o.codigo,
+    },
+    {
+      id: 'tipo',
+      titulo: 'Operação',
+      ordenavel: true,
+      celula: (o) => (o.estornoDe ? `Estorno de ${o.estornoDe}` : TIPOS_OPERACAO[o.tipo]),
+      exportar: (o) => (o.estornoDe ? `Estorno de ${o.estornoDe}` : TIPOS_OPERACAO[o.tipo]),
+    },
+    {
+      id: 'executadoEm',
+      titulo: 'Execução',
+      ordenavel: true,
+      celula: (o) => (
+        <span>
+          {formatarDataHora(o.executadoEm, fuso)}
+          <span className="block text-xs text-muted-foreground">
+            {o.lancadoEm
+              ? `lançada ${formatarDataHora(o.lancadoEm, fuso)}`
+              : `salvo ${formatarDataHora(o.atualizadoEm, fuso)}`}
+          </span>
+        </span>
+      ),
+      exportar: (o) => o.executadoEm,
+    },
+    {
+      id: 'projeto',
+      titulo: 'Projeto',
+      celula: (o) => o.projeto ?? '—',
+      exportar: (o) => o.projeto,
+    },
+    {
+      id: 'recipientes',
+      titulo: 'Recipientes',
+      celula: (o) => o.recipientes.join(', '),
+      exportar: (o) => o.recipientes.join(', '),
+    },
+    {
+      id: 'lotes',
+      titulo: 'Lotes',
+      celula: (o) => o.lotes.join(', '),
+      exportar: (o) => o.lotes.join(', '),
+    },
+    {
+      id: 'kg',
+      titulo: 'Uva',
+      className: 'text-right',
+      celula: (o) => (o.kg ? `${formatarDecimal(o.kg, 1)} kg` : '—'),
+      exportar: (o) => o.kg,
+    },
+  ]
+
   return (
     <Pagina
       titulo="Operações"
@@ -709,73 +775,7 @@ export function ListaOperacoes() {
           )
         }
         podeExportar={pode(s, F, 'exportar')}
-        colunas={[
-          {
-            id: 'codigo',
-            titulo: 'Código',
-            ordenavel: true,
-            celula: (o) =>
-              o.codigo ? (
-                <span className="flex flex-wrap items-center gap-2">
-                  <strong className={o.situacao === 'estornada' ? 'line-through' : ''}>
-                    {o.codigo}
-                  </strong>
-                  {o.situacao === 'estornada' && <Etiqueta tom="erro">Estornada</Etiqueta>}
-                </span>
-              ) : (
-                <Etiqueta tom="alerta">Rascunho</Etiqueta>
-              ),
-            exportar: (o) => o.codigo,
-          },
-          {
-            id: 'tipo',
-            titulo: 'Operação',
-            ordenavel: true,
-            celula: (o) => (o.estornoDe ? `Estorno de ${o.estornoDe}` : TIPOS_OPERACAO[o.tipo]),
-            exportar: (o) => (o.estornoDe ? `Estorno de ${o.estornoDe}` : TIPOS_OPERACAO[o.tipo]),
-          },
-          {
-            id: 'executadoEm',
-            titulo: 'Execução',
-            ordenavel: true,
-            celula: (o) => (
-              <span>
-                {formatarDataHora(o.executadoEm, fuso)}
-                <span className="block text-xs text-muted-foreground">
-                  {o.lancadoEm
-                    ? `lançada ${formatarDataHora(o.lancadoEm, fuso)}`
-                    : `salvo ${formatarDataHora(o.atualizadoEm, fuso)}`}
-                </span>
-              </span>
-            ),
-            exportar: (o) => o.executadoEm,
-          },
-          {
-            id: 'projeto',
-            titulo: 'Projeto',
-            celula: (o) => o.projeto ?? '—',
-            exportar: (o) => o.projeto,
-          },
-          {
-            id: 'recipientes',
-            titulo: 'Recipientes',
-            celula: (o) => o.recipientes.join(', '),
-            exportar: (o) => o.recipientes.join(', '),
-          },
-          {
-            id: 'lotes',
-            titulo: 'Lotes',
-            celula: (o) => o.lotes.join(', '),
-            exportar: (o) => o.lotes.join(', '),
-          },
-          {
-            id: 'kg',
-            titulo: 'Uva',
-            className: 'text-right',
-            celula: (o) => (o.kg ? `${formatarDecimal(o.kg, 1)} kg` : '—'),
-            exportar: (o) => o.kg,
-          },
-        ]}
+        colunas={colunas}
       />
     </Pagina>
   )

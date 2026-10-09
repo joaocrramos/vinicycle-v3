@@ -8,7 +8,7 @@ import {
   preencherModelo,
 } from '@vinicycle/shared'
 import { useState } from 'react'
-import { TabelaDados } from '@/componentes/TabelaDados'
+import { type Coluna, TabelaDados } from '@/componentes/TabelaDados'
 import { Botao } from '@/componentes/ui/botao'
 import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
 import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
@@ -111,6 +111,46 @@ function DetalheEnvio({ id, aoFechar }: { id: string; aoFechar: () => void }) {
 
 export function PaginaEnvios() {
   const [aberto, setAberto] = useState<string | null>(null)
+  const colunas: Coluna<LinhaEnvio>[] = [
+    {
+      id: 'criadoEm',
+      titulo: 'Quando',
+      ordenavel: true,
+      celula: (e) => formatarDataHora(e.criadoEm),
+      exportar: (e) => e.criadoEm,
+    },
+    {
+      id: 'canal',
+      titulo: 'Canal',
+      ordenavel: true,
+      celula: (e) => NOMES_CANAL[e.canal],
+      exportar: (e) => e.canal,
+    },
+    {
+      id: 'destinatario',
+      titulo: 'Para',
+      celula: (e) => e.destinatario,
+      exportar: (e) => e.destinatario,
+    },
+    {
+      id: 'assunto',
+      titulo: 'Assunto ou modelo',
+      celula: (e) => e.assunto ?? e.modelo,
+      exportar: (e) => e.assunto ?? e.modelo,
+    },
+    {
+      id: 'situacao',
+      titulo: 'Situação',
+      ordenavel: true,
+      celula: (e) => (
+        <span>
+          <Etiqueta tom={TOM[e.situacao]}>{NOME_SITUACAO[e.situacao]}</Etiqueta>
+          {e.tentativas > 1 && ` · ${e.tentativas} tentativas`}
+        </span>
+      ),
+      exportar: (e) => e.situacao,
+    },
+  ]
   return (
     <Pagina titulo="Envios" trilha={['Administração']}>
       <p className="text-sm text-muted-foreground">
@@ -150,46 +190,7 @@ export function PaginaEnvios() {
             </Selecao>
           </>
         )}
-        colunas={[
-          {
-            id: 'criadoEm',
-            titulo: 'Quando',
-            ordenavel: true,
-            celula: (e) => formatarDataHora(e.criadoEm),
-            exportar: (e) => e.criadoEm,
-          },
-          {
-            id: 'canal',
-            titulo: 'Canal',
-            ordenavel: true,
-            celula: (e) => NOMES_CANAL[e.canal],
-            exportar: (e) => e.canal,
-          },
-          {
-            id: 'destinatario',
-            titulo: 'Para',
-            celula: (e) => e.destinatario,
-            exportar: (e) => e.destinatario,
-          },
-          {
-            id: 'assunto',
-            titulo: 'Assunto ou modelo',
-            celula: (e) => e.assunto ?? e.modelo,
-            exportar: (e) => e.assunto ?? e.modelo,
-          },
-          {
-            id: 'situacao',
-            titulo: 'Situação',
-            ordenavel: true,
-            celula: (e) => (
-              <span>
-                <Etiqueta tom={TOM[e.situacao]}>{NOME_SITUACAO[e.situacao]}</Etiqueta>
-                {e.tentativas > 1 && ` · ${e.tentativas} tentativas`}
-              </span>
-            ),
-            exportar: (e) => e.situacao,
-          },
-        ]}
+        colunas={colunas}
       />
       {aberto && <DetalheEnvio id={aberto} aoFechar={() => setAberto(null)} />}
     </Pagina>

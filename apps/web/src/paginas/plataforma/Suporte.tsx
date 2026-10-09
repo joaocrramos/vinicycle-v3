@@ -13,7 +13,7 @@ import {
 import { CircleAlert, CircleCheck, Clock } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { TabelaDados } from '@/componentes/TabelaDados'
+import { type Coluna, TabelaDados } from '@/componentes/TabelaDados'
 import { Botao } from '@/componentes/ui/botao'
 import { Aviso, CabecalhoCartao, Cartao, CorpoCartao } from '@/componentes/ui/cartao'
 import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
@@ -412,22 +412,65 @@ export function PaginaSuporte() {
       >('/api/plataforma/chamados-resumo'),
   })
   const aberto = params.get('chamado')
+  const colunas: Coluna<LinhaChamado>[] = [
+    {
+      id: 'numero',
+      titulo: 'Nº',
+      ordenavel: true,
+      celula: (c) => c.numero,
+      exportar: (c) => c.numero,
+    },
+    {
+      id: 'assunto',
+      titulo: 'Assunto',
+      celula: (c) => (
+        <span>
+          {c.assunto}
+          <span className="block text-xs text-muted-foreground">
+            {c.cliente ?? 'sem cliente'} · {c.solicitante} · {c.categoria}
+          </span>
+        </span>
+      ),
+      exportar: (c) => c.assunto,
+    },
+    {
+      id: 'prioridade',
+      titulo: 'Prioridade',
+      ordenavel: true,
+      celula: (c) => NOMES_PRIORIDADE[c.prioridade],
+      exportar: (c) => c.prioridade,
+    },
+    {
+      id: 'situacao',
+      titulo: 'Situação',
+      ordenavel: true,
+      celula: (c) => <EtiquetaSituacaoChamado situacao={c.situacao} />,
+      exportar: (c) => c.situacao,
+    },
+    {
+      id: 'prazoEm',
+      titulo: 'Primeira resposta',
+      ordenavel: true,
+      celula: (c) => <Prazo semaforo={c.semaforo} prazoEm={c.prazoEm} />,
+      exportar: (c) => c.semaforo,
+    },
+  ]
   return (
     <Pagina
-      titulo="Suporte"
+      titulo="Central de suporte"
       trilha={['Administração']}
       acoes={
         pode(s, 'plataforma.suporte', 'editar') && (
           <Botao variante="secundario" onClick={() => setPrazos(true)}>
-            Prazos de atendimento
+            Definir prazos
           </Botao>
         )
       }
     >
       <TabelaDados
-        tabela="plataforma.suporte"
+        tabela="plataforma.chamados"
         url="/api/plataforma/chamados"
-        ordemPadrao={{ campo: 'prazoEm', direcao: 'asc' }}
+        ordemPadrao={{ campo: 'numero', direcao: 'desc' }}
         filtrosIniciais={{ situacao: 'abertos' }}
         aoClicar={(c) => setParams({ chamado: c.id })}
         podeExportar={pode(s, 'plataforma.suporte', 'exportar')}
@@ -435,17 +478,17 @@ export function PaginaSuporte() {
           <>
             <Selecao
               aria-label="Situação"
-              className="w-48"
-              value={f.situacao ?? ''}
+              className="w-36"
+              value={f.situacao ?? 'abertos'}
               onChange={(e) => definir('situacao', e.target.value)}
             >
               <option value="abertos">Em aberto</option>
-              <option value="">Todos</option>
               {SITUACOES_CHAMADO.map((x) => (
                 <option key={x} value={x}>
                   {NOMES_SITUACAO_CHAMADO[x]}
                 </option>
               ))}
+              <option value="todos">Todos</option>
             </Selecao>
             <Selecao
               aria-label="Prioridade"
@@ -462,50 +505,8 @@ export function PaginaSuporte() {
             </Selecao>
           </>
         )}
-        colunas={[
-          {
-            id: 'numero',
-            titulo: 'Nº',
-            ordenavel: true,
-            celula: (c) => c.numero,
-            exportar: (c) => c.numero,
-          },
-          {
-            id: 'assunto',
-            titulo: 'Assunto',
-            celula: (c) => (
-              <span>
-                {c.assunto}
-                <span className="block text-xs text-muted-foreground">
-                  {c.cliente ?? 'sem cliente'} · {c.solicitante} · {c.categoria}
-                </span>
-              </span>
-            ),
-            exportar: (c) => c.assunto,
-          },
-          {
-            id: 'prioridade',
-            titulo: 'Prioridade',
-            ordenavel: true,
-            celula: (c) => NOMES_PRIORIDADE[c.prioridade],
-            exportar: (c) => c.prioridade,
-          },
-          {
-            id: 'situacao',
-            titulo: 'Situação',
-            ordenavel: true,
-            celula: (c) => <EtiquetaSituacaoChamado situacao={c.situacao} />,
-            exportar: (c) => c.situacao,
-          },
-          {
-            id: 'prazoEm',
-            titulo: 'Primeira resposta',
-            ordenavel: true,
-            celula: (c) => <Prazo semaforo={c.semaforo} prazoEm={c.prazoEm} />,
-            exportar: (c) => c.semaforo,
-          },
-        ]}
-      />
+        colunas={colunas}
+      />{' '}
       <Cartao>
         <CabecalhoCartao
           titulo="Últimos 90 dias"

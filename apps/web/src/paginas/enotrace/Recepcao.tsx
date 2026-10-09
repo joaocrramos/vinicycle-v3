@@ -10,7 +10,7 @@ import { Anexos } from '@/componentes/Anexos'
 import { CampoNumero } from '@/componentes/campos-especiais'
 import { Historico } from '@/componentes/Historico'
 import { PedirMotivo } from '@/componentes/PedirMotivo'
-import { TabelaDados } from '@/componentes/TabelaDados'
+import { type Coluna, TabelaDados } from '@/componentes/TabelaDados'
 import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
 import { Botao } from '@/componentes/ui/botao'
 import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
@@ -53,6 +53,56 @@ export function ListaRecepcao() {
   const navegar = useNavigate()
   const { data: s } = useSessao()
   const fuso = fusoAtivo(s)
+  const colunas: Coluna<Linha>[] = [
+    {
+      id: 'codigo',
+      titulo: 'Romaneio',
+      ordenavel: true,
+      celula: (r) =>
+        r.codigo ? <strong>{r.codigo}</strong> : <Etiqueta tom="alerta">Rascunho</Etiqueta>,
+      exportar: (r) => r.codigo ?? 'Rascunho',
+    },
+    {
+      id: 'chegadaEm',
+      titulo: 'Chegada',
+      ordenavel: true,
+      celula: (r) => formatarDataHora(r.chegadaEm, fuso),
+      exportar: (r) => r.chegadaEm,
+    },
+    {
+      id: 'projeto',
+      titulo: 'Projeto',
+      celula: (r) => r.projeto,
+      exportar: (r) => r.projeto,
+    },
+    {
+      id: 'origem',
+      titulo: 'Origem',
+      celula: (r) =>
+        r.origem === 'vinhedo_proprio' ? 'Vinhedo próprio' : (r.fornecedor ?? 'Fornecedor'),
+      exportar: (r) => r.fornecedor ?? 'Vinhedo próprio',
+    },
+    {
+      id: 'variedades',
+      titulo: 'Variedades',
+      celula: (r) => r.variedades.join(', '),
+      exportar: (r) => r.variedades.join(', '),
+    },
+    {
+      id: 'kg',
+      titulo: 'Peso líquido',
+      className: 'text-right',
+      celula: (r) => kg(r.kg),
+      exportar: (r) => r.kg,
+    },
+    {
+      id: 'aProcessar',
+      titulo: 'A processar',
+      className: 'text-right',
+      celula: (r) => (r.situacao === 'confirmado' ? kg(r.aProcessar) : '—'),
+      exportar: (r) => r.aProcessar,
+    },
+  ]
   return (
     <Pagina
       titulo="Recepção da uva"
@@ -90,56 +140,7 @@ export function ListaRecepcao() {
             <option value="estornado">Estornados</option>
           </Selecao>
         )}
-        colunas={[
-          {
-            id: 'codigo',
-            titulo: 'Romaneio',
-            ordenavel: true,
-            celula: (r) =>
-              r.codigo ? <strong>{r.codigo}</strong> : <Etiqueta tom="alerta">Rascunho</Etiqueta>,
-            exportar: (r) => r.codigo ?? 'Rascunho',
-          },
-          {
-            id: 'chegadaEm',
-            titulo: 'Chegada',
-            ordenavel: true,
-            celula: (r) => formatarDataHora(r.chegadaEm, fuso),
-            exportar: (r) => r.chegadaEm,
-          },
-          {
-            id: 'projeto',
-            titulo: 'Projeto',
-            celula: (r) => r.projeto,
-            exportar: (r) => r.projeto,
-          },
-          {
-            id: 'origem',
-            titulo: 'Origem',
-            celula: (r) =>
-              r.origem === 'vinhedo_proprio' ? 'Vinhedo próprio' : (r.fornecedor ?? 'Fornecedor'),
-            exportar: (r) => r.fornecedor ?? 'Vinhedo próprio',
-          },
-          {
-            id: 'variedades',
-            titulo: 'Variedades',
-            celula: (r) => r.variedades.join(', '),
-            exportar: (r) => r.variedades.join(', '),
-          },
-          {
-            id: 'kg',
-            titulo: 'Peso líquido',
-            className: 'text-right',
-            celula: (r) => kg(r.kg),
-            exportar: (r) => r.kg,
-          },
-          {
-            id: 'aProcessar',
-            titulo: 'A processar',
-            className: 'text-right',
-            celula: (r) => (r.situacao === 'confirmado' ? kg(r.aProcessar) : '—'),
-            exportar: (r) => r.aProcessar,
-          },
-        ]}
+        colunas={colunas}
       />
     </Pagina>
   )

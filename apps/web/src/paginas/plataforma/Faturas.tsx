@@ -14,7 +14,7 @@ import {
   type LinhaFatura,
   periodoFatura,
 } from '@/componentes/Faturas'
-import { TabelaDados } from '@/componentes/TabelaDados'
+import { type Coluna, TabelaDados } from '@/componentes/TabelaDados'
 import { Selecao } from '@/componentes/ui/campos'
 import { Pagina } from '@/layout/Estrutura'
 import { pode, useSessao } from '@/lib/sessao'
@@ -24,6 +24,68 @@ export function PaginaFaturas() {
   const { data: s } = useSessao()
   const navegar = useNavigate()
   const [aberta, setAberta] = useState<string | null>(null)
+  const colunas: Coluna<LinhaFatura>[] = [
+    {
+      id: 'numero',
+      titulo: 'Nº',
+      ordenavel: true,
+      celula: (f) => f.numero,
+      exportar: (f) => f.numero,
+    },
+    {
+      id: 'cliente',
+      titulo: 'Cliente',
+      ordenavel: true,
+      celula: (f) => (
+        <button
+          type="button"
+          className="text-left underline-offset-2 hover:underline"
+          onClick={(e) => {
+            e.stopPropagation()
+            navegar(`/plataforma/clientes/${f.empresaId}`)
+          }}
+        >
+          {f.cliente}
+        </button>
+      ),
+      exportar: (f) => f.cliente,
+    },
+    {
+      id: 'periodo',
+      titulo: 'Período',
+      celula: (f) => periodoFatura(f),
+      exportar: (f) => periodoFatura(f),
+    },
+    {
+      id: 'vencimento',
+      titulo: 'Vencimento',
+      ordenavel: true,
+      celula: (f) => formatarData(f.vencimento),
+      exportar: (f) => f.vencimento,
+    },
+    {
+      id: 'total',
+      titulo: 'Total',
+      ordenavel: true,
+      className: 'text-right whitespace-nowrap',
+      celula: (f) => formatarMoeda(paraCentavos(f.total)),
+      exportar: (f) => f.total,
+    },
+    {
+      id: 'recebido',
+      titulo: 'Recebido',
+      className: 'text-right whitespace-nowrap',
+      celula: (f) => formatarMoeda(paraCentavos(f.recebido)),
+      exportar: (f) => f.recebido,
+    },
+    {
+      id: 'situacao',
+      titulo: 'Situação',
+      ordenavel: true,
+      celula: (f) => <EtiquetaFatura situacao={f.situacao} />,
+      exportar: (f) => f.situacao,
+    },
+  ]
   return (
     <Pagina titulo="Faturas e recebimentos" trilha={['Administração']}>
       <p className="text-sm text-muted-foreground">
@@ -51,68 +113,7 @@ export function PaginaFaturas() {
             ))}
           </Selecao>
         )}
-        colunas={[
-          {
-            id: 'numero',
-            titulo: 'Nº',
-            ordenavel: true,
-            celula: (f) => f.numero,
-            exportar: (f) => f.numero,
-          },
-          {
-            id: 'cliente',
-            titulo: 'Cliente',
-            ordenavel: true,
-            celula: (f) => (
-              <button
-                type="button"
-                className="text-left underline-offset-2 hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  navegar(`/plataforma/clientes/${f.empresaId}`)
-                }}
-              >
-                {f.cliente}
-              </button>
-            ),
-            exportar: (f) => f.cliente,
-          },
-          {
-            id: 'periodo',
-            titulo: 'Período',
-            celula: (f) => periodoFatura(f),
-            exportar: (f) => periodoFatura(f),
-          },
-          {
-            id: 'vencimento',
-            titulo: 'Vencimento',
-            ordenavel: true,
-            celula: (f) => formatarData(f.vencimento),
-            exportar: (f) => f.vencimento,
-          },
-          {
-            id: 'total',
-            titulo: 'Total',
-            ordenavel: true,
-            className: 'text-right whitespace-nowrap',
-            celula: (f) => formatarMoeda(paraCentavos(f.total)),
-            exportar: (f) => f.total,
-          },
-          {
-            id: 'recebido',
-            titulo: 'Recebido',
-            className: 'text-right whitespace-nowrap',
-            celula: (f) => formatarMoeda(paraCentavos(f.recebido)),
-            exportar: (f) => f.recebido,
-          },
-          {
-            id: 'situacao',
-            titulo: 'Situação',
-            ordenavel: true,
-            celula: (f) => <EtiquetaFatura situacao={f.situacao} />,
-            exportar: (f) => f.situacao,
-          },
-        ]}
+        colunas={colunas}
       />
       {aberta && (
         <DetalheFatura

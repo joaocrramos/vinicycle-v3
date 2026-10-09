@@ -18,7 +18,7 @@ import { Anexos } from '@/componentes/Anexos'
 import { CampoNumero } from '@/componentes/campos-especiais'
 import { Historico } from '@/componentes/Historico'
 import { PedirMotivo } from '@/componentes/PedirMotivo'
-import { TabelaDados } from '@/componentes/TabelaDados'
+import { type Coluna, TabelaDados } from '@/componentes/TabelaDados'
 import { Aba, Abas, ConteudoAba, ListaAbas } from '@/componentes/ui/abas'
 import { Botao } from '@/componentes/ui/botao'
 import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
@@ -103,6 +103,65 @@ interface LinhaProjeto {
 export function ListaProjetos() {
   const navegar = useNavigate()
   const { data: s } = useSessao()
+  const colunas: Coluna<LinhaProjeto>[] = [
+    {
+      id: 'codigo',
+      titulo: 'Código',
+      ordenavel: true,
+      celula: (p) => <strong>{p.codigo}</strong>,
+      exportar: (p) => p.codigo,
+    },
+    {
+      id: 'nome',
+      titulo: 'Projeto',
+      ordenavel: true,
+      celula: (p) => (
+        <span>
+          {p.nome}
+          {p.denominacao && (
+            <span className="block text-xs text-muted-foreground">{p.denominacao}</span>
+          )}
+        </span>
+      ),
+      exportar: (p) => p.nome,
+    },
+    {
+      id: 'safra',
+      titulo: 'Safra',
+      ordenavel: true,
+      celula: (p) => `${p.safraPrevista}${p.cicloPrevisto ? `.${p.cicloPrevisto}` : ''}`,
+      exportar: (p) => p.safraPrevista,
+    },
+    {
+      id: 'etapas',
+      titulo: 'Etapas dos lotes',
+      celula: (p) => p.etapas.join(', ') || '—',
+      exportar: (p) => p.etapas.join(', '),
+    },
+    {
+      id: 'volume',
+      titulo: 'Volume',
+      className: 'text-right',
+      celula: (p) => litros(p.volume),
+      exportar: (p) => p.volume,
+    },
+    {
+      id: 'enologo',
+      titulo: 'Enólogo',
+      celula: (p) => p.enologo ?? '—',
+      exportar: (p) => p.enologo,
+    },
+    {
+      id: 'situacao',
+      titulo: 'Situação',
+      ordenavel: true,
+      celula: (p) => (
+        <Etiqueta tom={TOM_SITUACAO[p.situacao]}>{SITUACOES_PROJETO[p.situacao]}</Etiqueta>
+      ),
+      exportar: (p) => SITUACOES_PROJETO[p.situacao],
+    },
+  ]
+
   return (
     <Pagina
       titulo="Projetos de vinho"
@@ -147,64 +206,7 @@ export function ListaProjetos() {
             <option value="todos">Todos</option>
           </Selecao>
         )}
-        colunas={[
-          {
-            id: 'codigo',
-            titulo: 'Código',
-            ordenavel: true,
-            celula: (p) => <strong>{p.codigo}</strong>,
-            exportar: (p) => p.codigo,
-          },
-          {
-            id: 'nome',
-            titulo: 'Projeto',
-            ordenavel: true,
-            celula: (p) => (
-              <span>
-                {p.nome}
-                {p.denominacao && (
-                  <span className="block text-xs text-muted-foreground">{p.denominacao}</span>
-                )}
-              </span>
-            ),
-            exportar: (p) => p.nome,
-          },
-          {
-            id: 'safra',
-            titulo: 'Safra',
-            ordenavel: true,
-            celula: (p) => `${p.safraPrevista}${p.cicloPrevisto ? `.${p.cicloPrevisto}` : ''}`,
-            exportar: (p) => p.safraPrevista,
-          },
-          {
-            id: 'etapas',
-            titulo: 'Etapas dos lotes',
-            celula: (p) => p.etapas.join(', ') || '—',
-            exportar: (p) => p.etapas.join(', '),
-          },
-          {
-            id: 'volume',
-            titulo: 'Volume',
-            className: 'text-right',
-            celula: (p) => litros(p.volume),
-            exportar: (p) => p.volume,
-          },
-          {
-            id: 'enologo',
-            titulo: 'Enólogo',
-            celula: (p) => p.enologo ?? '—',
-            exportar: (p) => p.enologo,
-          },
-          {
-            id: 'situacao',
-            titulo: 'Situação',
-            ordenavel: true,
-            celula: (p) => (
-              <Etiqueta tom={TOM_SITUACAO[p.situacao]}>{SITUACOES_PROJETO[p.situacao]}</Etiqueta>
-            ),
-            exportar: (p) => SITUACOES_PROJETO[p.situacao],
-          },
-        ]}
+        colunas={colunas}
       />
     </Pagina>
   )
@@ -1191,33 +1193,10 @@ export function FichaProjeto() {
           <AbaPlano p={p} podeEditar={podeEditar && aberto} />
         </ConteudoAba>
         <ConteudoAba value="recepcoes">
-          <TabelaDados
-            tabela="romaneios-projeto"
-            url={`/api/romaneios?projeto=${id}`}
-            ordemPadrao={{ campo: 'chegadaEm', direcao: 'desc' }}
-            aoClicar={(r) => navegar(`/enotrace/recepcao/${r.id}`)}
-            colunas={[
-              { id: 'codigo', titulo: 'Romaneio', celula: (r) => r.codigo ?? 'Rascunho' },
-              {
-                id: 'chegadaEm',
-                titulo: 'Chegada',
-                ordenavel: true,
-                celula: (r) => formatarDataHora(r.chegadaEm, fusoAtivo(s)),
-              },
-              { id: 'variedades', titulo: 'Variedades', celula: (r) => r.variedades.join(', ') },
-              {
-                id: 'kg',
-                titulo: 'Peso',
-                className: 'text-right',
-                celula: (r) => `${formatarDecimal(r.kg, 1)} kg`,
-              },
-              {
-                id: 'aProcessar',
-                titulo: 'A processar',
-                className: 'text-right',
-                celula: (r) => `${formatarDecimal(r.aProcessar, 1)} kg`,
-              },
-            ]}
+          <TabelaRomaneiosProjeto
+            projetoId={id}
+            fuso={fusoAtivo(s)}
+            aoClicar={(rId) => navegar(`/enotrace/recepcao/${rId}`)}
           />
         </ConteudoAba>
         <ConteudoAba value="operacoes">
@@ -1256,6 +1235,57 @@ export function FichaProjeto() {
         aoConfirmar={(m) => mudar(motivo!, m)}
       />
     </Pagina>
+  )
+}
+
+interface LinhaRomaneioProjeto {
+  id: string
+  codigo: string | null
+  chegadaEm: string
+  variedades: string[]
+  kg: string
+  aProcessar: string
+}
+
+function TabelaRomaneiosProjeto({
+  projetoId,
+  fuso,
+  aoClicar,
+}: {
+  projetoId: string
+  fuso: string
+  aoClicar: (id: string) => void
+}) {
+  const colunas: Coluna<LinhaRomaneioProjeto>[] = [
+    { id: 'codigo', titulo: 'Romaneio', celula: (r) => r.codigo ?? 'Rascunho' },
+    {
+      id: 'chegadaEm',
+      titulo: 'Chegada',
+      ordenavel: true,
+      celula: (r) => formatarDataHora(r.chegadaEm, fuso),
+    },
+    { id: 'variedades', titulo: 'Variedades', celula: (r) => r.variedades.join(', ') },
+    {
+      id: 'kg',
+      titulo: 'Peso',
+      className: 'text-right',
+      celula: (r) => `${formatarDecimal(r.kg, 1)} kg`,
+    },
+    {
+      id: 'aProcessar',
+      titulo: 'A processar',
+      className: 'text-right',
+      celula: (r) => `${formatarDecimal(r.aProcessar, 1)} kg`,
+    },
+  ]
+  return (
+    <TabelaDados
+      tabela="romaneios-projeto"
+      url={`/api/romaneios?projeto=${projetoId}`}
+      ordemPadrao={{ campo: 'chegadaEm', direcao: 'desc' }}
+      aoClicar={(r) => aoClicar(r.id)}
+      colunas={colunas}
+    />
   )
 }
 

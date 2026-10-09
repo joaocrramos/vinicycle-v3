@@ -14,7 +14,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { BotaoIcone } from '@/componentes/AcoesLinha'
 import { CampoNumero } from '@/componentes/campos-especiais'
 import { PedirMotivo } from '@/componentes/PedirMotivo'
-import { TabelaDados } from '@/componentes/TabelaDados'
+import { type Coluna, TabelaDados } from '@/componentes/TabelaDados'
 import { Botao } from '@/componentes/ui/botao'
 import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
 import { AreaTexto, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
@@ -120,6 +120,66 @@ export function ListaEstoque() {
     queryKey: ['estoque-pendencias'],
     queryFn: () => api.get<unknown[]>('/api/estoque/pendencias'),
   })
+  const colunas: Coluna<LinhaEstoque>[] = [
+    {
+      id: 'nome',
+      titulo: 'Item',
+      ordenavel: true,
+      celula: (i) => (
+        <span className="flex flex-wrap items-center gap-2">
+          <strong>{i.nome}</strong>
+          {i.pendencia && <Etiqueta tom="erro">Saldo negativo</Etiqueta>}
+          {i.lotesVencendo > 0 && (
+            <Etiqueta tom="alerta">
+              {i.lotesVencendo === 1 ? '1 lote vencendo' : `${i.lotesVencendo} lotes vencendo`}
+            </Etiqueta>
+          )}
+        </span>
+      ),
+      exportar: (i) => i.nome,
+    },
+    {
+      id: 'tipo',
+      titulo: 'Tipo',
+      ordenavel: true,
+      celula: (i) => NOMES_TIPO_ITEM[i.tipo],
+      exportar: (i) => NOMES_TIPO_ITEM[i.tipo],
+    },
+    {
+      id: 'saldo',
+      titulo: 'Saldo',
+      ordenavel: true,
+      className: 'text-right',
+      celula: (i) => (
+        <span
+          className={
+            Number(i.saldo) < 0
+              ? 'text-destructive'
+              : i.estoqueMinimo &&
+                  Number(i.saldo) - Number(i.saldoTerceiros) < Number(i.estoqueMinimo)
+                ? 'text-amber-600'
+                : ''
+          }
+        >
+          {qtd(i.saldo, i.unidade)}
+          {Number(i.saldoTerceiros) !== 0 && (
+            <span className="block text-xs text-muted-foreground">
+              {qtd(i.saldoTerceiros, i.unidade)} de clientes
+            </span>
+          )}
+        </span>
+      ),
+      exportar: (i) => i.saldo,
+    },
+    {
+      id: 'minimo',
+      titulo: 'Mínimo',
+      className: 'text-right',
+      celula: (i) => (i.estoqueMinimo ? qtd(i.estoqueMinimo, i.unidade) : '—'),
+      exportar: (i) => i.estoqueMinimo,
+    },
+  ]
+
   return (
     <Pagina
       titulo="Estoque"
@@ -172,67 +232,7 @@ export function ListaEstoque() {
         )}
         aoClicar={(i) => navegar(`/enotrace/estoque/${i.id}`)}
         podeExportar={pode(s, F, 'exportar')}
-        colunas={[
-          {
-            id: 'nome',
-            titulo: 'Item',
-            ordenavel: true,
-            celula: (i) => (
-              <span className="flex flex-wrap items-center gap-2">
-                <strong>{i.nome}</strong>
-                {i.pendencia && <Etiqueta tom="erro">Saldo negativo</Etiqueta>}
-                {i.lotesVencendo > 0 && (
-                  <Etiqueta tom="alerta">
-                    {i.lotesVencendo === 1
-                      ? '1 lote vencendo'
-                      : `${i.lotesVencendo} lotes vencendo`}
-                  </Etiqueta>
-                )}
-              </span>
-            ),
-            exportar: (i) => i.nome,
-          },
-          {
-            id: 'tipo',
-            titulo: 'Tipo',
-            ordenavel: true,
-            celula: (i) => NOMES_TIPO_ITEM[i.tipo],
-            exportar: (i) => NOMES_TIPO_ITEM[i.tipo],
-          },
-          {
-            id: 'saldo',
-            titulo: 'Saldo',
-            ordenavel: true,
-            className: 'text-right',
-            celula: (i) => (
-              <span
-                className={
-                  Number(i.saldo) < 0
-                    ? 'text-destructive'
-                    : i.estoqueMinimo &&
-                        Number(i.saldo) - Number(i.saldoTerceiros) < Number(i.estoqueMinimo)
-                      ? 'text-amber-600'
-                      : ''
-                }
-              >
-                {qtd(i.saldo, i.unidade)}
-                {Number(i.saldoTerceiros) !== 0 && (
-                  <span className="block text-xs text-muted-foreground">
-                    {qtd(i.saldoTerceiros, i.unidade)} de clientes
-                  </span>
-                )}
-              </span>
-            ),
-            exportar: (i) => i.saldo,
-          },
-          {
-            id: 'minimo',
-            titulo: 'Mínimo',
-            className: 'text-right',
-            celula: (i) => (i.estoqueMinimo ? qtd(i.estoqueMinimo, i.unidade) : '—'),
-            exportar: (i) => i.estoqueMinimo,
-          },
-        ]}
+        colunas={colunas}
       />
     </Pagina>
   )

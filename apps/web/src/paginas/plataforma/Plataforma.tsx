@@ -27,7 +27,7 @@ import {
 } from '@/componentes/Faturas'
 import { CampoTelefone } from '@/componentes/campos-especiais'
 import { FICHA_VAZIA_PJ, FichaCadastral } from '@/componentes/FichaCadastral'
-import { TabelaDados } from '@/componentes/TabelaDados'
+import { type Coluna, TabelaDados } from '@/componentes/TabelaDados'
 import { Botao } from '@/componentes/ui/botao'
 import { Aviso, CabecalhoCartao, Cartao, CorpoCartao, Etiqueta } from '@/componentes/ui/cartao'
 import { AreaTexto, Caixa, Campo, Entrada, Selecao } from '@/componentes/ui/campos'
@@ -118,6 +118,48 @@ interface LinhaCliente {
 export function ListaClientes() {
   const navegar = useNavigate()
   const { data: s } = useSessao()
+  const colunas: Coluna<LinhaCliente>[] = [
+    {
+      id: 'nome',
+      titulo: 'Cliente',
+      ordenavel: true,
+      celula: (c) => c.nomeFantasia || c.nome,
+      exportar: (c) => c.nome,
+    },
+    {
+      id: 'documento',
+      titulo: 'CNPJ/CPF',
+      ordenavel: true,
+      celula: (c) =>
+        c.documento
+          ? formatarDocumento(c.tipoPessoa === 'fisica' ? 'cpf' : 'cnpj', c.documento)
+          : '—',
+      exportar: (c) => c.documento,
+    },
+    {
+      id: 'usuarios',
+      titulo: 'Usuários',
+      className: 'text-right',
+      celula: (c) => c.usuarios,
+      exportar: (c) => c.usuarios,
+    },
+    {
+      id: 'criadoEm',
+      titulo: 'Cliente desde',
+      ordenavel: true,
+      celula: (c) => formatarDataHora(c.criadoEm),
+      exportar: (c) => c.criadoEm,
+    },
+    {
+      id: 'situacao',
+      titulo: 'Situação',
+      ordenavel: true,
+      celula: (c) => (
+        <Etiqueta tom={TOM[c.situacao]}>{NOMES_SITUACAO_EMPRESA[c.situacao]}</Etiqueta>
+      ),
+      exportar: (c) => c.situacao,
+    },
+  ]
   return (
     <Pagina
       titulo="Clientes"
@@ -151,48 +193,7 @@ export function ListaClientes() {
             ))}
           </Selecao>
         )}
-        colunas={[
-          {
-            id: 'nome',
-            titulo: 'Cliente',
-            ordenavel: true,
-            celula: (c) => c.nomeFantasia || c.nome,
-            exportar: (c) => c.nome,
-          },
-          {
-            id: 'documento',
-            titulo: 'CNPJ/CPF',
-            ordenavel: true,
-            celula: (c) =>
-              c.documento
-                ? formatarDocumento(c.tipoPessoa === 'fisica' ? 'cpf' : 'cnpj', c.documento)
-                : '—',
-            exportar: (c) => c.documento,
-          },
-          {
-            id: 'usuarios',
-            titulo: 'Usuários',
-            className: 'text-right',
-            celula: (c) => c.usuarios,
-            exportar: (c) => c.usuarios,
-          },
-          {
-            id: 'criadoEm',
-            titulo: 'Cliente desde',
-            ordenavel: true,
-            celula: (c) => formatarDataHora(c.criadoEm),
-            exportar: (c) => c.criadoEm,
-          },
-          {
-            id: 'situacao',
-            titulo: 'Situação',
-            ordenavel: true,
-            celula: (c) => (
-              <Etiqueta tom={TOM[c.situacao]}>{NOMES_SITUACAO_EMPRESA[c.situacao]}</Etiqueta>
-            ),
-            exportar: (c) => c.situacao,
-          },
-        ]}
+        colunas={colunas}
       />
     </Pagina>
   )
